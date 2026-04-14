@@ -29,7 +29,7 @@ module srio_video_frame_d_speed  #(
 	parameter		P_set_lite					= 0											
 ) (
 //==================================================================================================
-//--·´ÏòÓ³Éä²éÕÒ±í£¨LUT£©DDR¶ÁÈ¡½Ó¿Ú
+//--åå‘æ˜ å°„æŸ¥æ‰¾è¡¨ï¼ˆLUTï¼‰DDRè¯»å–æ¥å£
 	input	wire								V_LUT_AXI_clk							,
 	input	wire								V_LUT_AXI_rstn							,
 
@@ -55,6 +55,8 @@ module srio_video_frame_d_speed  #(
 
 	input										ps_video_en											,
 	input			[7:0]							ps_frame_ctr											,
+	// æ–°ä»£ç 
+	input			[31:0]							video_algo_ctrl										,
 	
 	input										video_send_en									,	
 
@@ -123,8 +125,8 @@ module srio_video_frame_d_speed  #(
 	
 	
 );
-//	srio_r srioÊ±ÖÓÊı¾İ¡¢srio_r_f	srioÊ±ÖÓ¡¢¾­¹ı»º	srio_i±¾µØÊ±ÖÓÊı
-//	srio_o	±¾µØÊ±ÖÓÊı¾İ£¬srio_t_f srioÊ±ÖÓÊı¾İ ,srio_t srioÊ±ÖÓÊı¾İ
+//	srio_r srioæ—¶é’Ÿæ•°æ®ã€srio_r_f	srioæ—¶é’Ÿã€ç»è¿‡ç¼“	srio_iæœ¬åœ°æ—¶é’Ÿæ•°
+//	srio_o	æœ¬åœ°æ—¶é’Ÿæ•°æ®ï¼Œsrio_t_f srioæ—¶é’Ÿæ•°æ® ,srio_t srioæ—¶é’Ÿæ•°æ®
 
 
 
@@ -277,8 +279,10 @@ module srio_video_frame_d_speed  #(
 		.srio_clk								( clk_srio									),	
 		.srio_rstn_i							( rst_n										),
 		
-		.user_clk								( user_250m_clk									),	
-		.user_rstn_i							( rst_n										),	//	´ı´¦Àí¸´Î»
+ 		.user_clk								( user_250m_clk									),	
+		.user_rstn_i							( rst_n										),	//	å¾…å¤„ç†å¤ä½
+		// æ–°ä»£ç 
+		.video_algo_ctrl						( video_algo_ctrl							),
 		
 		.SRIO_R_axis_tdata						( srio_t_f_axis_tdata							),	
 		.SRIO_R_axis_tuser						( srio_t_f_axis_tuser							),	
@@ -325,7 +329,7 @@ module srio_video_frame_d_speed  #(
 	--LVDS Cache Addr
 	--------------------------------------------------------------------------------------*/	
 	localparam		P_LVDS_DDR3_START_ADDR_R	= 32'h0000_0000 							;
-	localparam		P_LVDS_DDR3_END_ADDR_R		= P_VIDEO_FRAME_NUM*P_VIDEO_FRAME_SIZE+	P_LVDS_DDR3_START_ADDR_R;	// 32'80_1000h*5=32'h280_5000,£¨32'h80_1000£¬32'h100_2000,32'h180_3000,32'h200_4000,£©
+	localparam		P_LVDS_DDR3_END_ADDR_R		= P_VIDEO_FRAME_NUM*P_VIDEO_FRAME_SIZE+	P_LVDS_DDR3_START_ADDR_R;	// 32'80_1000h*5=32'h280_5000,ï¼ˆ32'h80_1000ï¼Œ32'h100_2000,32'h180_3000,32'h200_4000,ï¼‰
 	localparam		P_LVDS_DDR3_BLOCK_SIZE_R	= 32'h100									;
 	
 	/*--------------------------------------------------------------------------------------

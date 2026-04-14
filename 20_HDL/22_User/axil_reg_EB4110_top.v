@@ -29,12 +29,16 @@
 
 
 module axil_reg_EB4110_top # (
-	parameter 		P_words_w             		= 7          								,	//¿ÉĞ´µÄwords¸öÊı   
-	parameter 		P_words_r             		= 7          								,	//¿É¶ÁµÄwords¸öÊı	
+	// æ–°ä»£ç 
+	parameter 		P_words_w             		= 8          								,	//å¯å†™çš„wordsä¸ªæ•°   
+	parameter 		P_words_r             		= 8          								,	//å¯è¯»çš„wordsä¸ªæ•°	
+	// æ—§ä»£ç 
+	// parameter 		P_words_w             		= 7          								,	//å¯å†™çš„wordsä¸ªæ•°   
+	// parameter 		P_words_r             		= 7          								,	//å¯è¯»çš„wordsä¸ªæ•°	
 	parameter		base_addr					= 32'h10060000								
 )(
 //=======================================================================
-//--ÊäÈëÊä³ö¶Ë¿Ú¶¨Òå---------------------------
+//--è¾“å…¥è¾“å‡ºç«¯å£å®šä¹‰---------------------------
 	/*-------------------------------------------------------------------
 	--Common Interface
 	-------------------------------------------------------------------*/
@@ -42,11 +46,11 @@ module axil_reg_EB4110_top # (
 	input										rst								,	
 	
 //==================================================================================================
-//--¼Ä´æÆ÷
+//--å¯„å­˜å™¨
 	input			[P_words_r*32-1:0]			data_init								,
-	output	reg		[P_words_w*32-1:0]			data_w			= {P_words_w*32{1'b0}}	,	//	0*32+:32 µØÖ·0  1*32+:32 µØÖ·4£¬ÒÀ´Î8£¬c\10\4¡­¡­
+	output	reg		[P_words_w*32-1:0]			data_w			= {P_words_w*32{1'b0}}	,	//	0*32+:32 åœ°å€0  1*32+:32 åœ°å€4ï¼Œä¾æ¬¡8ï¼Œc\10\4â€¦â€¦
 //=======================================================================
-//--AXI Lite¼Ä´æÆ÷¶¨Òå
+//--AXI Liteå¯„å­˜å™¨å®šä¹‰
 	/*-------------------------------------------------------------------
 	--Write Data Command Signals
 	-------------------------------------------------------------------*/
@@ -94,17 +98,21 @@ module axil_reg_EB4110_top # (
 	output	reg		[31:0]						srio_v_sid_did	= 'b0					,
 	output	reg									srio_v_sel_x1	= 'b0					,
 
-   	output 	reg	    [11:00]						device_temp        							,	//DDRÎÂ¶È½Ó¿Ú
+   	output 	reg	    [11:00]						device_temp        							,	//DDRæ¸©åº¦æ¥å£
 
 	output	reg									ps_video_en									,
-	output	reg		[7:0]						ps_frame_ctr								
+	// æ–°ä»£ç 
+	output	reg		[7:0]						ps_frame_ctr								,
+	output	reg		[31:0]						video_algo_ctrl
+	// æ—§ä»£ç 
+	// output	reg		[7:0]						ps_frame_ctr								
   	
 	);
 
 //=======================================================================
 //--Parameter Define
 	/*-------------------------------------------------------------------
-	--AXI Lite¼Ä´æÆ÷ÅäÖÃÆ«ÒÆÁ¿
+	--AXI Liteå¯„å­˜å™¨é…ç½®åç§»é‡
 	-------------------------------------------------------------------*/
 	localparam		VERSION				= 32'h20221122					;
 	
@@ -117,14 +125,14 @@ module axil_reg_EB4110_top # (
     reg									lite_aw_valid		= 0			;
     reg             				   	lite_w_valid        = 0        	;
 	/*-------------------------------------------------------------------
-	--ÏµÍ³°æ±¾ºÍ¸´Ê¹
+	--ç³»ç»Ÿç‰ˆæœ¬å’Œå¤ä½¿
 	-------------------------------------------------------------------*/
 	wire			waddr_hit					= lite_axi_awaddr_r[31:16]==base_addr[31:16]	;
 	
     	
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
-			data_w							    <= data_init					;	//³õÊ¼»¯Öµ
+			data_w							    <= data_init					;	//åˆå§‹åŒ–å€¼
 		end else if(lite_aw_valid && lite_w_valid &&waddr_hit) begin
 				data_w[lite_axi_awaddr_r[15:2]*32 +: 32]<= sys_axi_wdata[31:0] 			;
 		end else begin
@@ -138,7 +146,7 @@ module axil_reg_EB4110_top # (
 	assign			data_r [0*32+:32]			= srio_v_sid_did						;
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
-			srio_v_sid_did						<= 32'h0051_0061						;	//³õÊ¼»¯Öµ
+			srio_v_sid_did						<= 32'h0051_0061						;	//åˆå§‹åŒ–å€¼
 		end else if(lite_aw_valid && lite_w_valid &&waddr_hit&&lite_axi_awaddr_r[15:00]==0) begin
 			srio_v_sid_did						<= sys_axi_wdata[31:0] 					;
 		end else begin
@@ -149,7 +157,7 @@ module axil_reg_EB4110_top # (
 	assign			data_r [1*32+:32]			= srio_v_sel_x1							;
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
-			srio_v_sel_x1						<= 1'b0									;	//³õÊ¼»¯Öµ
+			srio_v_sel_x1						<= 1'b0									;	//åˆå§‹åŒ–å€¼
 		end else if(lite_aw_valid && lite_w_valid &&waddr_hit&&lite_axi_awaddr_r[15:00]==4) begin
 			srio_v_sel_x1						<= sys_axi_wdata[0] 					;
 		end else begin
@@ -161,7 +169,7 @@ module axil_reg_EB4110_top # (
 
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
-			ps_video_en						<= 1'b1									;	//³õÊ¼»¯Öµ
+			ps_video_en						<= 1'b1									;	//åˆå§‹åŒ–å€¼
 		end else if(lite_aw_valid && lite_w_valid &&waddr_hit&&lite_axi_awaddr_r[15:00]==8) begin
 			ps_video_en						<= sys_axi_wdata[0] 					;
 		end else begin
@@ -173,7 +181,7 @@ module axil_reg_EB4110_top # (
 	assign			data_r [3*32+:32]			= ps_frame_ctr						;
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
-			ps_frame_ctr						<= 32'h0000_0004						;	//³õÊ¼»¯Öµ
+			ps_frame_ctr						<= 32'h0000_0004						;	//åˆå§‹åŒ–å€¼
 		end else if(lite_aw_valid && lite_w_valid &&waddr_hit&&lite_axi_awaddr_r[15:00]==16'h000c) begin
 			ps_frame_ctr						<= sys_axi_wdata[31:0] 				;
 		end else begin
@@ -184,7 +192,7 @@ module axil_reg_EB4110_top # (
 	assign			data_r [4*32+:32]			= device_temp						;
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
-			device_temp						<= 32'h0000_0000						;	//³õÊ¼»¯Öµ
+			device_temp						<= 32'h0000_0000						;	//åˆå§‹åŒ–å€¼
 		end else if(lite_aw_valid && lite_w_valid &&waddr_hit&&lite_axi_awaddr_r[15:00]==16'h0010) begin
 			device_temp						<= sys_axi_wdata[31:0] 					;
 		end else begin
@@ -192,10 +200,25 @@ module axil_reg_EB4110_top # (
 		end
 	end			
 	
-	assign			data_r [5*32+:32]			= D0_18b20						;
-	assign			data_r [6*32+:32]			= D1_18b20						;
+	// æ–°ä»£ç 
+	assign			data_r [5*32+:32]			= video_algo_ctrl						;
+	always @(posedge clk or posedge rst) begin
+		if(rst) begin
+			video_algo_ctrl					<= 32'h0000_0007						;	// é»˜è®¤å¼€å¯ç®—æ³•ä¸æ¼”ç¤º
+		end else if(lite_aw_valid && lite_w_valid &&waddr_hit&&lite_axi_awaddr_r[15:00]==16'h0014) begin
+			video_algo_ctrl					<= sys_axi_wdata[31:0] 					;
+		end else begin
+			video_algo_ctrl					<= video_algo_ctrl						;	
+		end
+	end
+
+	assign			data_r [6*32+:32]			= D0_18b20								;
+	assign			data_r [7*32+:32]			= D1_18b20								;
+	// æ—§ä»£ç 
+	// assign			data_r [5*32+:32]			= D0_18b20						;
+	// assign			data_r [6*32+:32]			= D1_18b20						;
 	/*-------------------------------------------------------------------
-	--ÆäËüĞÅºÅ´¦Àí
+	--å…¶å®ƒä¿¡å·å¤„ç†
 	-------------------------------------------------------------------*/
 
 	assign	sys_axi_awready				= 1'b1							;
@@ -264,7 +287,7 @@ module axil_reg_EB4110_top # (
 	end
 		
 //==================================================================================================
-//--¼Ä´æÆ÷¶ÁÊµÏÖ
+//--å¯„å­˜å™¨è¯»å®ç°
  	wire			raddr_hit			= sys_axi_araddr[31:16]==base_addr[31:16]	;
 
 	

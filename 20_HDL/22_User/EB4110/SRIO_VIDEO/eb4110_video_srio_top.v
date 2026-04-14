@@ -24,7 +24,7 @@
 	`define	ENABLE_BM_SIM
 //////////////////////////////////////////////////////////////////////////////////////////////////
 module	srio_top	#(
-    parameter 		P_SYS_CLK_FREQ   			= 32'd100000000        						,	//ÏµÍ³Ê±ÖÓÆµÂÊ
+    parameter 		P_SYS_CLK_FREQ   			= 32'd100000000        						,	//ç³»ç»Ÿæ—¶é’Ÿé¢‘ç‡
 //==================================================================================================
 //--parameter Instantation
 	/*--------------------------------------------------------------------------------------
@@ -153,7 +153,7 @@ module	srio_top	#(
 	parameter		P_CH_Start_Addr_R			= 0
 	)(
 	//==================================================================================================
-//--·´ÏòÓ³Éä²éÕÒ±í£¨LUT£©DDR¶ÁÈ¡½Ó¿Ú
+//--åå‘æ˜ å°„æŸ¥æ‰¾è¡¨ï¼ˆLUTï¼‰DDRè¯»å–æ¥å£
 	input	wire								V_LUT_AXI_clk							,
 	input	wire								V_LUT_AXI_rstn							,
 	output	wire	[3:0]						V_LUT_AXI_ARID								,
@@ -186,6 +186,8 @@ module	srio_top	#(
   	input										srio_v_sel_x1								,
 		input										ps_video_en											,
 	input			[7:0]							ps_frame_ctr											,
+	// æ–°ä»£ç 
+	input			[31:0]							video_algo_ctrl										,
 	
 //==================================================================================================
 //--Port Defines
@@ -208,7 +210,7 @@ module	srio_top	#(
 	output			[P_Srio_PHY_LANE_R-1:0]		srio_txp0									,
 
 	/*--------------------------------------------------------------------------------------
-	--DMAÉÏĞĞÍ¨µÀ AXI Stream½Ó¿Ú
+	--DMAä¸Šè¡Œé€šé“ AXI Streamæ¥å£
 	--------------------------------------------------------------------------------------*/
 	input			[P_DMA_UP_NUM_R*1-1  : 0]		dma_s_axis_aclk								,
 	output			[P_DMA_UP_NUM_R*64-1 : 0]		dma_s_axis_tdata							,
@@ -223,7 +225,7 @@ module	srio_top	#(
 	
 	
 	/*--------------------------------------------------------------------------------------
-	--DMAÍ¨µÀÏÂĞĞ AXI Stream½Ó¿Ú
+	--DMAé€šé“ä¸‹è¡Œ AXI Streamæ¥å£
 	--------------------------------------------------------------------------------------*/
 	input			[P_DMA_DN_NUM_R*1-1	: 0]		dma_m_axis_aclk								,
 	input			[P_DMA_DN_NUM_R*64-1	: 0]		dma_m_axis_tdata							,
@@ -746,6 +748,8 @@ endfunction
 		.video_send_en								( video_send_en									),	
 			.ps_frame_ctr									( ps_frame_ctr								),
 			.ps_video_en									( ps_video_en								),
+			// æ–°ä»£ç 
+			.video_algo_ctrl								( video_algo_ctrl							),
 
 		.rst_n								( ~sys_rst									),
 		.clk_axis								( flash_clk									),	

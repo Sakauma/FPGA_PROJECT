@@ -37,3 +37,6 @@
 
 # Editor or manual backup files
 *.bak
+
+# HLS build outputs
+hls/**/build/

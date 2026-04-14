@@ -19,18 +19,18 @@
 // Additional Comments:
 // Additional Cominit_ments:
 /*
-����[Common 17-576] 'use_project_ipc' is deprecated. This option is deprecated and no longer used.
-  ȡ�����Ͼ��棬��������һ�е�tcl��������±���IP��Ҳ����ѡ����µ�VIVADO2020.2���ϰ汾
+锟斤拷锟斤拷[Common 17-576] 'use_project_ipc' is deprecated. This option is deprecated and no longer used.
+  取锟斤拷锟斤拷锟较撅拷锟芥，锟斤拷锟斤拷锟斤拷锟斤拷一锟叫碉拷tcl锟斤拷锟筋，锟斤拷锟斤拷锟铰憋拷锟斤拷IP锟斤拷也锟斤拷锟斤拷选锟斤拷锟斤拷碌锟絍IVADO2020.2锟斤拷锟较版本
   set_msg_config -id {[Common 17-576]} -limit 0
 
  source C:/JFM_Kits/ip_patch/run.tcl
  add_hook_tcl_to_prj
  pre_synthesis_patch
  
- ����
+ 锟斤拷锟斤拷
  Not OOC IPs: MY_MEM_mig_7series_0_0 zynq_processing_system7_0_0 zynq_xadc_wiz_1_0
 sourcing script D:/SRIO_ZL/EB4110_PRJ/EB4110_FPGA_20260410_2/10_PRJ/ip_patch/synthesis_pre.tcl failed
-��Ҫ��reset_project
+锟斤拷要锟斤拷reset_project
    
 */
 //////////////////////////////////////////////////////////////////////////////////
@@ -122,7 +122,7 @@ module EB4110_10V10_TOP	#(
 
 	input										VP											,
 	input										VN                                          ,
-//��Ƶsrio
+//锟斤拷频srio
 //	input										sys_clk_n									,
 //	input										sys_clk_p									,
 	
@@ -134,19 +134,19 @@ module EB4110_10V10_TOP	#(
 	output			[4-1:0]						video_srio_txn0								,
 	output			[4-1:0]						video_srio_txp0								,
 
-    inout   		[63:0]     					ddr3_dq             						,   //ddr3 ����
-    inout   		[7:0]      					ddr3_dqs_n          						,   //ddr3 dqs��
-    inout   		[7:0]      					ddr3_dqs_p          						,   //ddr3 dqs��  
-	output			[14:0]						ddr3_addr									,	//ddr3 ��ַ   
-	output			[2:0]						ddr3_ba										,	//ddr3 banck ѡ��
-	output										ddr3_ras_n									,	//ddr3 ��ѡ��
-	output										ddr3_cas_n									,	//ddr3 ��ѡ��
-	output										ddr3_we_n									,	//ddr3 ��дѡ��
-	output										ddr3_reset_n								,	//ddr3 ��λ
-	output			[0:0]						ddr3_ck_p									,	//ddr3 ʱ����
-	output			[0:0]						ddr3_ck_n									,	//ddr3 ʱ�Ӹ�
-	output			[0:0]						ddr3_cke									,	//ddr3 ʱ��ʹ��
-	output			[0:0]						ddr3_cs_n									,	//ddr3 Ƭѡ
+    inout   		[63:0]     					ddr3_dq             						,   //ddr3 锟斤拷锟斤拷
+    inout   		[7:0]      					ddr3_dqs_n          						,   //ddr3 dqs锟斤拷
+    inout   		[7:0]      					ddr3_dqs_p          						,   //ddr3 dqs锟斤拷  
+	output			[14:0]						ddr3_addr									,	//ddr3 锟斤拷址   
+	output			[2:0]						ddr3_ba										,	//ddr3 banck 选锟斤拷
+	output										ddr3_ras_n									,	//ddr3 锟斤拷选锟斤拷
+	output										ddr3_cas_n									,	//ddr3 锟斤拷选锟斤拷
+	output										ddr3_we_n									,	//ddr3 锟斤拷写选锟斤拷
+	output										ddr3_reset_n								,	//ddr3 锟斤拷位
+	output			[0:0]						ddr3_ck_p									,	//ddr3 时锟斤拷锟斤拷
+	output			[0:0]						ddr3_ck_n									,	//ddr3 时锟接革拷
+	output			[0:0]						ddr3_cke									,	//ddr3 时锟斤拷使锟斤拷
+	output			[0:0]						ddr3_cs_n									,	//ddr3 片选
 	output			[7:0]						ddr3_dm										,	//ddr3_dm
 	output			[0:0]						ddr3_odt										//,    //ddr3_odt    
 	);                                       
@@ -163,6 +163,8 @@ module EB4110_10V10_TOP	#(
     
 	wire										ps_video_en									;	
 	wire			[7:0]						ps_frame_ctr								;	
+	// 新代码
+	wire			[31:0]						video_algo_ctrl								;
 	
 	wire			[31:0]						S_AXI_1_araddr								;
 	wire			[1:0]						S_AXI_1_arburst								;
@@ -240,6 +242,8 @@ wire										V_LUT_AXI_rstn								;
 	
 		.ps_video_en							( ps_video_en								),	
 		.ps_frame_ctr							( ps_frame_ctr								),	
+		// 新代码
+		.video_algo_ctrl						( video_algo_ctrl							),
                                         
 		.srio_v_sid_did							( srio_v_sid_did								),	
 		.srio_v_sel_x1							( srio_v_sel_x1								),	                                        
@@ -298,7 +302,7 @@ wire										V_LUT_AXI_rstn								;
 
 
 	/*--------------------------------------------------------------------------------------
-	--SRIOͨ������ AXI Stream�ӿ�
+	--SRIO通锟斤拷锟斤拷锟斤拷 AXI Stream锟接匡拷
 	--------------------------------------------------------------------------------------*/
 
 	wire			[P_SRIO_DN_NUM_R*1-1	: 0]	srio_m_axis_aclk						;
@@ -317,7 +321,7 @@ wire										V_LUT_AXI_rstn								;
     assign			srio_m_axis_aclk					= {P_SRIO_DN_NUM_R{ps_sys_clk}}				;
 
 	/*--------------------------------------------------------------------------------------
-	--SRIOͨ������ AXI Stream�ӿ�
+	--SRIO通锟斤拷锟斤拷锟斤拷 AXI Stream锟接匡拷
 	--------------------------------------------------------------------------------------*/
 
 	wire			[1*64-1:0]					loop_m_axis_tdata							;
@@ -1350,6 +1354,8 @@ wire										V_LUT_AXI_rstn								;
 	
 		.ps_video_en							( ps_video_en								),	
 		.ps_frame_ctr							( ps_frame_ctr								),	
+		// 新代码
+		.video_algo_ctrl						( video_algo_ctrl							),
 		.device_temp							( device_temp								),
 		
 		.srio_v_sid_did	    					( srio_v_sid_did	    					),

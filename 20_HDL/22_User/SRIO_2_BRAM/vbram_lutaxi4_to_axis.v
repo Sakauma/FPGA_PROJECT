@@ -9,8 +9,8 @@
 // Target Devices	: K7-V7		        
 // Tool versions	: Vivado2020		
 // Description		: 
-//		1°¢ ”∆µbram°¢≤È’“±Ìaxi4µΩsrioµƒaxisµƒΩ”ø⁄                  
-//		2°¢1–– ”∆µ’º”√1∏ˆbramµ•‘™£¨xc7z100ffg900◊‹π≤755∏ˆµ•‘™    
+//		1„ÄÅËßÜÈ¢ëbram„ÄÅÊü•ÊâæË°®axi4Âà∞srioÁöÑaxisÁöÑÊé•Âè£                  
+//		2„ÄÅ1Ë°åËßÜÈ¢ëÂç†Áî®1‰∏™bramÂçïÂÖÉÔºåxc7z100ffg900ÊÄªÂÖ±755‰∏™ÂçïÂÖÉ    
 // Dependencies		: 					
 // 										
 // Top File			: 					
@@ -25,42 +25,44 @@
 //		2	: 				 	 		
 //																	
 // Additional Comments:	
-/*Ω”ø⁄√Ë ˆ            
+/*Êé•Âè£ÊèèËø∞            
 //======================================================================================
 //  Input / Output Interface Description
 //======================================================================================
-//  Signal Name         |  ±÷””Ú   			|  Description
+//  Signal Name         | Êó∂ÈíüÂüü   			|  Description
 //----------------------|-------------------|--------------------------------------------
-//  bram_            	| clk     			|  ”∆µbramª∫¥ÊΩ”ø⁄
-//  V_LUT_            	| clk     			| ≤È’“±ÌΩ”ø⁄£¨axi4
-//  m_srio_             | m_srio_axis_aclk  | SRIO ‰≥ˆΩ”ø⁄
+//  bram_            	| clk     			| ËßÜÈ¢ëbramÁºìÂ≠òÊé•Âè£
+//  V_LUT_            	| clk     			| Êü•ÊâæË°®Êé•Âè£Ôºåaxi4
+//  m_srio_             | m_srio_axis_aclk  | SRIOËæìÂá∫Êé•Âè£
 //--------------------------------------------------------------------------------------
-//	clk					:	250MHz£ª
-//	m_srio_axis_aclk	:	µ±«∞Œ™62.5MHz£¨µ˜Õ®∫Ûª·∏¸∏ƒŒ™125MHz°£
+//	clk					:	250MHzÔºõ
+//	m_srio_axis_aclk	:	ÂΩìÂâç‰∏∫62.5MHzÔºåË∞ÉÈÄöÂêé‰ºöÊõ¥Êîπ‰∏∫125MHz„ÄÇ
 */									
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 module vbram_lutaxi4_to_axis#(
     parameter		B_RAM_WIDTH     			= 16        								,
-    parameter		B_RAM_DEPTH  				= 32'h64000	  								,	// 32'h64000£∫200––
-    parameter		P_LINE_DEPTH     			= 200											// bram÷–ø…“‘¥Êµƒ ”∆µ–– ˝	      		
+    parameter		B_RAM_DEPTH  				= 32'h64000	  								,	// 32'h64000Ôºö200Ë°å
+    parameter		P_LINE_DEPTH     			= 200											// bram‰∏≠ÂèØ‰ª•Â≠òÁöÑËßÜÈ¢ëË°åÊï∞	      		
     )(
 //==================================================================================================
 //--Input/Output Port--------------------------
 	input										clk											,	//250M
 	input										rstn										,
+	// Êñ∞‰ª£Á†Å
+	input			[31:0]						video_algo_ctrl								,
 //==================================================================================================
-//-- ”∆µbramΩ”ø⁄--------------------------	
-    input		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_cur_w   							,	// µ±«∞bram–¥»Î––Œª÷√ 
-    input      					 				bram_line_cur_w_en   						, 	//	1 :±Ì æ≥…π¶–¥»Îµ⁄bram_line_cur_w–– ˝æ›‘⁄bram÷–
+//--ËßÜÈ¢ëbramÊé•Âè£--------------------------	
+    input		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_cur_w   							,	// ÂΩìÂâçbramÂÜôÂÖ•Ë°å‰ΩçÁΩÆ 
+    input      					 				bram_line_cur_w_en   						, 	//	1 :Ë°®Á§∫ÊàêÂäüÂÜôÂÖ•Á¨¨bram_line_cur_wË°åÊï∞ÊçÆÂú®bram‰∏≠
     
-	output	wire	[clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							,	// √ø∂Œbramµÿ÷∑∂‘”¶µƒ––∫≈µÿ÷∑
-    input      		[12-1:0] 					bram_line_num								,	// √ø∂Œbramµÿ÷∑∂‘”¶µƒ––∫≈ , bram_line_num_addr*32'h0~bram_line_num_addr*32'h800∂‘”¶µƒ––∫≈,æﬂÃÂ¡–∫≈∂‘”¶µ±«∞––µƒ≤ªÕ¨µÿ÷∑
+	output	wire	[clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							,	// ÊØèÊÆµbramÂú∞ÂùÄÂØπÂ∫îÁöÑË°åÂè∑Âú∞ÂùÄ
+    input      		[12-1:0] 					bram_line_num								,	// ÊØèÊÆµbramÂú∞ÂùÄÂØπÂ∫îÁöÑË°åÂè∑ , bram_line_num_addr*32'h0~bram_line_num_addr*32'h800ÂØπÂ∫îÁöÑË°åÂè∑,ÂÖ∑‰ΩìÂàóÂè∑ÂØπÂ∫îÂΩìÂâçË°åÁöÑ‰∏çÂêåÂú∞ÂùÄ
    
-    output		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_addrb   								,	// 16bitŒªøÌµƒbramµÿ÷∑
+    output		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_addrb   								,	// 16bit‰ΩçÂÆΩÁöÑbramÂú∞ÂùÄ
     input		  	[B_RAM_WIDTH-1:0]           bram_doutb   								,     
 //===========================================================================================
-//--∑¥œÚ”≥…‰≤È’“±Ì£®LUT£©DDR∂¡»°Ω”ø⁄                                                         
+//--ÂèçÂêëÊò†Â∞ÑÊü•ÊâæË°®ÔºàLUTÔºâDDRËØªÂèñÊé•Âè£                                                         
 	output	wire	[3:0]						V_LUT_AXI_ARID								,
 	output	wire	[31:0]						V_LUT_AXI_ARADDR							,
 	output	wire	[7:0]						V_LUT_AXI_ARLEN								,
@@ -79,24 +81,24 @@ module vbram_lutaxi4_to_axis#(
 	input	wire								V_LUT_AXI_RVALID							,
 	output	wire								V_LUT_AXI_RREADY							,
 //==================================================================================================
-//-- ‰≥ˆ∏¯SRIO--------------------------
+//--ËæìÂá∫ÁªôSRIO--------------------------
 //----------------------------------------------------------------------------------
-//  ˝æ›øÌ∂»: 64bit
+// Êï∞ÊçÆÂÆΩÂ∫¶: 64bit
 //--------------------------------------------------------------------------------
-// µ⁄1≈ƒ: axis0 (œ˚œ¢Õ∑)
+// Á¨¨1Êãç: axis0 (Ê∂àÊÅØÂ§¥)
 // --------------------------------------------------------------------------------
-// |  Œª”Ú∑∂Œß   |   ∫¨“ÂÀµ√˜      |
+// |  ‰ΩçÂüüËåÉÂõ¥   |   Âê´‰πâËØ¥Êòé      |
 // |------------|----------------|
-// | bit63~bit32 | œ˚œ¢¿‡–Õ (RapidIO Ttype)		:32'h00600000
-// | bit31~bit0  | µÿ÷∑ (RapidIO Target Address):∑¢ÀÕ∏¯SRIOµƒµÿ÷∑∂‘”¶ ◊∏ˆœÒÀÿµƒ◊÷Ω⁄µÿ÷∑
+// | bit63~bit32 | Ê∂àÊÅØÁ±ªÂûã (RapidIO Ttype)		:32'h00600000
+// | bit31~bit0  | Âú∞ÂùÄ (RapidIO Target Address):ÂèëÈÄÅÁªôSRIOÁöÑÂú∞ÂùÄÂØπÂ∫îÈ¶ñ‰∏™ÂÉèÁ¥†ÁöÑÂ≠óËäÇÂú∞ÂùÄ
 //--------------------------------------------------------------------------------
-// µ⁄2~65≈ƒº∞“‘∫Û: ( ”∆µ ˝æ› payload)//πÃ∂®256◊÷Ω⁄
+// Á¨¨2~65ÊãçÂèä‰ª•Âêé: (ËßÜÈ¢ëÊï∞ÊçÆ payload)//Âõ∫ÂÆö256Â≠óËäÇ
 // --------------------------------------------------------------------------------
-// |  Œª”Ú∑∂Œß   |   ∫¨“ÂÀµ√˜      |
+// |  ‰ΩçÂüüËåÉÂõ¥   |   Âê´‰πâËØ¥Êòé      |
 // |------------|----------------|
-// | bit63~bit0  | ∏∫‘ÿ ˝æ› (Payload Data)
+// | bit63~bit0  | Ë¥üËΩΩÊï∞ÊçÆ (Payload Data)
 //--------------------------------------------------------------------------------
-	input										m_srio_axis_aclk							,	// Õ‚≤øSRIO≤ªÕ¨ƒ£ Ω£¨ ±÷”≤ªÕ¨x2:125M,x1_62.5M
+	input										m_srio_axis_aclk							,	// Â§ñÈÉ®SRIO‰∏çÂêåÊ®°ÂºèÔºåÊó∂Èíü‰∏çÂêåx2:125M,x1_62.5M
 	input										m_srio_axis_rstn							,
 	output	wire	[63:0]						m_srio_axis_tdata							,
 	input										m_srio_axis_tready							,
@@ -111,6 +113,11 @@ module vbram_lutaxi4_to_axis#(
             depth = depth >> 1;
     endfunction	
 
+	// Êñ∞‰ª£Á†Å
+	wire			[63:0]						raw_srio_axis_tdata							;
+	wire										raw_srio_axis_tready						;
+	wire										raw_srio_axis_tvalid						;
+	wire										raw_srio_axis_tlast							;
 
 	readbram_to_axis64_top #(
 	    .B_RAM_WIDTH        					( B_RAM_WIDTH    							),
@@ -131,9 +138,49 @@ module vbram_lutaxi4_to_axis#(
         .m_axis_aclk		     				( m_srio_axis_aclk               			),
         .m_axis_aresetn	                        ( m_srio_axis_rstn          				),      
                         
-        .m_axis_tready	     					( m_srio_axis_tready						),
-        .m_axis_tdata	         				( {m_srio_axis_tlast,m_srio_axis_tdata}	    ),
-        .m_axis_tvalid	         				( m_srio_axis_tvalid	      				));
+        .m_axis_tready	     					( raw_srio_axis_tready						),
+        .m_axis_tdata	         				( {raw_srio_axis_tlast,raw_srio_axis_tdata}	),
+        .m_axis_tvalid	         				( raw_srio_axis_tvalid	      				));
+
+	undistort_demo_hls_wrap u_undistort_demo_hls_wrap(
+		.clk									( m_srio_axis_aclk							),
+		.rstn									( m_srio_axis_rstn							),
+		.algo_ctrl								( video_algo_ctrl							),
+
+		.s_axis_tdata							( raw_srio_axis_tdata						),
+		.s_axis_tvalid							( raw_srio_axis_tvalid						),
+		.s_axis_tready							( raw_srio_axis_tready						),
+		.s_axis_tlast							( raw_srio_axis_tlast						),
+
+		.m_axis_tdata							( m_srio_axis_tdata							),
+		.m_axis_tvalid							( m_srio_axis_tvalid						),
+		.m_axis_tready							( m_srio_axis_tready						),
+		.m_axis_tlast							( m_srio_axis_tlast							)
+	);
+
+	// Êóß‰ª£Á†Å
+//	readbram_to_axis64_top #(
+//	    .B_RAM_WIDTH        					( B_RAM_WIDTH    							),
+//	    .B_RAM_DEPTH        					( B_RAM_DEPTH      							),
+//	    .P_LINE_DEPTH        					( P_LINE_DEPTH      						)
+//	)readbram_to_axis64_top(
+//	    .bram_clk   	       					( clk   									),
+//		.bram_rstn   	    					( rstn   	    							),
+//
+//	    .bram_line_cur_w   	       				( bram_line_cur_w   						),
+//		.bram_line_cur_w_en   	    			( bram_line_cur_w_en   	    				),
+//	    .bram_line_num		       				( bram_line_num		    					),
+//		.bram_line_num_addr   	    			( bram_line_num_addr   	    				),
+//	    .bram_addrb   		       				( bram_addrb   		    					),
+//	    .bram_doutb   		       				( bram_doutb   		    					), 
+//		
+//
+//        .m_axis_aclk		     				( m_srio_axis_aclk               			),
+//        .m_axis_aresetn	                        ( m_srio_axis_rstn          				),      
+//                        
+//        .m_axis_tready	     					( m_srio_axis_tready						),
+//        .m_axis_tdata	         				( {m_srio_axis_tlast,m_srio_axis_tdata}	    ),
+//        .m_axis_tvalid	         				( m_srio_axis_tvalid	      				));
 		
 
 

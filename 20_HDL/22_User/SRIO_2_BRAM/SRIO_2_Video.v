@@ -1,20 +1,20 @@
 module SRIO_2_Video#(
     parameter		A_RAM_WIDTH     			= 64        								,
-    parameter		A_RAM_DEPTH     			= 256*512      								,	// bramÉî¶È²ÎÊı£¬512Ã¿ĞĞ
+    parameter		A_RAM_DEPTH     			= 256*512      								,	// bramæ·±åº¦å‚æ•°ï¼Œ512æ¯è¡Œ
     parameter		B_RAM_WIDTH     			= 16        								,
     parameter		B_RAM_DEPTH     			= A_RAM_WIDTH*A_RAM_DEPTH/B_RAM_WIDTH      	,    
     parameter		RAM_OUT_REG_EN  			= "DISABLE"  								,	// ENABLE
     parameter		RAM_STYLE       			= "block"   								,
     parameter		INIT_FILE       			= ""        								,
     
-    parameter		P_LINE_DEPTH     			= A_RAM_DEPTH/512								// bramÖĞ¿ÉÒÔ´æµÄÊÓÆµĞĞÊı	      		
+    parameter		P_LINE_DEPTH     			= A_RAM_DEPTH/512								// bramä¸­å¯ä»¥å­˜çš„è§†é¢‘è¡Œæ•°	      		
 
 /*	
-	Ã¿Ö¡Í¼Ïñ2049*2048*2=32'h801000×Ö½Ú£¬
-	8×Ö½ÚµØÖ·¿í¶ÈÎª32'h100200£¬ÎªÁËºóÆÚ¼õÉÙÑÓÊ±£¬½«µØÖ·ĞÅÏ¢21bit¿í¶È£¬Ö¡¼ÆÊı1bit¿í¶ÈĞ­Í¬Êı¾İÒ»Æğ´æÈëbram£»
-	×Ü¹²ĞèÒª86¿í¶Èbram£¬²¢ĞĞ18kbramĞèÒª5¸ö£¬ÔòÒ»ĞĞÍ¼ÏñÎª512Éî¶È£¬Êµ¼ÊÊ¹ÓÃ×îµÍ5¸ö18kbram£¬¶ÔÓ¦z7100ÖĞÎª2.5¸öbram£¬´æ´¢Á½ĞĞÊı¾İ¡£
+	æ¯å¸§å›¾åƒ2049*2048*2=32'h801000å­—èŠ‚ï¼Œ
+	8å­—èŠ‚åœ°å€å®½åº¦ä¸º32'h100200ï¼Œä¸ºäº†åæœŸå‡å°‘å»¶æ—¶ï¼Œå°†åœ°å€ä¿¡æ¯21bitå®½åº¦ï¼Œå¸§è®¡æ•°1bitå®½åº¦ååŒæ•°æ®ä¸€èµ·å­˜å…¥bramï¼›
+	æ€»å…±éœ€è¦86å®½åº¦bramï¼Œå¹¶è¡Œ18kbraméœ€è¦5ä¸ªï¼Œåˆ™ä¸€è¡Œå›¾åƒä¸º512æ·±åº¦ï¼Œå®é™…ä½¿ç”¨æœ€ä½5ä¸ª18kbramï¼Œå¯¹åº”z7100ä¸­ä¸º2.5ä¸ªbramï¼Œå­˜å‚¨ä¸¤è¡Œæ•°æ®ã€‚
 	
-	¸ÃÄ£¿éÓĞ3¸öbram£¬Ã¿´æ´¢Á½ĞĞĞèÒªbram×ÊÔ´Î»2.5*3=7.5¸ö£¬ĞĞÊı¶ÔÓ¦bramÏûºÄ¸öÊıÎª£º£¨Z7100×Ü¹²ÓĞ755¸ö£©
+	è¯¥æ¨¡å—æœ‰3ä¸ªbramï¼Œæ¯å­˜å‚¨ä¸¤è¡Œéœ€è¦bramèµ„æºä½2.5*3=7.5ä¸ªï¼Œè¡Œæ•°å¯¹åº”bramæ¶ˆè€—ä¸ªæ•°ä¸ºï¼šï¼ˆZ7100æ€»å…±æœ‰755ä¸ªï¼‰
 	2	7.5
 	4	15
 	8	30
@@ -22,12 +22,12 @@ module SRIO_2_Video#(
 	32	120
 	64	240      
 	
-	Ã¿Ö¡Í¼Ïñ2049*2048*2=32'h801000×Ö½Ú£¬µÚ1~2048ĞĞĞĞµØÖ·ÒÀ´ÎÊÇ£º
-	ĞĞµØÖ·	ĞĞµØÖ·Êµ¼Ê	bram_64		bram_16	ÆğÊ¼µØÖ·
+	æ¯å¸§å›¾åƒ2049*2048*2=32'h801000å­—èŠ‚ï¼Œç¬¬1~2048è¡Œè¡Œåœ°å€ä¾æ¬¡æ˜¯ï¼š
+	è¡Œåœ°å€	è¡Œåœ°å€å®é™…	bram_64		bram_16	èµ·å§‹åœ°å€
 	1000    0000  		 0000    	 0000      
 	2000	1000		 0200    	 0800    
 	3000	2000		 0400    	 1000    
-	¡­¡­¡­¡­¡­¡­¡­¡­¡­¡­                        
+	â€¦â€¦â€¦â€¦â€¦â€¦â€¦â€¦â€¦â€¦                        
 	800000	7FF000		               
 	
 */    
@@ -37,10 +37,12 @@ module SRIO_2_Video#(
 	input										srio_clk									,
 	input										srio_rstn_i									,  
 	
-	input										user_clk									,  // ²ÉÓÃ250MÊ±ÖÓ
+	input										user_clk									,  // é‡‡ç”¨250Mæ—¶é’Ÿ
 	input										user_rstn_i									,  
+	// æ–°ä»£ç 
+	input			[31:0]						video_algo_ctrl								,
 //==================================================================================================
-//--SRIO_¶Ë¿Ú
+//--SRIO_ç«¯å£
 	input	wire	[63:0]						SRIO_R_axis_tdata							,
 	input	wire	[31:0]						SRIO_R_axis_tuser							,
 	output	wire								SRIO_R_axis_tready							,
@@ -53,7 +55,7 @@ module SRIO_2_Video#(
 	output	wire								SRIO_T_axis_tvalid							,
 	output	wire								SRIO_T_axis_tlast							,
 //==================================================================================================
-//--·´ÏòÓ³Éä²éÕÒ±í£¨LUT£©DDR¶ÁÈ¡½Ó¿Ú
+//--åå‘æ˜ å°„æŸ¥æ‰¾è¡¨ï¼ˆLUTï¼‰DDRè¯»å–æ¥å£
 	input	wire								V_LUT_AXI_clk							,
 	input	wire								V_LUT_AXI_rstn							,
 
@@ -101,14 +103,14 @@ module SRIO_2_Video#(
     wire		  	[clogb2(A_RAM_DEPTH-1)-1:0] bram_addra   								;  
     wire		  	[A_RAM_WIDTH-1:0]           bram_dina    								;  
 
-    wire		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_cur_w   							;	// µ±Ç°bramĞ´ÈëĞĞÎ»ÖÃ 
-    wire      					 				bram_line_cur_w_en   						; 	//	1 :±íÊ¾³É¹¦Ğ´ÈëµÚbram_line_cur_wĞĞÊı¾İÔÚbramÖĞ
+    wire		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_cur_w   							;	// å½“å‰bramå†™å…¥è¡Œä½ç½® 
+    wire      					 				bram_line_cur_w_en   						; 	//	1 :è¡¨ç¤ºæˆåŠŸå†™å…¥ç¬¬bram_line_cur_wè¡Œæ•°æ®åœ¨bramä¸­
     
     
-	wire		     [clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							;	// Ã¿¶ÎbramµØÖ·¶ÔÓ¦µÄĞĞºÅµØÖ·
-    wire      		[12-1:0] 					bram_line_num								;	// Ã¿¶ÎbramµØÖ·¶ÔÓ¦µÄĞĞºÅ , bram_line_num_addr*32'h0~bram_line_num_addr*32'h800¶ÔÓ¦µÄĞĞºÅ,¾ßÌåÁĞºÅ¶ÔÓ¦µ±Ç°ĞĞµÄ²»Í¬µØÖ·
+	wire		     [clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							;	// æ¯æ®µbramåœ°å€å¯¹åº”çš„è¡Œå·åœ°å€
+    wire      		[12-1:0] 					bram_line_num								;	// æ¯æ®µbramåœ°å€å¯¹åº”çš„è¡Œå· , bram_line_num_addr*32'h0~bram_line_num_addr*32'h800å¯¹åº”çš„è¡Œå·,å…·ä½“åˆ—å·å¯¹åº”å½“å‰è¡Œçš„ä¸åŒåœ°å€
         
-    wire		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_addrb   								;	// 16bitÎ»¿íµÄbramµØÖ·
+    wire		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_addrb   								;	// 16bitä½å®½çš„bramåœ°å€
     wire		  	[B_RAM_WIDTH-1:0]           bram_doutb   								;     
                                                                                             
 	srio_v_axis_to_bram_top	#(
@@ -171,7 +173,7 @@ module SRIO_2_Video#(
 	    .clkb                					( user_clk                                	),
 	    .rstb                					( ~user_rstn                                ),
 
-	    .enb                					( 1'b1		                                ),	// ´ıĞŞ¸Ä
+	    .enb                					( 1'b1		                                ),	// å¾…ä¿®æ”¹
 	    .addrb              					( bram_addrb               					),
 	    .doutb              					( bram_doutb               					),
 	    .regceb             					( 1'b1                                  	)
@@ -184,6 +186,8 @@ module SRIO_2_Video#(
 	) u_vbram_lutaxi4_to_axis(            
 	    .clk                					( user_clk           						),
 	    .rstn                					( user_rstn           						),
+	    // æ–°ä»£ç 
+	    .video_algo_ctrl						( video_algo_ctrl							),
 
 	    .bram_line_cur_w   	       				( bram_line_cur_w   						),
 	    

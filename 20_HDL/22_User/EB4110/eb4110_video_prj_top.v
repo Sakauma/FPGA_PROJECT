@@ -41,7 +41,7 @@ restart
 run 220us
 */
 module srio_test_prj_top	#(
-    parameter 		P_SYS_CLK_FREQ   			= 32'd125000000        						,	//ϵͳʱ��Ƶ��
+    parameter 		P_SYS_CLK_FREQ   			= 32'd125000000        						,	//系统时锟斤拷频锟斤拷
 	parameter		P_Srio_PHY_LANE_R			= 4												//Physical lane number,board gtx for SRIO
 )(		
 	input										VP											,
@@ -50,14 +50,16 @@ module srio_test_prj_top	#(
 
 	input										ps_sys_clk											,
 
-   	input 	wire	[11:00]						device_temp        							,	//DDR�¶Ƚӿ�
+   	input 	wire	[11:00]						device_temp        							,	//DDR锟铰度接匡拷
   	input			[31:0]						srio_v_sid_did								,
   	input										srio_v_sel_x1								,
 
 	input										ps_video_en									,
 	input			[7:0]						ps_frame_ctr								,			
+	// 新代码
+	input			[31:0]						video_algo_ctrl								,
 //==================================================================================================
-//--����ӳ����ұ�LUT��DDR��ȡ�ӿ�
+//--锟斤拷锟斤拷映锟斤拷锟斤拷冶锟絃UT锟斤拷DDR锟斤拷取锟接匡拷
 	output	wire								V_LUT_AXI_clk								,
 	output	wire								V_LUT_AXI_rstn								,
 
@@ -100,19 +102,19 @@ module srio_test_prj_top	#(
 	output			[P_Srio_PHY_LANE_R-1:0]		srio_txn0									,
 	output			[P_Srio_PHY_LANE_R-1:0]		srio_txp0									,
 
-    inout   [63:0]     ddr3_dq             ,   //ddr3 ����
-    inout   [7:0]      ddr3_dqs_n          ,   //ddr3 dqs��
-    inout   [7:0]      ddr3_dqs_p          ,   //ddr3 dqs��  
-    output  [14:0]     ddr3_addr           ,   //ddr3 ��ַ   
-    output  [2:0]      ddr3_ba             ,   //ddr3 banck ѡ��
-    output             ddr3_ras_n          ,   //ddr3 ��ѡ��
-    output             ddr3_cas_n          ,   //ddr3 ��ѡ��
-    output             ddr3_we_n           ,   //ddr3 ��дѡ��
-    output             ddr3_reset_n        ,   //ddr3 ��λ
-    output  [0:0]      ddr3_ck_p           ,   //ddr3 ʱ����
-    output  [0:0]      ddr3_ck_n           ,   //ddr3 ʱ�Ӹ�
-    output  [0:0]      ddr3_cke            ,   //ddr3 ʱ��ʹ��
-    output  [0:0]      ddr3_cs_n           ,   //ddr3 Ƭѡ
+    inout   [63:0]     ddr3_dq             ,   //ddr3 锟斤拷锟斤拷
+    inout   [7:0]      ddr3_dqs_n          ,   //ddr3 dqs锟斤拷
+    inout   [7:0]      ddr3_dqs_p          ,   //ddr3 dqs锟斤拷  
+    output  [14:0]     ddr3_addr           ,   //ddr3 锟斤拷址   
+    output  [2:0]      ddr3_ba             ,   //ddr3 banck 选锟斤拷
+    output             ddr3_ras_n          ,   //ddr3 锟斤拷选锟斤拷
+    output             ddr3_cas_n          ,   //ddr3 锟斤拷选锟斤拷
+    output             ddr3_we_n           ,   //ddr3 锟斤拷写选锟斤拷
+    output             ddr3_reset_n        ,   //ddr3 锟斤拷位
+    output  [0:0]      ddr3_ck_p           ,   //ddr3 时锟斤拷锟斤拷
+    output  [0:0]      ddr3_ck_n           ,   //ddr3 时锟接革拷
+    output  [0:0]      ddr3_cke            ,   //ddr3 时锟斤拷使锟斤拷
+    output  [0:0]      ddr3_cs_n           ,   //ddr3 片选
     output  [7:0]      ddr3_dm             ,   //ddr3_dm
     output  [0:0]      ddr3_odt            //,    //ddr3_odt    
 
@@ -144,7 +146,7 @@ module srio_test_prj_top	#(
 
 
 	/*--------------------------------------------------------------------------------------
-	--SRIOͨ������ AXI Stream�ӿ�
+	--SRIO通锟斤拷锟斤拷锟斤拷 AXI Stream锟接匡拷
 	--------------------------------------------------------------------------------------*/
 
 	wire			[P_SRIO_DN_NUM_R*1-1	: 0]	srio_m_axis_aclk						;	
@@ -188,7 +190,7 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
     );	
     
 //==================================================================================================
-//ddr����ź�
+//ddr锟斤拷锟斤拷藕锟?
 	wire										ddr_sys_clk_i								;
 	wire										ddr_clk_ref_i								;
 	wire										ddr_init_calib_complete						; 	
@@ -196,7 +198,7 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
     assign			    ddr_sys_clk_i			= clk_200m									;
     assign			    ddr_clk_ref_i			= clk_200m									;	
 //==================================================================================================
-//--Master AXI4д�ӿ�
+//--Master AXI4写锟接匡拷
 	wire		[3:0]							M_AXI_AWID									;
 	wire		[31:0]							M_AXI_AWADDR								;
 	wire		[7:0]							M_AXI_AWLEN									;
@@ -289,7 +291,7 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
 
 
 //	/*--------------------------------------------------------------------------------------
-//	--SRIOͨ������ AXI Stream�ӿ�
+//	--SRIO通锟斤拷锟斤拷锟斤拷 AXI Stream锟接匡拷
 //	--------------------------------------------------------------------------------------*/
 
 //	wire			[P_SRIO_DN_NUM_R*1-1	: 0]	srio_m_axis_aclk						;	
@@ -343,10 +345,14 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
 		.srio_v_sel_x1							( 0								),	 
 		.ps_video_en							( 1								),
 		.ps_frame_ctr							( 8'h04								),
+		// 新代码
+		.video_algo_ctrl						( 32'h0000_0007							),
 	`else
 		.srio_v_sel_x1							( srio_v_sel_x1								),	 
 		.ps_video_en							( ps_video_en								),
 		.ps_frame_ctr							( ps_frame_ctr								),
+		// 新代码
+		.video_algo_ctrl						( video_algo_ctrl							),
 	`endif	
 
 		.user_250m_clk							( user_250m_clk								),
@@ -558,13 +564,13 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
       
 
 //     clk_calc_mul_chan #(
-//        .DETECT_CLK_FRE     ( P_SYS_CLK_FREQ                 ),//���ʱ��
-//        .CLK_CHAN           ( 16                           ) //֧��ͨ����
+//        .DETECT_CLK_FRE     ( P_SYS_CLK_FREQ                 ),//锟斤拷锟绞憋拷锟?
+//        .CLK_CHAN           ( 16                           ) //支锟斤拷通锟斤拷锟斤拷
 //        )
 //      u_freq_calc_top(
 //        .I_rst              ( 1'b0                         ),
-//        .I_clk_detect       ( s_axis_aclk                     ), //���ʱ��
-//        .I_clk_in           ( {srio_top.gt_pcs_clk,srio_top.drpclk,srio_top.refclk,srio_top.phy_clk,srio_top.gt_clk,srio_top.log_clk,user_250m_clk}                  ), //������ʱ��
+//        .I_clk_detect       ( s_axis_aclk                     ), //锟斤拷锟绞憋拷锟?
+//        .I_clk_in           ( {srio_top.gt_pcs_clk,srio_top.drpclk,srio_top.refclk,srio_top.phy_clk,srio_top.gt_clk,srio_top.log_clk,user_250m_clk}                  ), //锟斤拷锟斤拷锟斤拷时锟斤拷
 //        .I_fre_detect_chan  ( vio_ctrl_clk_calc[3:0]           ),//(vio_ctrl_clk_calc[3:0]       ),
 //        .O_clk_cnt          ( s_detect_fre                 )
 //    );
@@ -573,7 +579,7 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
 	MY_MEM u_mem	(
  		.device_temp_i								( device_temp									),
 //===============================================================================================
-//--DDR�ⲿ�ӿ�
+//--DDR锟解部锟接匡拷
  		.DDR3_addr								( ddr3_addr									),
 		.DDR3_ba								( ddr3_ba									),
 		.DDR3_cas_n								( ddr3_cas_n								),
@@ -591,7 +597,7 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
 		.DDR3_we_n								( ddr3_we_n									),
     	.init_calib_complete					( ddr_init_calib_complete					),
 //===============================================================================================
-//--ddr�ź�
+//--ddr锟脚猴拷
   		.ddr_sys_clk_i							( ddr_sys_clk_i								),
     	.ddr_clk_ref_i							( ddr_clk_ref_i								),
 

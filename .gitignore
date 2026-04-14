@@ -1,0 +1,39 @@
+# Vivado generated data
+10_PRJ/.Xil/
+10_PRJ/00_PRJ.cache/
+10_PRJ/00_PRJ.hw/
+10_PRJ/00_PRJ.ip_user_files/
+10_PRJ/00_PRJ.runs/
+10_PRJ/00_PRJ.sim/
+10_PRJ/NA/
+20_HDL/ip_gen/
+50_IP/ip_gen/
+70_BIN/
+
+# Keep only custom BD IP metadata from the generated tree
+10_PRJ/00_PRJ.gen/*
+!10_PRJ/00_PRJ.gen/sources_1/
+10_PRJ/00_PRJ.gen/sources_1/*
+!10_PRJ/00_PRJ.gen/sources_1/bd/
+10_PRJ/00_PRJ.gen/sources_1/bd/*
+!10_PRJ/00_PRJ.gen/sources_1/bd/mref/
+!10_PRJ/00_PRJ.gen/sources_1/bd/mref/**
+
+# Tool logs and crash dumps
+10_PRJ/*.backup.jou
+10_PRJ/*.backup.log
+10_PRJ/*.debug
+10_PRJ/*.dmp
+10_PRJ/*.jou
+10_PRJ/*.log
+10_PRJ/*.pb
+10_PRJ/*.str
+10_PRJ/*.zip
+10_PRJ/hs_err_pid*
+10_PRJ/vivado_pid*
+
+# Debug/session artifacts
+10_PRJ/*.ila
+
+# Editor or manual backup files
+*.bak

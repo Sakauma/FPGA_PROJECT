@@ -1,0 +1,49 @@
+{
+   "ActiveEmotionalView":"Default View",
+   "Default View_ScaleFactor":"0.685135",
+   "Default View_TopLeft":"-353,-92",
+   "ExpandedHierarchyInLayout":"",
+   "guistr":"# # String gsaved with Nlview 7.8.0 2024-04-26 e1825d835c VDI=44 GEI=38 GUI=JA:21.0
+#  -string -flagsOSRD
+preplace port DDR3 -pg 1 -lvl 3 -x 860 -y 450 -defaultsOSRD
+preplace port S00_AXI -pg 1 -lvl 0 -x 0 -y 260 -defaultsOSRD
+preplace port S01_AXI -pg 1 -lvl 0 -x 0 -y 280 -defaultsOSRD
+preplace port S03_AXI -pg 1 -lvl 0 -x 0 -y 300 -defaultsOSRD
+preplace port S04_AXI -pg 1 -lvl 0 -x 0 -y 320 -defaultsOSRD
+preplace port S06_AXI -pg 1 -lvl 0 -x 0 -y 340 -defaultsOSRD
+preplace port port-id_axi_sys_clk -pg 1 -lvl 0 -x 0 -y 360 -defaultsOSRD
+preplace port port-id_axi_sys_rst -pg 1 -lvl 0 -x 0 -y 380 -defaultsOSRD
+preplace port port-id_ddr_clk_ref_i -pg 1 -lvl 0 -x 0 -y 10 -defaultsOSRD
+preplace port port-id_ddr_rst -pg 1 -lvl 0 -x 0 -y 700 -defaultsOSRD
+preplace port port-id_ddr_sys_clk_i -pg 1 -lvl 0 -x 0 -y 30 -defaultsOSRD
+preplace port port-id_init_calib_complete -pg 1 -lvl 3 -x 860 -y 530 -defaultsOSRD
+preplace portBus device_temp_i -pg 1 -lvl 0 -x 0 -y 240 -defaultsOSRD
+preplace inst axi_interconnect_0 -pg 1 -lvl 1 -x 270 -y 440 -defaultsOSRD
+preplace inst proc_sys_reset_0 -pg 1 -lvl 1 -x 270 -y 120 -defaultsOSRD
+preplace inst mig_7series_0 -pg 1 -lvl 2 -x 650 -y 490 -defaultsOSRD
+preplace netloc axi_sys_clk_1 1 0 1 70J 360n
+preplace netloc axi_sys_rst_1 1 0 1 60J 380n
+preplace netloc clk_ref_i_0_1 1 0 2 30 680 450
+preplace netloc ddr_rst_1 1 0 2 N 700 460
+preplace netloc device_temp_i_1 1 0 2 50 20 470
+preplace netloc mig_7series_1_init_calib_complete 1 2 1 N 530
+preplace netloc mig_7series_1_mmcm_locked 1 0 3 80 730 N 730 810
+preplace netloc mig_7series_1_ui_clk_sync_rst 1 0 3 100 10 N 10 810
+preplace netloc proc_sys_reset_0_peripheral_aresetn 1 0 2 100 710 440J
+preplace netloc sys_clk_i_0_1 1 0 2 20 690 470
+preplace netloc mig_7series_0_ui_clk 1 0 3 90 720 NJ 720 820
+preplace netloc S01_AXI_1 1 0 1 NJ 280
+preplace netloc S04_AXI_1 1 0 1 NJ 320
+preplace netloc axi_interconnect_0_M00_AXI 1 1 1 N 440
+preplace netloc S06_AXI_1 1 0 1 NJ 340
+preplace netloc mig_7series_1_DDR3 1 2 1 N 450
+preplace netloc S00_AXI_1 1 0 1 NJ 260
+preplace netloc S03_AXI_1 1 0 1 NJ 300
+levelinfo -pg 1 0 270 650 860
+pagesize -pg 1 -db -bbox -sgen -190 -10 1050 750
+"
+}
+{
+   "da_board_cnt":"1",
+   "da_clkrst_cnt":"3"
+}

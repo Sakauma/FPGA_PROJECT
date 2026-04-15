@@ -1,4 +1,11 @@
-`timescale 1ns/1ns
+﻿`timescale 1ns/1ns
+// ============================================================================
+// 维护注释
+//   文件职责      : SRIO 视频收发、解包、节流与协议辅助逻辑。
+//   源码属性      : 手工维护源码，不要把修改同步到生成 IP 或网表。
+//   更新要求      : 当时钟、复位、接口或数据顺序假设变化时，同步更新注释。
+//   维护边界      : 注释用于说明当前实现意图，不替代接口协议文档。
+// ============================================================================
 //////////////////////////////////////////////////////////////////////////////////
 // Company:			ZHTY
 // Engineer:		ZYL
@@ -9,7 +16,7 @@
 // Target Devices:	K7-V7
 // Tool Versions: 	Vivado 2016.1 HDL-EDIT UltraEdit TAB=4 Consolas
 // Description:
-//		ģ�齫LVDS���ݴ�DDR�ж�����������IT UP Streamʱ������HDLC
+//		妯″潡灏哃VDS鏁版嵁浠嶥DR涓鍑猴紝骞剁敓鎴怚T UP Stream鏃跺簭锛岄€佸線HDLC
 // Dependencies:
 //
 // Revision:
@@ -64,7 +71,7 @@ module lvds_hdlc_read #(
 	input			[31:0]						lvds_cache_cur_waddr						,
 	output			[31:0]						lvds_cache_cur_raddr						,	
 	/*--------------------------------------------------------------------------------------
-	--AXI����ͨ��������ӿ�
+	--AXI鏁版嵁閫氶亾璇昏姹傛帴鍙?
 	--------------------------------------------------------------------------------------*/
 	
 	output	reg									m_axir_req					= 0				,
@@ -173,7 +180,7 @@ module lvds_hdlc_read #(
 	end
 	
 	
-	reg				[7:0]						wr_frame_all_cnt		= 7'h00				;	//	����д��ddr��ѯ����
+	reg				[7:0]						wr_frame_all_cnt		= 7'h00				;	//	鏁版嵁鍐欏叆ddr杞娆℃暟
 	reg				[31:0]						lvds_cache_cur_waddr_d	= 'b0				;
 
 
@@ -202,7 +209,7 @@ module lvds_hdlc_read #(
 			S_AXIR_IDLE_M						: begin
 			
 
-				if( (lvds_cache_cur_waddr==P_V_FRAME_DDR3_BLOCK_SIZE_R-32'h100)&& ps_video_en&&wr_frame_all_cnt==0&&video_send_en==1) begin//��Ƶ����
+				if( (lvds_cache_cur_waddr==P_V_FRAME_DDR3_BLOCK_SIZE_R-32'h100)&& ps_video_en&&wr_frame_all_cnt==0&&video_send_en==1) begin//闄嶉鍙戦€?
 					S_AXIR_NM					= S_AXIR_FRAME_STAR_M						;
 				end else begin
 					S_AXIR_NM					= S_AXIR_IDLE_M								;
@@ -269,7 +276,7 @@ module lvds_hdlc_read #(
 		endcase
 	end
 //==================================================================================================
-//--���ʿ���
+//--閫熺巼鎺у埗
 
 	always @(posedge sys_clk_i or posedge sys_rst_i) begin
 		if(sys_rst_i) begin
@@ -282,7 +289,7 @@ module lvds_hdlc_read #(
 	end
 
 //==================================================================================================
-//--�����ַ�ͳ���ʵ��
+//--璇锋眰鍦板潃鍜岄暱搴﹀疄鐜?
 	always @(posedge sys_clk_i or posedge sys_rst_i) begin
 		if(sys_rst_i) begin
 			m_axir_req							<= 1'b0										;
@@ -293,7 +300,7 @@ module lvds_hdlc_read #(
 		end
 	end
 	/*--------------------------------------------------------------------------------------
-	--HEAD��DATA�����׵�ַ��ʼ��ȡ��HEAD���ݲ�д��FIFO
+	--HEAD涓嶥ATA閮戒粠棣栧湴鍧€寮€濮嬭鍙栵紝HEAD鏁版嵁涓嶅啓鍏IFO
 	--------------------------------------------------------------------------------------*/
 	always @(posedge sys_clk_i or posedge sys_rst_i) begin
 		if(sys_rst_i) begin
@@ -319,7 +326,7 @@ module lvds_hdlc_read #(
 	end
 
 //==================================================================================================
-//--���ݶ�ȡ����
+//--鏁版嵁璇诲彇鎿嶄綔
 	always @(posedge sys_clk_i or posedge sys_rst_i) begin
 		if(sys_rst_i) begin
 			S_RB_CM								<= S_RB_IDLE_M								;
@@ -385,9 +392,9 @@ module lvds_hdlc_read #(
 			DSW_LEN								<= 16'b0									;
 		end else if(S_RB_CM[B_RB_HDATA_M]) begin
 			if(MLVDS_AXI_RVALID && MLVDS_AXI_RREADY) begin
-				//DSW_LEN							<= MLVDS_AXI_RDATA[47:32]					;	//	��ȡ֡��
+				//DSW_LEN							<= MLVDS_AXI_RDATA[47:32]					;	//	鑾峰彇甯ч暱
 				
-				DSW_LEN							<= 16'h100					;	//	��ȡ֡��
+				DSW_LEN							<= 16'h100					;	//	鑾峰彇甯ч暱
 			end else begin
 				DSW_LEN							<= DSW_LEN									;
 			end
@@ -428,7 +435,7 @@ module lvds_hdlc_read #(
 			axis_data_fifo_wen					<= 1'b0										;
 			axis_data_fifo_din[65:0]			<= 66'b0									;
 			
-		end else if(S_RB_CM[B_RB_HDATA_M]) begin	//�����Զ���SRIO֡ͷ
+		end else if(S_RB_CM[B_RB_HDATA_M]) begin	//澧炲姞鑷畾涔塖RIO甯уご
 			axis_data_fifo_wen					<= MLVDS_AXI_RVALID && MLVDS_AXI_RREADY		;
 			axis_data_fifo_din[63:0]			<= {32'h0060_2000,	cur_raddr-P_LVDS_DDR3_START_ADDR_R}	;
 			

@@ -1,4 +1,11 @@
-`timescale 1ns/1ps
+﻿`timescale 1ns/1ps
+// ============================================================================
+// 维护注释
+//   文件职责      : EB4110 板级定制的视频业务逻辑。
+//   源码属性      : 手工维护源码，不要把修改同步到生成 IP 或网表。
+//   更新要求      : 当时钟、复位、接口或数据顺序假设变化时，同步更新注释。
+//   维护边界      : 注释用于说明当前实现意图，不替代接口协议文档。
+// ============================================================================
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Company			: ZHTY
 // Engineer			: wangzhen
@@ -41,7 +48,7 @@ restart
 run 220us
 */
 module srio_test_prj_top	#(
-    parameter 		P_SYS_CLK_FREQ   			= 32'd125000000        						,	//系统时锟斤拷频锟斤拷
+    parameter 		P_SYS_CLK_FREQ   			= 32'd125000000        						,	//缁崵绮洪弮鍫曟晸閺傘倖瀚规０鎴︽晸閺傘倖瀚?
 	parameter		P_Srio_PHY_LANE_R			= 4												//Physical lane number,board gtx for SRIO
 )(		
 	input										VP											,
@@ -50,16 +57,15 @@ module srio_test_prj_top	#(
 
 	input										ps_sys_clk											,
 
-   	input 	wire	[11:00]						device_temp        							,	//DDR锟铰度接匡拷
+   	input 	wire	[11:00]						device_temp        							,	//DDR闁跨喖鎽惔锔藉复閸栤剝瀚?
   	input			[31:0]						srio_v_sid_did								,
   	input										srio_v_sel_x1								,
 
 	input										ps_video_en									,
 	input			[7:0]						ps_frame_ctr								,			
-	// 新代码
-	input			[31:0]						video_algo_ctrl								,
+	// 閺傞鍞惍?	input			[31:0]						video_algo_ctrl								,
 //==================================================================================================
-//--锟斤拷锟斤拷映锟斤拷锟斤拷冶锟絃UT锟斤拷DDR锟斤拷取锟接匡拷
+//--闁跨喐鏋婚幏鐑芥晸閺傘倖瀚归弰鐘绘晸閺傘倖瀚归柨鐔告灮閹峰嘲鍠嶉柨鐔虹オUT闁跨喐鏋婚幏绋R闁跨喐鏋婚幏宄板絿闁跨喐甯撮崠鈩冨
 	output	wire								V_LUT_AXI_clk								,
 	output	wire								V_LUT_AXI_rstn								,
 
@@ -102,19 +108,19 @@ module srio_test_prj_top	#(
 	output			[P_Srio_PHY_LANE_R-1:0]		srio_txn0									,
 	output			[P_Srio_PHY_LANE_R-1:0]		srio_txp0									,
 
-    inout   [63:0]     ddr3_dq             ,   //ddr3 锟斤拷锟斤拷
-    inout   [7:0]      ddr3_dqs_n          ,   //ddr3 dqs锟斤拷
-    inout   [7:0]      ddr3_dqs_p          ,   //ddr3 dqs锟斤拷  
-    output  [14:0]     ddr3_addr           ,   //ddr3 锟斤拷址   
-    output  [2:0]      ddr3_ba             ,   //ddr3 banck 选锟斤拷
-    output             ddr3_ras_n          ,   //ddr3 锟斤拷选锟斤拷
-    output             ddr3_cas_n          ,   //ddr3 锟斤拷选锟斤拷
-    output             ddr3_we_n           ,   //ddr3 锟斤拷写选锟斤拷
-    output             ddr3_reset_n        ,   //ddr3 锟斤拷位
-    output  [0:0]      ddr3_ck_p           ,   //ddr3 时锟斤拷锟斤拷
-    output  [0:0]      ddr3_ck_n           ,   //ddr3 时锟接革拷
-    output  [0:0]      ddr3_cke            ,   //ddr3 时锟斤拷使锟斤拷
-    output  [0:0]      ddr3_cs_n           ,   //ddr3 片选
+    inout   [63:0]     ddr3_dq             ,   //ddr3 闁跨喐鏋婚幏鐑芥晸閺傘倖瀚?
+    inout   [7:0]      ddr3_dqs_n          ,   //ddr3 dqs闁跨喐鏋婚幏?
+    inout   [7:0]      ddr3_dqs_p          ,   //ddr3 dqs闁跨喐鏋婚幏? 
+    output  [14:0]     ddr3_addr           ,   //ddr3 闁跨喐鏋婚幏宄版絻   
+    output  [2:0]      ddr3_ba             ,   //ddr3 banck 闁鏁撻弬銈嗗
+    output             ddr3_ras_n          ,   //ddr3 闁跨喐鏋婚幏鐑解偓澶愭晸閺傘倖瀚?
+    output             ddr3_cas_n          ,   //ddr3 闁跨喐鏋婚幏鐑解偓澶愭晸閺傘倖瀚?
+    output             ddr3_we_n           ,   //ddr3 闁跨喐鏋婚幏宄板晸闁鏁撻弬銈嗗
+    output             ddr3_reset_n        ,   //ddr3 闁跨喐鏋婚幏铚傜秴
+    output  [0:0]      ddr3_ck_p           ,   //ddr3 閺冨爼鏁撻弬銈嗗闁跨喐鏋婚幏?
+    output  [0:0]      ddr3_ck_n           ,   //ddr3 閺冨爼鏁撻幒銉╂交閹?
+    output  [0:0]      ddr3_cke            ,   //ddr3 閺冨爼鏁撻弬銈嗗娴ｅ潡鏁撻弬銈嗗
+    output  [0:0]      ddr3_cs_n           ,   //ddr3 閻楀洭鈧?
     output  [7:0]      ddr3_dm             ,   //ddr3_dm
     output  [0:0]      ddr3_odt            //,    //ddr3_odt    
 
@@ -146,7 +152,7 @@ module srio_test_prj_top	#(
 
 
 	/*--------------------------------------------------------------------------------------
-	--SRIO通锟斤拷锟斤拷锟斤拷 AXI Stream锟接匡拷
+	--SRIO闁岸鏁撻弬銈嗗闁跨喐鏋婚幏鐑芥晸閺傘倖瀚?AXI Stream闁跨喐甯撮崠鈩冨
 	--------------------------------------------------------------------------------------*/
 
 	wire			[P_SRIO_DN_NUM_R*1-1	: 0]	srio_m_axis_aclk						;	
@@ -190,7 +196,7 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
     );	
     
 //==================================================================================================
-//ddr锟斤拷锟斤拷藕锟?
+//ddr闁跨喐鏋婚幏鐑芥晸閺傘倖瀚归挊鏇㈡晸?
 	wire										ddr_sys_clk_i								;
 	wire										ddr_clk_ref_i								;
 	wire										ddr_init_calib_complete						; 	
@@ -198,7 +204,7 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
     assign			    ddr_sys_clk_i			= clk_200m									;
     assign			    ddr_clk_ref_i			= clk_200m									;	
 //==================================================================================================
-//--Master AXI4写锟接匡拷
+//--Master AXI4閸愭瑩鏁撻幒銉ュ皡閹?
 	wire		[3:0]							M_AXI_AWID									;
 	wire		[31:0]							M_AXI_AWADDR								;
 	wire		[7:0]							M_AXI_AWLEN									;
@@ -291,7 +297,7 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
 
 
 //	/*--------------------------------------------------------------------------------------
-//	--SRIO通锟斤拷锟斤拷锟斤拷 AXI Stream锟接匡拷
+//	--SRIO闁岸鏁撻弬銈嗗闁跨喐鏋婚幏鐑芥晸閺傘倖瀚?AXI Stream闁跨喐甯撮崠鈩冨
 //	--------------------------------------------------------------------------------------*/
 
 //	wire			[P_SRIO_DN_NUM_R*1-1	: 0]	srio_m_axis_aclk						;	
@@ -345,14 +351,12 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
 		.srio_v_sel_x1							( 0								),	 
 		.ps_video_en							( 1								),
 		.ps_frame_ctr							( 8'h04								),
-		// 新代码
-		.video_algo_ctrl						( 32'h0000_0007							),
+		// 閺傞鍞惍?		.video_algo_ctrl						( 32'h0000_0007							),
 	`else
 		.srio_v_sel_x1							( srio_v_sel_x1								),	 
 		.ps_video_en							( ps_video_en								),
 		.ps_frame_ctr							( ps_frame_ctr								),
-		// 新代码
-		.video_algo_ctrl						( video_algo_ctrl							),
+		// 閺傞鍞惍?		.video_algo_ctrl						( video_algo_ctrl							),
 	`endif	
 
 		.user_250m_clk							( user_250m_clk								),
@@ -564,13 +568,13 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
       
 
 //     clk_calc_mul_chan #(
-//        .DETECT_CLK_FRE     ( P_SYS_CLK_FREQ                 ),//锟斤拷锟绞憋拷锟?
-//        .CLK_CHAN           ( 16                           ) //支锟斤拷通锟斤拷锟斤拷
+//        .DETECT_CLK_FRE     ( P_SYS_CLK_FREQ                 ),//闁跨喐鏋婚幏鐑芥晸缂佺偞鍞婚幏鐑芥晸?
+//        .CLK_CHAN           ( 16                           ) //閺€顖炴晸閺傘倖瀚归柅姘舵晸閺傘倖瀚归柨鐔告灮閹?
 //        )
 //      u_freq_calc_top(
 //        .I_rst              ( 1'b0                         ),
-//        .I_clk_detect       ( s_axis_aclk                     ), //锟斤拷锟绞憋拷锟?
-//        .I_clk_in           ( {srio_top.gt_pcs_clk,srio_top.drpclk,srio_top.refclk,srio_top.phy_clk,srio_top.gt_clk,srio_top.log_clk,user_250m_clk}                  ), //锟斤拷锟斤拷锟斤拷时锟斤拷
+//        .I_clk_detect       ( s_axis_aclk                     ), //闁跨喐鏋婚幏鐑芥晸缂佺偞鍞婚幏鐑芥晸?
+//        .I_clk_in           ( {srio_top.gt_pcs_clk,srio_top.drpclk,srio_top.refclk,srio_top.phy_clk,srio_top.gt_clk,srio_top.log_clk,user_250m_clk}                  ), //闁跨喐鏋婚幏鐑芥晸閺傘倖瀚归柨鐔告灮閹烽攱妞傞柨鐔告灮閹?
 //        .I_fre_detect_chan  ( vio_ctrl_clk_calc[3:0]           ),//(vio_ctrl_clk_calc[3:0]       ),
 //        .O_clk_cnt          ( s_detect_fre                 )
 //    );
@@ -579,7 +583,7 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
 	MY_MEM u_mem	(
  		.device_temp_i								( device_temp									),
 //===============================================================================================
-//--DDR锟解部锟接匡拷
+//--DDR闁跨喕袙闁劑鏁撻幒銉ュ皡閹?
  		.DDR3_addr								( ddr3_addr									),
 		.DDR3_ba								( ddr3_ba									),
 		.DDR3_cas_n								( ddr3_cas_n								),
@@ -597,7 +601,7 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
 		.DDR3_we_n								( ddr3_we_n									),
     	.init_calib_complete					( ddr_init_calib_complete					),
 //===============================================================================================
-//--ddr锟脚猴拷
+//--ddr闁跨喕鍓奸悮瀛樺
   		.ddr_sys_clk_i							( ddr_sys_clk_i								),
     	.ddr_clk_ref_i							( ddr_clk_ref_i								),
 

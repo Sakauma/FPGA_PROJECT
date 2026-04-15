@@ -1,3 +1,10 @@
+﻿# ============================================================================
+# 维护注释
+#   文件职责      : EB4110 工程主约束文件，负责引脚、时钟与时序约束。
+#   源码属性      : 手工维护约束文件，不要把修改回写到生成约束中。
+#   更新要求      : 当引脚、时钟或时序例外变化时，同步更新注释。
+#   维护边界      : 注释应与板级连线和当前工具版本保持一致。
+# ============================================================================
 set_property BITSTREAM.CONFIG.UNUSEDPIN PULLNONE [current_design]
 
 #set_property PACKAGE_PIN AH10 [get_ports {fc_gt_rxp[0]}]
@@ -6,7 +13,7 @@ set_property BITSTREAM.CONFIG.UNUSEDPIN PULLNONE [current_design]
 #set_property PACKAGE_PIN AK6 [get_ports {fc_gt_txp[1]}]
 #set_property PACKAGE_PIN AF10 [get_ports gtxrefclk109_p]
 
-#25M����û�к���
+#25M锟斤拷锟斤拷没锟叫猴拷锟斤拷
 #set_property PACKAGE_PIN AE22 [get_ports sys_clk_p]
 #set_property	IOSTANDARD	LVCMOS33	[get_ports	sys_clk_p	]
 
@@ -146,7 +153,7 @@ set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins srio_vid
 #set_clock_groups -asynchronous -group [get_clocks clk_fpga_0] -group [get_clocks -of_objects [get_pins srio_video_loop/srio_top/i_srio_support/u_SRIO_5g_2x_8b.u_srio_support/srio_clk_inst/srio_mmcm_inst/CLKOUT2]]
 
 set_false_path -from [get_pins {zynq_i/proc_sys_reset_0/U0/PR_OUT_DFF[0].FDRE_PER/C}]
-##ֻ����Ƶʹ��
+##只锟斤拷锟斤拷频使锟斤拷
 #set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins srio_video_loop/u_mem/mig_7series_0/u_MY_MEM_mig_7series_0_0_mig/u_ddr3_infrastructure/gen_mmcm.mmcm_i/CLKFBOUT]] -group [get_clocks -of_objects [get_pins srio_video_loop/u_mem/mig_7series_0/u_MY_MEM_mig_7series_0_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_0.u_ddr_phy_4lanes/ddr_byte_lane_D.ddr_byte_lane_D/phaser_in_gen.phaser_in/ICLK]]
 #set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins srio_video_loop/u_mem/mig_7series_0/u_MY_MEM_mig_7series_0_0_mig/u_ddr3_infrastructure/gen_mmcm.mmcm_i/CLKFBOUT]] -group [get_clocks -of_objects [get_pins srio_video_loop/u_mem/mig_7series_0/u_MY_MEM_mig_7series_0_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_2.u_ddr_phy_4lanes/ddr_byte_lane_A.ddr_byte_lane_A/phaser_in_gen.phaser_in/ICLK]]
 #set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins srio_video_loop/u_mem/mig_7series_0/u_MY_MEM_mig_7series_0_0_mig/u_ddr3_infrastructure/gen_mmcm.mmcm_i/CLKFBOUT]] -group [get_clocks -of_objects [get_pins srio_video_loop/u_mem/mig_7series_0/u_MY_MEM_mig_7series_0_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_2.u_ddr_phy_4lanes/ddr_byte_lane_B.ddr_byte_lane_B/phaser_in_gen.phaser_in/ICLK]]
@@ -160,3 +167,4 @@ set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins srio_vid
 
 
 set_clock_groups -asynchronous -group [get_clocks clk_fpga_0] -group [get_clocks -of_objects [get_pins srio_video_loop/srio_top/i_srio_support/u_SRIO_5g_2x_8b.u_srio_support/srio_clk_inst/srio_mmcm_inst/CLKOUT2]] 
+

@@ -1,4 +1,11 @@
-`timescale 1ns/1ps
+ï»¿`timescale 1ns/1ps
+// ============================================================================
+// ç»´æŠ¤æ³¨é‡Š
+//   æ–‡ä»¶èŒè´£      : å·¥ç¨‹çº§ä¼ ç»Ÿé¡¶å±‚ä»¿çœŸå¹³å°ï¼Œç”¨äºå¯„å­˜å™¨ä¸æ•°æ®é€šè·¯éªŒè¯ã€‚
+//   æºç å±æ€§      : æ‰‹å·¥ç»´æŠ¤æºç ï¼Œä¸è¦æŠŠä¿®æ”¹åŒæ­¥åˆ°ç”Ÿæˆ IP æˆ–ç½‘è¡¨ã€‚
+//   æ›´æ–°è¦æ±‚      : å½“æ—¶é’Ÿã€å¤ä½ã€æ¥å£æˆ–æ•°æ®é¡ºåºå‡è®¾å˜åŒ–æ—¶ï¼ŒåŒæ­¥æ›´æ–°æ³¨é‡Šã€‚
+//   ç»´æŠ¤è¾¹ç•Œ      : æ³¨é‡Šç”¨äºè¯´æ˜å½“å‰å®ç°æ„å›¾ï¼Œä¸æ›¿ä»£æ¥å£åè®®æ–‡æ¡£ã€‚
+// ============================================================================
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Company			: ZHTY
 // Engineer			: wangzhen
@@ -26,7 +33,7 @@
 // Additional Comments:
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
-·ÂÕæÓïÑÔĞèÒªÑ¡Ôñmixed
+ä»¿çœŸè¯­è¨€éœ€è¦é€‰æ‹©mixed
 
 cd E:/FPGA_CBB_WZ/srio_v10/10_PRJ/00_PRJ.sim/sim_1/behav/modelsim
 do tb_top_compile.do
@@ -89,7 +96,7 @@ initial	begin
 		lbe_wr_en								= 1'b0												;
 		lbe_wdata								= 32'h0000_0000										;
 		
-//		//¶Á485¡ª¡ª0²¨ÌØÂÊ
+//		//è¯»485â€”â€”0æ³¢ç‰¹ç‡
 //		#1000
 //		lbe_addr								= 32'h82b1_0000										;
 //		lbe_req									= 1'b1												;
@@ -99,21 +106,21 @@ initial	begin
 //		lbe_req									= 1'b0												;
 	
 	
-		//Ğ´½µÆµÊ¹ÄÜ
+		//å†™é™é¢‘ä½¿èƒ½
 		#1000
 		lbe_addr								= 32'h8122_0000										;
 		lbe_req									= 1'b1												;
 		lbe_wr_en								= 1'b1												;
 		lbe_wdata								= 32'h0000_0001										;
 		#10	
-		//Ğ´½µÆµ²ÎÊı
+		//å†™é™é¢‘å‚æ•°
 		#1000
 		lbe_addr								= 32'h8122_0008										;
 		lbe_req									= 1'b1												;
 		lbe_wr_en								= 1'b1												;
 		lbe_wdata								= 32'h0000_0040										;
 		#10			
-		//Ğ´485¡ª¡ª0²¨ÌØÂÊ
+		//å†™485â€”â€”0æ³¢ç‰¹ç‡
 		#1000
 		lbe_addr								= 32'h82b1_0000										;
 		lbe_req									= 1'b1												;
@@ -122,7 +129,7 @@ initial	begin
 		#10
 		lbe_req									= 1'b0												;		
 
-		//¶Á485¡ª¡ª0²¨ÌØÂÊ
+		//è¯»485â€”â€”0æ³¢ç‰¹ç‡
 		#1000
 		lbe_addr								= 32'h82b1_0000										;
 		lbe_req									= 1'b1												;
@@ -132,7 +139,7 @@ initial	begin
 		lbe_req									= 1'b0												;
 
 
-		//¶Ásrio
+		//è¯»srio
 		#1000
 		lbe_addr								= 32'h8400_0000										;
 		lbe_req									= 1'b1												;
@@ -143,7 +150,7 @@ initial	begin
 		
 		
 		
-		//¶Ásid_DID
+		//è¯»sid_DID
 		#1000
 		lbe_addr								= 32'h8600_0000										;
 		lbe_req									= 1'b1												;
@@ -152,7 +159,7 @@ initial	begin
 		#10
 		lbe_req									= 1'b0												;		
 
-		//Ğ´sid_DID
+		//å†™sid_DID
 		#1000
 		lbe_addr								= 32'h8600_0000										;
 		lbe_req									= 1'b1												;
@@ -160,7 +167,7 @@ initial	begin
 		lbe_wdata								= 32'h00aa_00cc										;
 		#10
 		lbe_req									= 1'b0												;	
-		//¶Ásid_DID
+		//è¯»sid_DID
 		#1000
 		lbe_addr								= 32'h8600_0000										;
 		lbe_req									= 1'b1												;
@@ -194,71 +201,71 @@ run 10us
 */
 
 
-//// Ä£¿é¹¦ÄÜ£ºRapidIOÄ¿±ê¶Ë£¬½ÓÊÕNREADÇëÇóºóÍ¨¹ıiotx¶Ë¿Ú·¢ËÍÏìÓ¦°ü
+//// æ¨¡å—åŠŸèƒ½ï¼šRapidIOç›®æ ‡ç«¯ï¼Œæ¥æ”¶NREADè¯·æ±‚åé€šè¿‡iotxç«¯å£å‘é€å“åº”åŒ…
 //module rapidio_target_nread_response(
-//    input           clk,                // RapidIO IPºËÊ±ÖÓ£¨½¨Òé125MHz£©
-//    input           rst_n,              // Òì²½¸´Î»£¨µÍÓĞĞ§£©
+//    input           clk,                // RapidIO IPæ ¸æ—¶é’Ÿï¼ˆå»ºè®®125MHzï¼‰
+//    input           rst_n,              // å¼‚æ­¥å¤ä½ï¼ˆä½æœ‰æ•ˆï¼‰
     
-//    // RapidIO Condensed I/O ½ÓÊÕ¶Ë¿Ú£¨ÊÕNREADÇëÇó£©
-//    input           s_axis_iorx_tvalid, // ÇëÇóÓĞĞ§
-//    input           s_axis_iorx_tlast,  // ÇëÇó°ü½áÊø
-//    input  [63:0]   s_axis_iorx_tdata,  // ÇëÇóÊı¾İ£¨º¬µØÖ·/Í·²¿£©
-//    input  [7:0]    s_axis_iorx_tkeep,  // ÇëÇó×Ö½ÚÓĞĞ§
-//    input  [31:0]   s_axis_iorx_tuser,  // ÇëÇó¿ØÖÆĞÅÏ¢£¨FTYPE/TTYPE/Device ID£©
-//    output          s_axis_iorx_tready, // ½ÓÊÕ×¼±¸¾ÍĞ÷
+//    // RapidIO Condensed I/O æ¥æ”¶ç«¯å£ï¼ˆæ”¶NREADè¯·æ±‚ï¼‰
+//    input           s_axis_iorx_tvalid, // è¯·æ±‚æœ‰æ•ˆ
+//    input           s_axis_iorx_tlast,  // è¯·æ±‚åŒ…ç»“æŸ
+//    input  [63:0]   s_axis_iorx_tdata,  // è¯·æ±‚æ•°æ®ï¼ˆå«åœ°å€/å¤´éƒ¨ï¼‰
+//    input  [7:0]    s_axis_iorx_tkeep,  // è¯·æ±‚å­—èŠ‚æœ‰æ•ˆ
+//    input  [31:0]   s_axis_iorx_tuser,  // è¯·æ±‚æ§åˆ¶ä¿¡æ¯ï¼ˆFTYPE/TTYPE/Device IDï¼‰
+//    output          s_axis_iorx_tready, // æ¥æ”¶å‡†å¤‡å°±ç»ª
     
-//    // RapidIO Condensed I/O ·¢ËÍ¶Ë¿Ú£¨·¢NREADÏìÓ¦£¬ºËĞÄiotx¶Ë¿Ú£©
-//    output          m_axis_iotx_tvalid, // ÏìÓ¦ÓĞĞ§
-//    output          m_axis_iotx_tlast,  // ÏìÓ¦°ü½áÊø
-//    output [63:0]   m_axis_iotx_tdata,  // ÏìÓ¦Êı¾İ£¨º¬Í·²¿/ÔØºÉ£©
-//    output [7:0]    m_axis_iotx_tkeep,  // ÏìÓ¦×Ö½ÚÓĞĞ§
-//    output [31:0]   m_axis_iotx_tuser,  // ÏìÓ¦¿ØÖÆĞÅÏ¢£¨FTYPE/TTYPE/Device ID£©
-//    input           m_axis_iotx_tready  // ·¢ËÍ×¼±¸¾ÍĞ÷£¨IPºË²à£©
+//    // RapidIO Condensed I/O å‘é€ç«¯å£ï¼ˆå‘NREADå“åº”ï¼Œæ ¸å¿ƒiotxç«¯å£ï¼‰
+//    output          m_axis_iotx_tvalid, // å“åº”æœ‰æ•ˆ
+//    output          m_axis_iotx_tlast,  // å“åº”åŒ…ç»“æŸ
+//    output [63:0]   m_axis_iotx_tdata,  // å“åº”æ•°æ®ï¼ˆå«å¤´éƒ¨/è½½è·ï¼‰
+//    output [7:0]    m_axis_iotx_tkeep,  // å“åº”å­—èŠ‚æœ‰æ•ˆ
+//    output [31:0]   m_axis_iotx_tuser,  // å“åº”æ§åˆ¶ä¿¡æ¯ï¼ˆFTYPE/TTYPE/Device IDï¼‰
+//    input           m_axis_iotx_tready  // å‘é€å‡†å¤‡å°±ç»ªï¼ˆIPæ ¸ä¾§ï¼‰
 //);
 
-//// -------------------------- ²½Öè1£º²ÎÊı¶¨Òå£¨ºËĞÄ±àÂë£© --------------------------
-//// NREADÏìÓ¦µÄFTYPE/TTYPE±àÂë£¨²Î¿¼ÎÄµµ£ºFTYPE=0010, TTYPE=0100£©
-//localparam NREAD_RESP_FTYPE = 4'b0010;  // NREADÏìÓ¦¹¦ÄÜÀàĞÍ±àÂë
-//localparam NREAD_RESP_TTYPE = 4'b0100;  // NREADÏìÓ¦ÊÂÎñÀàĞÍ±àÂë
-//localparam DEVICE_ID_TARGET = 8'h01;    // Ä¿±ê¶Ë8bit Device ID£¨¿É×Ô¶¨Òå£©
+//// -------------------------- æ­¥éª¤1ï¼šå‚æ•°å®šä¹‰ï¼ˆæ ¸å¿ƒç¼–ç ï¼‰ --------------------------
+//// NREADå“åº”çš„FTYPE/TTYPEç¼–ç ï¼ˆå‚è€ƒæ–‡æ¡£ï¼šFTYPE=0010, TTYPE=0100ï¼‰
+//localparam NREAD_RESP_FTYPE = 4'b0010;  // NREADå“åº”åŠŸèƒ½ç±»å‹ç¼–ç 
+//localparam NREAD_RESP_TTYPE = 4'b0100;  // NREADå“åº”äº‹åŠ¡ç±»å‹ç¼–ç 
+//localparam DEVICE_ID_TARGET = 8'h01;    // ç›®æ ‡ç«¯8bit Device IDï¼ˆå¯è‡ªå®šä¹‰ï¼‰
 
-//// ×´Ì¬»ú¶¨Òå£º´¦ÀíNREADÇëÇó¡ú¹¹ÔìÏìÓ¦¡ú·¢ËÍÏìÓ¦
+//// çŠ¶æ€æœºå®šä¹‰ï¼šå¤„ç†NREADè¯·æ±‚â†’æ„é€ å“åº”â†’å‘é€å“åº”
 ////typedef enum {IDLE, PARSE_REQUEST, BUILD_RESPONSE, SEND_RESPONSE} state_t;
 //reg [3:0] current_state, next_state;
 
-//// -------------------------- ²½Öè2£ºÇëÇó½âÎöÓëÏìÓ¦»º´æ --------------------------
-//reg [31:0] req_addr;        // ½âÎö³öµÄNREADÇëÇóµØÖ·£¨Òª¶ÁÈ¡µÄµØÖ·£©
-//reg [63:0] resp_data;       // NREADÏìÓ¦Êı¾İÔØºÉ£¨Ä£Äâ´Ó¼Ä´æÆ÷¶ÁÈ¡£©
-//reg        resp_pending;    // ÏìÓ¦´ı·¢ËÍ±êÖ¾
+//// -------------------------- æ­¥éª¤2ï¼šè¯·æ±‚è§£æä¸å“åº”ç¼“å­˜ --------------------------
+//reg [31:0] req_addr;        // è§£æå‡ºçš„NREADè¯·æ±‚åœ°å€ï¼ˆè¦è¯»å–çš„åœ°å€ï¼‰
+//reg [63:0] resp_data;       // NREADå“åº”æ•°æ®è½½è·ï¼ˆæ¨¡æ‹Ÿä»å¯„å­˜å™¨è¯»å–ï¼‰
+//reg        resp_pending;    // å“åº”å¾…å‘é€æ ‡å¿—
 
-//// ½âÎöNREADÇëÇó£ºÌáÈ¡FTYPE/TTYPE/ÇëÇóµØÖ·
+//// è§£æNREADè¯·æ±‚ï¼šæå–FTYPE/TTYPE/è¯·æ±‚åœ°å€
 //always @(posedge clk or negedge rst_n) begin
 //    if(!rst_n) begin
 //        req_addr    <= 32'd0;
 //        resp_pending <= 1'b0;
 //    end else if(s_axis_iorx_tvalid && s_axis_iorx_tready) begin
-//        // ½âÎöÇëÇóÍ·²¿£ºÅĞ¶ÏÊÇ·ñÎªNREADÇëÇó£¨FTYPE=0010, TTYPE=0100£©
+//        // è§£æè¯·æ±‚å¤´éƒ¨ï¼šåˆ¤æ–­æ˜¯å¦ä¸ºNREADè¯·æ±‚ï¼ˆFTYPE=0010, TTYPE=0100ï¼‰
 //        if((s_axis_iorx_tuser[31:28] == NREAD_RESP_FTYPE) && 
 //           (s_axis_iorx_tuser[27:24] == NREAD_RESP_TTYPE)) begin
-//            // ÌáÈ¡NREADÇëÇóµÄÄ¿±êµØÖ·£¨´Ótdata¸ß32bit½âÎö£©
+//            // æå–NREADè¯·æ±‚çš„ç›®æ ‡åœ°å€ï¼ˆä»tdataé«˜32bitè§£æï¼‰
 //            req_addr <= s_axis_iorx_tdata[63:32];
-//            // Ä£Äâ£º¸ù¾İÇëÇóµØÖ·¶ÁÈ¡¶ÔÓ¦Êı¾İ£¨Êµ¼ÊÏîÄ¿ÖĞÌæ»»Îª¼Ä´æÆ÷/ÄÚ´æ¶ÁÈ¡£©
+//            // æ¨¡æ‹Ÿï¼šæ ¹æ®è¯·æ±‚åœ°å€è¯»å–å¯¹åº”æ•°æ®ï¼ˆå®é™…é¡¹ç›®ä¸­æ›¿æ¢ä¸ºå¯„å­˜å™¨/å†…å­˜è¯»å–ï¼‰
 //            case(req_addr)
-//                32'h00604000: resp_data <= 64'h0001020304050607; // Ê¾ÀıÊı¾İ1
-//                32'h00604008: resp_data <= 64'h08090a0b0c0d0e0f; // Ê¾ÀıÊı¾İ2
-//                default:      resp_data <= 64'hdeadbeefdeadbeef; // ÎŞĞ§µØÖ··µ»ØÄ¬ÈÏÖµ
+//                32'h00604000: resp_data <= 64'h0001020304050607; // ç¤ºä¾‹æ•°æ®1
+//                32'h00604008: resp_data <= 64'h08090a0b0c0d0e0f; // ç¤ºä¾‹æ•°æ®2
+//                default:      resp_data <= 64'hdeadbeefdeadbeef; // æ— æ•ˆåœ°å€è¿”å›é»˜è®¤å€¼
 //            endcase
-//            resp_pending <= 1'b1; // ±ê¼ÇĞèÒª·¢ËÍÏìÓ¦
+//            resp_pending <= 1'b1; // æ ‡è®°éœ€è¦å‘é€å“åº”
 //        end
-//        // °ü½áÊøÊ±Çå¿Õ´ı·¢ËÍ±êÖ¾£¨·ÀÖ¹ÖØ¸´ÏìÓ¦£©
+//        // åŒ…ç»“æŸæ—¶æ¸…ç©ºå¾…å‘é€æ ‡å¿—ï¼ˆé˜²æ­¢é‡å¤å“åº”ï¼‰
 //        if(s_axis_iorx_tlast) begin
 //            resp_pending <= 1'b0;
 //        end
 //    end
 //end
 
-//// -------------------------- ²½Öè3£º×´Ì¬»ú¿ØÖÆ --------------------------
-//// ×´Ì¬»úÊ±ĞòÂß¼­
+//// -------------------------- æ­¥éª¤3ï¼šçŠ¶æ€æœºæ§åˆ¶ --------------------------
+//// çŠ¶æ€æœºæ—¶åºé€»è¾‘
 //always @(posedge clk or negedge rst_n) begin
 //    if(!rst_n) begin
 //        current_state <= IDLE;
@@ -267,28 +274,28 @@ run 10us
 //    end
 //end
 
-//// ×´Ì¬»ú×éºÏÂß¼­
+//// çŠ¶æ€æœºç»„åˆé€»è¾‘
 //always @(*) begin
 //    next_state = current_state;
 //    case(current_state)
 //        IDLE: begin
-//            // ÊÕµ½ÓĞĞ§NREADÇëÇó£¬½øÈë½âÎö½×¶Î
+//            // æ”¶åˆ°æœ‰æ•ˆNREADè¯·æ±‚ï¼Œè¿›å…¥è§£æé˜¶æ®µ
 //            if(s_axis_iorx_tvalid && resp_pending) begin
 //                next_state = PARSE_REQUEST;
 //            end
 //        end
 //        PARSE_REQUEST: begin
-//            // ½âÎöÍê³É£¬½øÈëÏìÓ¦¹¹Ôì½×¶Î
+//            // è§£æå®Œæˆï¼Œè¿›å…¥å“åº”æ„é€ é˜¶æ®µ
 //            next_state = BUILD_RESPONSE;
 //        end
 //        BUILD_RESPONSE: begin
-//            // ÏìÓ¦¹¹ÔìÍê³É£¬IPºË×¼±¸¾ÍĞ÷Ôò·¢ËÍ
+//            // å“åº”æ„é€ å®Œæˆï¼ŒIPæ ¸å‡†å¤‡å°±ç»ªåˆ™å‘é€
 //            if(m_axis_iotx_tready) begin
 //                next_state = SEND_RESPONSE;
 //            end
 //        end
 //        SEND_RESPONSE: begin
-//            // ÏìÓ¦·¢ËÍÍê³É£¨tlastÀ­¸ß£©£¬»Øµ½¿ÕÏĞ
+//            // å“åº”å‘é€å®Œæˆï¼ˆtlastæ‹‰é«˜ï¼‰ï¼Œå›åˆ°ç©ºé—²
 //            if(m_axis_iotx_tlast) begin
 //                next_state = IDLE;
 //            end
@@ -297,37 +304,37 @@ run 10us
 //    endcase
 //end
 
-//// -------------------------- ²½Öè4£ºiotx¶Ë¿ÚÏìÓ¦·¢ËÍ --------------------------
-//// 1. ¿ØÖÆĞÅºÅ£ºtvalid£¨ÏìÓ¦ÓĞĞ§£©¡¢tlast£¨ÏìÓ¦½áÊø£©
+//// -------------------------- æ­¥éª¤4ï¼šiotxç«¯å£å“åº”å‘é€ --------------------------
+//// 1. æ§åˆ¶ä¿¡å·ï¼štvalidï¼ˆå“åº”æœ‰æ•ˆï¼‰ã€tlastï¼ˆå“åº”ç»“æŸï¼‰
 //reg tvalid_reg, tlast_reg;
 //always @(posedge clk or negedge rst_n) begin
 //    if(!rst_n) begin
 //        tvalid_reg <= 1'b0;
 //        tlast_reg  <= 1'b0;
 //    end else if(current_state == SEND_RESPONSE) begin
-//        tvalid_reg <= 1'b1;        // ÏìÓ¦ÓĞĞ§
-//        tlast_reg  <= 1'b1;        // µ¥beatÏìÓ¦£¬Ö±½Ó±ê¼Ç½áÊø
+//        tvalid_reg <= 1'b1;        // å“åº”æœ‰æ•ˆ
+//        tlast_reg  <= 1'b1;        // å•beatå“åº”ï¼Œç›´æ¥æ ‡è®°ç»“æŸ
 //    end else begin
 //        tvalid_reg <= 1'b0;
 //        tlast_reg  <= 1'b0;
 //    end
 //end
 
-//// 2. ÏìÓ¦Í·²¿£ºtuser£¨FTYPE/TTYPE/Device ID£©
+//// 2. å“åº”å¤´éƒ¨ï¼štuserï¼ˆFTYPE/TTYPE/Device IDï¼‰
 //reg [31:0] tuser_reg;
 //always @(posedge clk or negedge rst_n) begin
 //    if(!rst_n) begin
 //        tuser_reg <= 32'd0;
 //    end else if(current_state == BUILD_RESPONSE) begin
-//        // ¹¹Ôìtuser£º¸ß4bit=FTYPE£¬´Î4bit=TTYPE£¬½ÓÏÂÀ´8bit=Ä¿±êDevice ID
+//        // æ„é€ tuserï¼šé«˜4bit=FTYPEï¼Œæ¬¡4bit=TTYPEï¼Œæ¥ä¸‹æ¥8bit=ç›®æ ‡Device ID
 //        tuser_reg[31:28] = NREAD_RESP_FTYPE;    // [31:28] = FTYPE
 //        tuser_reg[27:24] = NREAD_RESP_TTYPE;    // [27:24] = TTYPE
 //        tuser_reg[23:16] = DEVICE_ID_TARGET;    // [23:16] = 8bit Device ID
-//        tuser_reg[15:0]  = 16'd0;               // ±£ÁôÎ»£¨¿ÉÀ©Õ¹ÊÂÎñID£©
+//        tuser_reg[15:0]  = 16'd0;               // ä¿ç•™ä½ï¼ˆå¯æ‰©å±•äº‹åŠ¡IDï¼‰
 //    end
 //end
 
-//// 3. ÏìÓ¦Êı¾İ£ºtdata£¨Í·²¿+Êı¾İÔØºÉ£©¡¢tkeep£¨×Ö½ÚÓĞĞ§£©
+//// 3. å“åº”æ•°æ®ï¼štdataï¼ˆå¤´éƒ¨+æ•°æ®è½½è·ï¼‰ã€tkeepï¼ˆå­—èŠ‚æœ‰æ•ˆï¼‰
 //reg [63:0] tdata_reg;
 //reg [7:0]  tkeep_reg;
 //always @(posedge clk or negedge rst_n) begin
@@ -335,16 +342,16 @@ run 10us
 //        tdata_reg <= 64'd0;
 //        tkeep_reg <= 8'd0;
 //    end else if(current_state == BUILD_RESPONSE) begin
-//        tdata_reg <= resp_data;    // ÏìÓ¦Êı¾İÔØºÉ£¨Ä£Äâ¶ÁÈ¡µÄÄÚÈİ£©
-//        tkeep_reg <= 8'hff;       // 8×Ö½ÚÈ«ÓĞĞ§£¨64bit×ÜÏß£©
+//        tdata_reg <= resp_data;    // å“åº”æ•°æ®è½½è·ï¼ˆæ¨¡æ‹Ÿè¯»å–çš„å†…å®¹ï¼‰
+//        tkeep_reg <= 8'hff;       // 8å­—èŠ‚å…¨æœ‰æ•ˆï¼ˆ64bitæ€»çº¿ï¼‰
 //    end
 //end
 
-//// -------------------------- ²½Öè5£º¶Ë¿ÚĞÅºÅ¸³Öµ --------------------------
-//// ½ÓÊÕ¶Ë¿Ú£ºÊ¼ÖÕ×¼±¸¾ÍĞ÷£¨¿É¸ù¾İÊµ¼Ê³¡¾°µ÷Õû£©
+//// -------------------------- æ­¥éª¤5ï¼šç«¯å£ä¿¡å·èµ‹å€¼ --------------------------
+//// æ¥æ”¶ç«¯å£ï¼šå§‹ç»ˆå‡†å¤‡å°±ç»ªï¼ˆå¯æ ¹æ®å®é™…åœºæ™¯è°ƒæ•´ï¼‰
 //assign s_axis_iorx_tready = 1'b1;
 
-//// ·¢ËÍ¶Ë¿Ú£¨iotxºËĞÄ£©£º°ó¶¨¼Ä´æÆ÷Êä³ö
+//// å‘é€ç«¯å£ï¼ˆiotxæ ¸å¿ƒï¼‰ï¼šç»‘å®šå¯„å­˜å™¨è¾“å‡º
 //assign m_axis_iotx_tvalid = tvalid_reg;
 //assign m_axis_iotx_tlast  = tlast_reg;
 //assign m_axis_iotx_tdata  = tdata_reg;

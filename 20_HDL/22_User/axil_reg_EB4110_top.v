@@ -1,4 +1,11 @@
-`timescale 1ns / 1ps
+﻿`timescale 1ns / 1ps
+// ============================================================================
+// 维护注释
+//   文件职责      : 板级 AXI-Lite 寄存器组，负责控制与状态映射。
+//   源码属性      : 手工维护源码，不要把修改同步到生成 IP 或网表。
+//   更新要求      : 当时钟、复位、接口或数据顺序假设变化时，同步更新注释。
+//   维护边界      : 注释用于说明当前实现意图，不替代接口协议文档。
+// ============================================================================
 `timescale 1ns/1ns
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Company			: ZHTY				
@@ -29,16 +36,14 @@
 
 
 module axil_reg_EB4110_top # (
-	// 新代码
-	parameter 		P_words_w             		= 8          								,	//可写的words个数   
-	parameter 		P_words_r             		= 8          								,	//可读的words个数	
-	// 旧代码
-	// parameter 		P_words_w             		= 7          								,	//可写的words个数   
-	// parameter 		P_words_r             		= 7          								,	//可读的words个数	
+	// 閺傞鍞惍?	parameter 		P_words_w             		= 8          								,	//閸欘垰鍟撻惃鍓媜rds娑擃亝鏆?  
+	parameter 		P_words_r             		= 8          								,	//閸欘垵顕伴惃鍓媜rds娑擃亝鏆?
+	// 閺冄傚敩閻?	// parameter 		P_words_w             		= 7          								,	//閸欘垰鍟撻惃鍓媜rds娑擃亝鏆?  
+	// parameter 		P_words_r             		= 7          								,	//閸欘垵顕伴惃鍓媜rds娑擃亝鏆?
 	parameter		base_addr					= 32'h10060000								
 )(
 //=======================================================================
-//--输入输出端口定义---------------------------
+//--鏉堟挸鍙嗘潏鎾冲毉缁旑垰褰涚€规矮绠?--------------------------
 	/*-------------------------------------------------------------------
 	--Common Interface
 	-------------------------------------------------------------------*/
@@ -46,11 +51,11 @@ module axil_reg_EB4110_top # (
 	input										rst								,	
 	
 //==================================================================================================
-//--寄存器
+//--鐎靛嫬鐡ㄩ崳?
 	input			[P_words_r*32-1:0]			data_init								,
-	output	reg		[P_words_w*32-1:0]			data_w			= {P_words_w*32{1'b0}}	,	//	0*32+:32 地址0  1*32+:32 地址4，依次8，c\10\4……
+	output	reg		[P_words_w*32-1:0]			data_w			= {P_words_w*32{1'b0}}	,	//	0*32+:32 閸︽澘娼?  1*32+:32 閸︽澘娼?閿涘奔绶峰▎?閿涘畱\10\4閳ワ腹鈧?
 //=======================================================================
-//--AXI Lite寄存器定义
+//--AXI Lite鐎靛嫬鐡ㄩ崳銊ョ暰娑?
 	/*-------------------------------------------------------------------
 	--Write Data Command Signals
 	-------------------------------------------------------------------*/
@@ -98,21 +103,19 @@ module axil_reg_EB4110_top # (
 	output	reg		[31:0]						srio_v_sid_did	= 'b0					,
 	output	reg									srio_v_sel_x1	= 'b0					,
 
-   	output 	reg	    [11:00]						device_temp        							,	//DDR温度接口
+   	output 	reg	    [11:00]						device_temp        							,	//DDR濞撯晛瀹抽幒銉ュ經
 
 	output	reg									ps_video_en									,
-	// 新代码
-	output	reg		[7:0]						ps_frame_ctr								,
+	// 閺傞鍞惍?	output	reg		[7:0]						ps_frame_ctr								,
 	output	reg		[31:0]						video_algo_ctrl
-	// 旧代码
-	// output	reg		[7:0]						ps_frame_ctr								
+	// 閺冄傚敩閻?	// output	reg		[7:0]						ps_frame_ctr								
   	
 	);
 
 //=======================================================================
 //--Parameter Define
 	/*-------------------------------------------------------------------
-	--AXI Lite寄存器配置偏移量
+	--AXI Lite鐎靛嫬鐡ㄩ崳銊╁帳缂冾喖浜哥粔濠氬櫤
 	-------------------------------------------------------------------*/
 	localparam		VERSION				= 32'h20221122					;
 	
@@ -125,14 +128,14 @@ module axil_reg_EB4110_top # (
     reg									lite_aw_valid		= 0			;
     reg             				   	lite_w_valid        = 0        	;
 	/*-------------------------------------------------------------------
-	--系统版本和复使
+	--缁崵绮洪悧鍫熸拱閸滃苯顦叉担?
 	-------------------------------------------------------------------*/
 	wire			waddr_hit					= lite_axi_awaddr_r[31:16]==base_addr[31:16]	;
 	
     	
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
-			data_w							    <= data_init					;	//初始化值
+			data_w							    <= data_init					;	//閸掓繂顫愰崠鏍р偓?
 		end else if(lite_aw_valid && lite_w_valid &&waddr_hit) begin
 				data_w[lite_axi_awaddr_r[15:2]*32 +: 32]<= sys_axi_wdata[31:0] 			;
 		end else begin
@@ -146,7 +149,7 @@ module axil_reg_EB4110_top # (
 	assign			data_r [0*32+:32]			= srio_v_sid_did						;
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
-			srio_v_sid_did						<= 32'h0051_0061						;	//初始化值
+			srio_v_sid_did						<= 32'h0051_0061						;	//閸掓繂顫愰崠鏍р偓?
 		end else if(lite_aw_valid && lite_w_valid &&waddr_hit&&lite_axi_awaddr_r[15:00]==0) begin
 			srio_v_sid_did						<= sys_axi_wdata[31:0] 					;
 		end else begin
@@ -157,7 +160,7 @@ module axil_reg_EB4110_top # (
 	assign			data_r [1*32+:32]			= srio_v_sel_x1							;
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
-			srio_v_sel_x1						<= 1'b0									;	//初始化值
+			srio_v_sel_x1						<= 1'b0									;	//閸掓繂顫愰崠鏍р偓?
 		end else if(lite_aw_valid && lite_w_valid &&waddr_hit&&lite_axi_awaddr_r[15:00]==4) begin
 			srio_v_sel_x1						<= sys_axi_wdata[0] 					;
 		end else begin
@@ -169,7 +172,7 @@ module axil_reg_EB4110_top # (
 
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
-			ps_video_en						<= 1'b1									;	//初始化值
+			ps_video_en						<= 1'b1									;	//閸掓繂顫愰崠鏍р偓?
 		end else if(lite_aw_valid && lite_w_valid &&waddr_hit&&lite_axi_awaddr_r[15:00]==8) begin
 			ps_video_en						<= sys_axi_wdata[0] 					;
 		end else begin
@@ -181,7 +184,7 @@ module axil_reg_EB4110_top # (
 	assign			data_r [3*32+:32]			= ps_frame_ctr						;
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
-			ps_frame_ctr						<= 32'h0000_0004						;	//初始化值
+			ps_frame_ctr						<= 32'h0000_0004						;	//閸掓繂顫愰崠鏍р偓?
 		end else if(lite_aw_valid && lite_w_valid &&waddr_hit&&lite_axi_awaddr_r[15:00]==16'h000c) begin
 			ps_frame_ctr						<= sys_axi_wdata[31:0] 				;
 		end else begin
@@ -192,7 +195,7 @@ module axil_reg_EB4110_top # (
 	assign			data_r [4*32+:32]			= device_temp						;
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
-			device_temp						<= 32'h0000_0000						;	//初始化值
+			device_temp						<= 32'h0000_0000						;	//閸掓繂顫愰崠鏍р偓?
 		end else if(lite_aw_valid && lite_w_valid &&waddr_hit&&lite_axi_awaddr_r[15:00]==16'h0010) begin
 			device_temp						<= sys_axi_wdata[31:0] 					;
 		end else begin
@@ -200,11 +203,10 @@ module axil_reg_EB4110_top # (
 		end
 	end			
 	
-	// 新代码
-	assign			data_r [5*32+:32]			= video_algo_ctrl						;
+	// 閺傞鍞惍?	assign			data_r [5*32+:32]			= video_algo_ctrl						;
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
-			video_algo_ctrl					<= 32'h0000_0007						;	// 默认开启算法与演示
+			video_algo_ctrl					<= 32'h0000_0007						;	// 姒涙顓诲鈧崥顖滅暬濞夋洑绗屽鏃傘仛
 		end else if(lite_aw_valid && lite_w_valid &&waddr_hit&&lite_axi_awaddr_r[15:00]==16'h0014) begin
 			video_algo_ctrl					<= sys_axi_wdata[31:0] 					;
 		end else begin
@@ -214,12 +216,10 @@ module axil_reg_EB4110_top # (
 
 	assign			data_r [6*32+:32]			= D0_18b20								;
 	assign			data_r [7*32+:32]			= D1_18b20								;
-	// 旧代码
-	// assign			data_r [5*32+:32]			= D0_18b20						;
+	// 閺冄傚敩閻?	// assign			data_r [5*32+:32]			= D0_18b20						;
 	// assign			data_r [6*32+:32]			= D1_18b20						;
 	/*-------------------------------------------------------------------
-	--其它信号处理
-	-------------------------------------------------------------------*/
+	--閸忚泛鐣犳穱鈥冲娇婢跺嫮鎮?	-------------------------------------------------------------------*/
 
 	assign	sys_axi_awready				= 1'b1							;
 	assign	sys_axi_wready				= 1'b1							;
@@ -287,7 +287,7 @@ module axil_reg_EB4110_top # (
 	end
 		
 //==================================================================================================
-//--寄存器读实现
+//--鐎靛嫬鐡ㄩ崳銊嚢鐎圭偟骞?
  	wire			raddr_hit			= sys_axi_araddr[31:16]==base_addr[31:16]	;
 
 	

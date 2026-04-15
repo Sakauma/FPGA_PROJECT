@@ -1,4 +1,11 @@
-`timescale 1ns / 1ps
+﻿`timescale 1ns / 1ps
+// ============================================================================
+// 维护注释
+//   文件职责      : 系统顶层集成文件，负责连接 PS、SRIO 视频、DDR3、RS422、DMA 与板级 IO。
+//   源码属性      : 手工维护源码，不要把修改同步到生成 IP 或网表。
+//   更新要求      : 当时钟、复位、接口或数据顺序假设变化时，同步更新注释。
+//   维护边界      : 注释用于说明当前实现意图，不替代接口协议文档。
+// ============================================================================
 //////////////////////////////////////////////////////////////////////////////////
 // Company:		XJKJ
 // Engineer:	ZYL
@@ -19,18 +26,18 @@
 // Additional Comments:
 // Additional Cominit_ments:
 /*
-锟斤拷锟斤拷[Common 17-576] 'use_project_ipc' is deprecated. This option is deprecated and no longer used.
-  取锟斤拷锟斤拷锟较撅拷锟芥，锟斤拷锟斤拷锟斤拷锟斤拷一锟叫碉拷tcl锟斤拷锟筋，锟斤拷锟斤拷锟铰憋拷锟斤拷IP锟斤拷也锟斤拷锟斤拷选锟斤拷锟斤拷碌锟絍IVADO2020.2锟斤拷锟较版本
+闁跨喐鏋婚幏鐑芥晸閺傘倖瀚筟Common 17-576] 'use_project_ipc' is deprecated. This option is deprecated and no longer used.
+  閸欐牠鏁撻弬銈嗗闁跨喐鏋婚幏鐑芥晸鏉堝啯鎷濋幏鐑芥晸閼恒儻绱濋柨鐔告灮閹风兘鏁撻弬銈嗗闁跨喐鏋婚幏鐑芥晸閺傘倖瀚规稉鈧柨鐔峰建绾板瀚箃cl闁跨喐鏋婚幏鐑芥晸缁涘绱濋柨鐔告灮閹风兘鏁撻弬銈嗗闁跨喖鎽幉瀣闁跨喐鏋婚幏绋㏄闁跨喐鏋婚幏铚傜瘍闁跨喐鏋婚幏鐑芥晸閺傘倖瀚归柅澶愭晸閺傘倖瀚归柨鐔告灮閹烽顣遍柨鐔虹ザIVADO2020.2闁跨喐鏋婚幏鐑芥晸鏉堝啰澧楅張?
   set_msg_config -id {[Common 17-576]} -limit 0
 
  source C:/JFM_Kits/ip_patch/run.tcl
  add_hook_tcl_to_prj
  pre_synthesis_patch
  
- 锟斤拷锟斤拷
+ 闁跨喐鏋婚幏鐑芥晸閺傘倖瀚?
  Not OOC IPs: MY_MEM_mig_7series_0_0 zynq_processing_system7_0_0 zynq_xadc_wiz_1_0
 sourcing script D:/SRIO_ZL/EB4110_PRJ/EB4110_FPGA_20260410_2/10_PRJ/ip_patch/synthesis_pre.tcl failed
-锟斤拷要锟斤拷reset_project
+闁跨喐鏋婚幏鐤洣闁跨喐鏋婚幏绌渆set_project
    
 */
 //////////////////////////////////////////////////////////////////////////////////
@@ -122,7 +129,7 @@ module EB4110_10V10_TOP	#(
 
 	input										VP											,
 	input										VN                                          ,
-//锟斤拷频srio
+//闁跨喐鏋婚幏鐑筋暥srio
 //	input										sys_clk_n									,
 //	input										sys_clk_p									,
 	
@@ -134,19 +141,19 @@ module EB4110_10V10_TOP	#(
 	output			[4-1:0]						video_srio_txn0								,
 	output			[4-1:0]						video_srio_txp0								,
 
-    inout   		[63:0]     					ddr3_dq             						,   //ddr3 锟斤拷锟斤拷
-    inout   		[7:0]      					ddr3_dqs_n          						,   //ddr3 dqs锟斤拷
-    inout   		[7:0]      					ddr3_dqs_p          						,   //ddr3 dqs锟斤拷  
-	output			[14:0]						ddr3_addr									,	//ddr3 锟斤拷址   
-	output			[2:0]						ddr3_ba										,	//ddr3 banck 选锟斤拷
-	output										ddr3_ras_n									,	//ddr3 锟斤拷选锟斤拷
-	output										ddr3_cas_n									,	//ddr3 锟斤拷选锟斤拷
-	output										ddr3_we_n									,	//ddr3 锟斤拷写选锟斤拷
-	output										ddr3_reset_n								,	//ddr3 锟斤拷位
-	output			[0:0]						ddr3_ck_p									,	//ddr3 时锟斤拷锟斤拷
-	output			[0:0]						ddr3_ck_n									,	//ddr3 时锟接革拷
-	output			[0:0]						ddr3_cke									,	//ddr3 时锟斤拷使锟斤拷
-	output			[0:0]						ddr3_cs_n									,	//ddr3 片选
+    inout   		[63:0]     					ddr3_dq             						,   //ddr3 闁跨喐鏋婚幏鐑芥晸閺傘倖瀚?
+    inout   		[7:0]      					ddr3_dqs_n          						,   //ddr3 dqs闁跨喐鏋婚幏?
+    inout   		[7:0]      					ddr3_dqs_p          						,   //ddr3 dqs闁跨喐鏋婚幏? 
+	output			[14:0]						ddr3_addr									,	//ddr3 闁跨喐鏋婚幏宄版絻   
+	output			[2:0]						ddr3_ba										,	//ddr3 banck 闁鏁撻弬銈嗗
+	output										ddr3_ras_n									,	//ddr3 闁跨喐鏋婚幏鐑解偓澶愭晸閺傘倖瀚?
+	output										ddr3_cas_n									,	//ddr3 闁跨喐鏋婚幏鐑解偓澶愭晸閺傘倖瀚?
+	output										ddr3_we_n									,	//ddr3 闁跨喐鏋婚幏宄板晸闁鏁撻弬銈嗗
+	output										ddr3_reset_n								,	//ddr3 闁跨喐鏋婚幏铚傜秴
+	output			[0:0]						ddr3_ck_p									,	//ddr3 閺冨爼鏁撻弬銈嗗闁跨喐鏋婚幏?
+	output			[0:0]						ddr3_ck_n									,	//ddr3 閺冨爼鏁撻幒銉╂交閹?
+	output			[0:0]						ddr3_cke									,	//ddr3 閺冨爼鏁撻弬銈嗗娴ｅ潡鏁撻弬銈嗗
+	output			[0:0]						ddr3_cs_n									,	//ddr3 閻楀洭鈧?
 	output			[7:0]						ddr3_dm										,	//ddr3_dm
 	output			[0:0]						ddr3_odt										//,    //ddr3_odt    
 	);                                       
@@ -163,8 +170,7 @@ module EB4110_10V10_TOP	#(
     
 	wire										ps_video_en									;	
 	wire			[7:0]						ps_frame_ctr								;	
-	// 新代码
-	wire			[31:0]						video_algo_ctrl								;
+	// 閺傞鍞惍?	wire			[31:0]						video_algo_ctrl								;
 	
 	wire			[31:0]						S_AXI_1_araddr								;
 	wire			[1:0]						S_AXI_1_arburst								;
@@ -242,8 +248,7 @@ wire										V_LUT_AXI_rstn								;
 	
 		.ps_video_en							( ps_video_en								),	
 		.ps_frame_ctr							( ps_frame_ctr								),	
-		// 新代码
-		.video_algo_ctrl						( video_algo_ctrl							),
+		// 閺傞鍞惍?		.video_algo_ctrl						( video_algo_ctrl							),
                                         
 		.srio_v_sid_did							( srio_v_sid_did								),	
 		.srio_v_sel_x1							( srio_v_sel_x1								),	                                        
@@ -302,7 +307,7 @@ wire										V_LUT_AXI_rstn								;
 
 
 	/*--------------------------------------------------------------------------------------
-	--SRIO通锟斤拷锟斤拷锟斤拷 AXI Stream锟接匡拷
+	--SRIO闁岸鏁撻弬銈嗗闁跨喐鏋婚幏鐑芥晸閺傘倖瀚?AXI Stream闁跨喐甯撮崠鈩冨
 	--------------------------------------------------------------------------------------*/
 
 	wire			[P_SRIO_DN_NUM_R*1-1	: 0]	srio_m_axis_aclk						;
@@ -321,7 +326,7 @@ wire										V_LUT_AXI_rstn								;
     assign			srio_m_axis_aclk					= {P_SRIO_DN_NUM_R{ps_sys_clk}}				;
 
 	/*--------------------------------------------------------------------------------------
-	--SRIO通锟斤拷锟斤拷锟斤拷 AXI Stream锟接匡拷
+	--SRIO闁岸鏁撻弬銈嗗闁跨喐鏋婚幏鐑芥晸閺傘倖瀚?AXI Stream闁跨喐甯撮崠鈩冨
 	--------------------------------------------------------------------------------------*/
 
 	wire			[1*64-1:0]					loop_m_axis_tdata							;
@@ -1354,8 +1359,7 @@ wire										V_LUT_AXI_rstn								;
 	
 		.ps_video_en							( ps_video_en								),	
 		.ps_frame_ctr							( ps_frame_ctr								),	
-		// 新代码
-		.video_algo_ctrl						( video_algo_ctrl							),
+		// 閺傞鍞惍?		.video_algo_ctrl						( video_algo_ctrl							),
 		.device_temp							( device_temp								),
 		
 		.srio_v_sid_did	    					( srio_v_sid_did	    					),

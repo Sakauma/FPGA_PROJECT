@@ -1,14 +1,21 @@
+﻿// ============================================================================
+// 维护注释
+//   文件职责      : 可复用的 FIFO、复位与总线桥接基础模块。
+//   源码属性      : 手工维护源码，不要把修改同步到生成 IP 或网表。
+//   更新要求      : 当时钟、复位、接口或数据顺序假设变化时，同步更新注释。
+//   维护边界      : 注释用于说明当前实现意图，不替代接口协议文档。
+// ============================================================================
 module slb_to_axil_m #(
-    parameter           P_REQ_SEL_PLUS    = 1  ,  // ����һ�δ���һ��
+    parameter           P_REQ_SEL_PLUS    = 1  ,  // 鐢宠涓€娆¤Е鍙戜竴娆?
 
-    parameter           C_S_AXI_ADDR_WIDTH    = 32    // AXI�ٷ���׼��������
+    parameter           C_S_AXI_ADDR_WIDTH    = 32    // AXI瀹樻柟鏍囧噯鍙傛暟鍛藉悕
 ) (
-    // Global Clock & Reset (��׼����)
+    // Global Clock & Reset (鏍囧噯鍛藉悕)
     input  wire                                s_axi_aclk          ,
     input  wire                                s_axi_aresetn       ,
 
     // ==============================================
-    // Local Bus (LBE) Slave Interface ���ѱ�׼����
+    // Local Bus (LBE) Slave Interface 銆愬凡鏍囧噯鍖栥€?
     // ==============================================
     input  wire                                lbe_width_sel       ,  // 0=16bit, 1=32bit
     input  wire [C_S_AXI_ADDR_WIDTH-1:0]       lbe_addr            ,
@@ -19,7 +26,7 @@ module slb_to_axil_m #(
     output reg [31:0]                         lbe_rdata           ,
 
     // ==============================================
-    // AXI4-Lite Master Interface - �ٷ���׼����
+    // AXI4-Lite Master Interface - 瀹樻柟鏍囧噯鍛藉悕
     // ==============================================
     // Write Address Channel
     output reg [C_S_AXI_ADDR_WIDTH-1:0]        m_axi_awaddr        ,
@@ -52,7 +59,7 @@ module slb_to_axil_m #(
 );
 
 // ---------------------------
-// FSM State Definition (��׼��ʽ)
+// FSM State Definition (鏍囧噯鏍煎紡)
 // ---------------------------
 localparam [2:0]    S_IDLE          = 3'b000 ;
 localparam [2:0]    S_WR_ADDR       = 3'b001 ;
@@ -62,7 +69,7 @@ localparam [2:0]    S_RD_ADDR       = 3'b100 ;
 localparam [2:0]    S_RD_WAIT       = 3'b101 ;
 
 // ---------------------------
-// Internal Registers (�淶����)
+// Internal Registers (瑙勮寖鍛藉悕)
 // ---------------------------
 reg [2:0]                           curr_state      ;
 reg [2:0]                           next_state      ;
@@ -73,7 +80,7 @@ reg                                 req_pending     ;
 reg                                 read_data_vld   ;
 reg [1:0]                           byte_offset     ;
 
-// ����ԭlast_state�߼�����׼������
+// 淇濈暀鍘焞ast_state閫昏緫锛屾爣鍑嗗寲鍛藉悕
 reg [2:0]                           last_state      ;
 
 always @(posedge s_axi_aclk   ) begin

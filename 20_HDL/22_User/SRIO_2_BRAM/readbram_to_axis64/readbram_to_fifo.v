@@ -1,10 +1,10 @@
-ï»¿`timescale 1ns/1ns
+`timescale 1ns/1ns
 // ============================================================================
-// ç»´æŠ¤æ³¨é‡Š
-//   æ–‡ä»¶èŒè´£      : BRAM è¡Œæ•°æ®è¯»å–ä¸ AXIS æ ¼å¼åŒ–é€»è¾‘ã€‚
-//   æºç å±æ€§      : æ‰‹å·¥ç»´æŠ¤æºç ï¼Œä¸è¦æŠŠä¿®æ”¹åŒæ­¥åˆ°ç”Ÿæˆ IP æˆ–ç½‘è¡¨ã€‚
-//   æ›´æ–°è¦æ±‚      : å½“æ—¶é’Ÿã€å¤ä½ã€æ¥å£æˆ–æ•°æ®é¡ºåºå‡è®¾å˜åŒ–æ—¶ï¼ŒåŒæ­¥æ›´æ–°æ³¨é‡Šã€‚
-//   ç»´æŠ¤è¾¹ç•Œ      : æ³¨é‡Šç”¨äºè¯´æ˜å½“å‰å®ç°æ„å›¾ï¼Œä¸æ›¿ä»£æ¥å£åè®®æ–‡æ¡£ã€‚
+// ĞÂÔöÎ¬»¤ËµÃ÷
+// ÎÄ¼şÖ°Ôğ      : µ±Ç°ÎÄ¼şÎªÊÖ¹¤Î¬»¤Ô´Âë£¬³Ğµ£±¾Ä£¿é/½Å±¾µÄÕæÊµÊµÏÖ¡£
+// Î¬»¤±ß½ç      : ±¾×¢ÊÍ¿é½ö²¹³äÎ¬»¤ËµÃ÷£¬²»¸ÄĞ´ÈÎºÎÔ­ÓĞËµÃ÷¡¢ÀúÊ·×¢ÊÍ»òÏÖÓĞÂß¼­¡£
+// ĞŞ¸ÄÔ¼Êø      : ºóĞøÈçĞè¼ÌĞø²¹³äËµÃ÷£¬Ö»ÔÊĞí×·¼ÓÖĞÎÄ×¢ÊÍ£¬²»µÃÌæ»»¾É×¢ÊÍ»ò¸Ä¶¯¾É´úÂë¡£
+// Éú³É¹ØÏµ      : Èô´æÔÚ¶ÔÓ¦Éú³ÉÎï£¬Ó¦ÒÔµ±Ç°ÊÖ¹¤Ô´ÂëÎª×¼£¬½ûÖ¹·´Ïò¸²¸Ç±¾ÎÄ¼ş¡£
 // ============================================================================
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Company			: ZHTY
@@ -32,32 +32,32 @@
 //
 // Additional Comments:
 /*
-è¯»å–mifæ–‡ä»¶ï¼Œå°†æ¯è¡Œå†™å…¥fifoçš„å•ä¸ªåœ°å€ï¼Œä¸æ”¯æŒdepthä¸º1
+¶ÁÈ¡mifÎÄ¼ş£¬½«Ã¿ĞĞĞ´ÈëfifoµÄµ¥¸öµØÖ·£¬²»Ö§³ÖdepthÎª1
 */
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 module readbram_to_fifo #(
     parameter		DATA_WIDTH     				= 65        								,
     parameter		B_RAM_WIDTH     			= 16        								,
-    parameter		B_RAM_DEPTH  				= 32'h64000	  								,	// 32'h64000ï¼š200è¡Œ
-    parameter		P_LINE_DEPTH     			= 200											// bramä¸­å¯ä»¥å­˜çš„è§†é¢‘è¡Œæ•°	      	
+    parameter		B_RAM_DEPTH  				= 32'h64000	  								,	// 32'h64000£º200ĞĞ
+    parameter		P_LINE_DEPTH     			= 200											// bramÖĞ¿ÉÒÔ´æµÄÊÓÆµĞĞÊı	      	
 ) (
 	input										clk											,
 	input										rst_n										,
 //==================================================================================================
-//--è§†é¢‘bramæ¥å£--------------------------	
-    input		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_cur_w   							,	// å½“å‰bramå†™å…¥è¡Œä½ç½® 
-    input      					 				bram_line_cur_w_en   						, 	//	1 :è¡¨ç¤ºæˆåŠŸå†™å…¥ç¬¬bram_line_cur_wè¡Œæ•°æ®åœ¨bramä¸­,å¯ç”¨äºè§¦å‘çŠ¶æ€æœºå·¥ä½œ
+//--ÊÓÆµbram½Ó¿Ú--------------------------	
+    input		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_cur_w   							,	// µ±Ç°bramĞ´ÈëĞĞÎ»ÖÃ 
+    input      					 				bram_line_cur_w_en   						, 	//	1 :±íÊ¾³É¹¦Ğ´ÈëµÚbram_line_cur_wĞĞÊı¾İÔÚbramÖĞ,¿ÉÓÃÓÚ´¥·¢×´Ì¬»ú¹¤×÷
     
-	output	wire	[clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							,	// æ¯æ®µbramåœ°å€å¯¹åº”çš„è¡Œå·åœ°å€
-    input      		[12-1:0] 					bram_line_num								,	// æ¯æ®µbramåœ°å€å¯¹åº”çš„è¡Œå· , bram_line_num_addr*32'h0~bram_line_num_addr*32'h800å¯¹åº”çš„è¡Œå·,å…·ä½“åˆ—å·å¯¹åº”å½“å‰è¡Œçš„ä¸åŒåœ°å€
+	output	wire	[clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							,	// Ã¿¶ÎbramµØÖ·¶ÔÓ¦µÄĞĞºÅµØÖ·
+    input      		[12-1:0] 					bram_line_num								,	// Ã¿¶ÎbramµØÖ·¶ÔÓ¦µÄĞĞºÅ , bram_line_num_addr*32'h0~bram_line_num_addr*32'h800¶ÔÓ¦µÄĞĞºÅ,¾ßÌåÁĞºÅ¶ÔÓ¦µ±Ç°ĞĞµÄ²»Í¬µØÖ·
    
-    output		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_addrb   								,	// 16bitä½å®½çš„bramåœ°å€
+    output		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_addrb   								,	// 16bitÎ»¿íµÄbramµØÖ·
     input		  	[B_RAM_WIDTH-1:0]           bram_doutb   								,     
 
-    output 	reg 								fifo_wr_en									,   // FIFOå†™ä½¿èƒ½
-    output 	reg 	[DATA_WIDTH-1:0] 			fifo_din									, 	// FIFOæ•°æ®è¾“å…¥
-    input 	wire 								fifo_almost_full       							 // FIFOæ»¡æ ‡å¿—
+    output 	reg 								fifo_wr_en									,   // FIFOĞ´Ê¹ÄÜ
+    output 	reg 	[DATA_WIDTH-1:0] 			fifo_din									, 	// FIFOÊı¾İÊäÈë
+    input 	wire 								fifo_almost_full       							 // FIFOÂú±êÖ¾
 );
 //	data_bit16_check	check_r_wfifo(
 //		.clk									( clk								),	
@@ -68,7 +68,7 @@ module readbram_to_fifo #(
 //		.rx_en									( fifo_wr_en &&(~fifo_almost_full) ),	
 //		.rx_last								( fifo_din    [64]	));
 
-	reg											Video_pro_star		= 1'b0					;	// ä¸Šç”µåbramé¦–æ¬¡åŠæ»¡å†å¼€å§‹è§†é¢‘å¤„ç†
+	reg											Video_pro_star		= 1'b0					;	// ÉÏµçºóbramÊ×´Î°ëÂúÔÙ¿ªÊ¼ÊÓÆµ´¦Àí
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin	Video_pro_star 		<= 1'b0										;
         end else  if(bram_line_cur_w_en && bram_line_cur_w>= P_LINE_DEPTH/2	)	begin	
@@ -84,11 +84,11 @@ module readbram_to_fifo #(
         for (clogb2=0; depth>0; clogb2=clogb2+1)
             depth = depth >> 1;
     endfunction
-    // åœ°å€è®¡æ•°å™¨
+    // µØÖ·¼ÆÊıÆ÷
     reg 			[$clog2(B_RAM_DEPTH):0] 	addr_cnt									;
     reg 			[1:0] 						addr_cnt_last2								;
 
-    // ä¸»çŠ¶æ€æœºï¼šIDLEå’ŒWRITEä¸¤ç§çŠ¶æ€
+    // Ö÷×´Ì¬»ú£ºIDLEºÍWRITEÁ½ÖÖ×´Ì¬
 	localparam 									S_IDLE_M  		= 4'b0001					;
     localparam	 								S_W_HEAD_M 		= 4'b0010					;
     localparam	 								S_GET_64_M 		= 4'b0100					;
@@ -96,7 +96,7 @@ module readbram_to_fifo #(
 
     reg 			[3:0]						S_CM, S_NM	,S_LM							;
 
-    // çŠ¶æ€å¯„å­˜å™¨
+    // ×´Ì¬¼Ä´æÆ÷
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin	S_CM 				<= S_IDLE_M									;
         end else 	begin	S_CM 				<= S_NM										;
@@ -111,12 +111,12 @@ module readbram_to_fifo #(
     
     
 /*
-æ¯è¡Œ 2048ä¸ª16bit
-æ¯åŒ…	256/8=128ä¸ª16bit
+Ã¿ĞĞ 2048¸ö16bit
+Ã¿°ü	256/8=128¸ö16bit
 
-æ¯è¡Œ16åŒ…
+Ã¿ĞĞ16°ü
 */
-    reg		  		[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_star   							;	// æœ¬æ¬¡å¤„ç†çš„è¡Œèµ·å§‹ 
+    reg		  		[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_star   							;	// ±¾´Î´¦ÀíµÄĞĞÆğÊ¼ 
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin	
@@ -132,7 +132,7 @@ module readbram_to_fifo #(
         end
     end
 //
-//    reg		  		[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_star   							;	// æœ¬æ¬¡å¤„ç†çš„è¡Œèµ·å§‹ 
+//    reg		  		[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_star   							;	// ±¾´Î´¦ÀíµÄĞĞÆğÊ¼ 
 //
 ////    always @(*) begin
 ////        	if(bram_line_cur_w>= P_LINE_DEPTH/2	)begin
@@ -157,7 +157,7 @@ module readbram_to_fifo #(
 
 //	wire	[31:0]	srio_addr					= (video_line_star<<12) + (addr_cnt <<1)&32'hffff_ff00	;
 
-	wire	[31:0]	srio_addr					= {video_line_star , addr_cnt [10:7],8'h00}		;	// ç­‰æ•ˆ (video_line_star<<12) + (addr_cnt <<1)&32'hffff_ff00	
+	wire	[31:0]	srio_addr					= {video_line_star , addr_cnt [10:7],8'h00}		;	// µÈĞ§ (video_line_star<<12) + (addr_cnt <<1)&32'hffff_ff00	
 
 //	assign			bram_addrb					= (bram_line_star<<11) + addr_cnt			;
 	assign			bram_addrb					= {bram_line_star, addr_cnt	[10:0]	}	;
@@ -165,9 +165,9 @@ module readbram_to_fifo #(
 	
 	
 	reg											bram_line_cur_w_en_d1		= 'b0				;
-    always @(posedge clk ) 						bram_line_cur_w_en_d1		<=bram_line_cur_w_en;	// æ‰“ä¸€æ‹ç­‰å¾…bram_line_numå‡†å¤‡å¥½
+    always @(posedge clk ) 						bram_line_cur_w_en_d1		<=bram_line_cur_w_en;	// ´òÒ»ÅÄµÈ´ıbram_line_num×¼±¸ºÃ
 
-    // çŠ¶æ€è½¬ç§»é€»è¾‘
+    // ×´Ì¬×ªÒÆÂß¼­
     always @(*) begin
         case (S_CM)
             S_IDLE_M:
@@ -175,14 +175,14 @@ module readbram_to_fifo #(
                 else							S_NM 			= S_IDLE_M					;
             S_W_HEAD_M:
                 if ( ~fifo_almost_full)   		S_NM 			= S_GET_64_M				;
-                else 							S_NM 			= S_W_HEAD_M				; 	// ä¿æŒå½“å‰çŠ¶æ€ï¼Œç­‰å¾…FIFOæœ‰ç©ºé—´
+                else 							S_NM 			= S_W_HEAD_M				; 	// ±£³Öµ±Ç°×´Ì¬£¬µÈ´ıFIFOÓĞ¿Õ¼ä
             S_GET_64_M:
                 if (addr_cnt[1:0] == 2'h3)   	S_NM 			= S_W_DATA_M				;
                 else 							S_NM 			= S_GET_64_M				;
             S_W_DATA_M:
-                if (addr_cnt==2048 	&~fifo_almost_full)S_NM 			= S_IDLE_M					;	// æ»¡ä¸€è¡Œ
-                else if (addr_cnt[6:0]==0&~fifo_almost_full)S_NM 		= S_W_HEAD_M				;	// æ»¡ä¸€åŒ…srio
-                else if (fifo_almost_full)				S_NM 			= S_W_DATA_M				; 	// ä¿æŒå½“å‰çŠ¶æ€ï¼Œç­‰å¾…FIFOæœ‰ç©ºé—´
+                if (addr_cnt==2048 	&~fifo_almost_full)S_NM 			= S_IDLE_M					;	// ÂúÒ»ĞĞ
+                else if (addr_cnt[6:0]==0&~fifo_almost_full)S_NM 		= S_W_HEAD_M				;	// ÂúÒ»°üsrio
+                else if (fifo_almost_full)				S_NM 			= S_W_DATA_M				; 	// ±£³Öµ±Ç°×´Ì¬£¬µÈ´ıFIFOÓĞ¿Õ¼ä
                 else 							S_NM 			= S_GET_64_M				;
 
             default:							S_NM 			= S_IDLE_M					;
@@ -205,7 +205,7 @@ module readbram_to_fifo #(
                 end
                 S_W_HEAD_M: begin
                 	if (fifo_almost_full) begin	
-                        fifo_wr_en 				<= fifo_wr_en								; 	// FIFOæ»¡æ—¶æš‚åœå†™å…¥
+                        fifo_wr_en 				<= fifo_wr_en								; 	// FIFOÂúÊ±ÔİÍ£Ğ´Èë
                         addr_cnt 				<= addr_cnt									;
             			addr_cnt_last2 			<= addr_cnt_last2							;
                     end else begin
@@ -216,7 +216,7 @@ module readbram_to_fifo #(
                         fifo_din 				<= {1'b0,32'h0060_2000,srio_addr} 			;
                 end
             	S_GET_64_M:begin
-                        fifo_wr_en 				<= 	1'b0									; 	// FIFOæœªæ»¡æ—¶å†™å…¥æ•°æ®
+                        fifo_wr_en 				<= 	1'b0									; 	// FIFOÎ´ÂúÊ±Ğ´ÈëÊı¾İ
                         addr_cnt 				<= addr_cnt + 1'b1							;
             			addr_cnt_last2 			<= addr_cnt[1:0]							;
                         fifo_din  [(addr_cnt_last2[1:0])*16+:16]<= bram_doutb				;
@@ -225,10 +225,10 @@ module readbram_to_fifo #(
                     if (fifo_almost_full ) begin		//| addr_cnt == 2048
                         addr_cnt 				<= addr_cnt									;
             			addr_cnt_last2 			<= addr_cnt_last2							;
-                        fifo_wr_en 				<= fifo_wr_en								; 	// FIFOæ»¡æ—¶æš‚åœå†™å…¥
+                        fifo_wr_en 				<= fifo_wr_en								; 	// FIFOÂúÊ±ÔİÍ£Ğ´Èë
                     end else begin
-                        fifo_wr_en 				<= fifo_almost_full   ? 1'b0		:	1'b1; 	// FIFOæœªæ»¡æ—¶å†™å…¥æ•°æ®
-                        addr_cnt 				<= fifo_almost_full || S_NM==S_W_HEAD_M  ? addr_cnt	:	addr_cnt + 1'b1;	//  æ­¤å¤„æ ¹æ®éœ€è¦ä¿®æ”¹è·³è½¬èŒƒå›´
+                        fifo_wr_en 				<= fifo_almost_full   ? 1'b0		:	1'b1; 	// FIFOÎ´ÂúÊ±Ğ´ÈëÊı¾İ
+                        addr_cnt 				<= fifo_almost_full || S_NM==S_W_HEAD_M  ? addr_cnt	:	addr_cnt + 1'b1;	//  ´Ë´¦¸ù¾İĞèÒªĞŞ¸ÄÌø×ª·¶Î§
             			addr_cnt_last2 			<= addr_cnt[1:0]							;
                     end 
                     
@@ -243,12 +243,12 @@ module readbram_to_fifo #(
     end
 
 
-//	wire	[11:0]	video_line_star_pre3 		= bram_line_num[(bram_line_star-3)*12+:12]		;	// é€šè¿‡DEBUGå‘ç°ï¼Œè¯¥ä¿¡å·åœ¨1ä¸ªæ—¶é’Ÿå‘¨æœŸæ— æ³•å‡†å¤‡å¥½
-//	wire	[11:0]	video_line_star_pre2 		= bram_line_num[(bram_line_star-2)*12+:12]		;	// é€šè¿‡DEBUGå‘ç°ï¼Œè¯¥ä¿¡å·åœ¨1ä¸ªæ—¶é’Ÿå‘¨æœŸæ— æ³•å‡†å¤‡å¥½
-//	wire	[11:0]	video_line_star_pre1 		= bram_line_num[(bram_line_star-1)*12+:12]		;	// é€šè¿‡DEBUGå‘ç°ï¼Œè¯¥ä¿¡å·åœ¨1ä¸ªæ—¶é’Ÿå‘¨æœŸæ— æ³•å‡†å¤‡å¥½
+//	wire	[11:0]	video_line_star_pre3 		= bram_line_num[(bram_line_star-3)*12+:12]		;	// Í¨¹ıDEBUG·¢ÏÖ£¬¸ÃĞÅºÅÔÚ1¸öÊ±ÖÓÖÜÆÚÎŞ·¨×¼±¸ºÃ
+//	wire	[11:0]	video_line_star_pre2 		= bram_line_num[(bram_line_star-2)*12+:12]		;	// Í¨¹ıDEBUG·¢ÏÖ£¬¸ÃĞÅºÅÔÚ1¸öÊ±ÖÓÖÜÆÚÎŞ·¨×¼±¸ºÃ
+//	wire	[11:0]	video_line_star_pre1 		= bram_line_num[(bram_line_star-1)*12+:12]		;	// Í¨¹ıDEBUG·¢ÏÖ£¬¸ÃĞÅºÅÔÚ1¸öÊ±ÖÓÖÜÆÚÎŞ·¨×¼±¸ºÃ
 //
-//	wire	[11:0]	video_line_star_n1 	    		= bram_line_num[(bram_line_star+1)*12+:12]		;	// é€šè¿‡DEBUGå‘ç°ï¼Œè¯¥ä¿¡å·åœ¨1ä¸ªæ—¶é’Ÿå‘¨æœŸæ— æ³•å‡†å¤‡å¥½
-//	wire	[11:0]	video_line_star_n2 	    		= bram_line_num[(bram_line_star+2)*12+:12]		;	// é€šè¿‡DEBUGå‘ç°ï¼Œè¯¥ä¿¡å·åœ¨1ä¸ªæ—¶é’Ÿå‘¨æœŸæ— æ³•å‡†å¤‡å¥½
+//	wire	[11:0]	video_line_star_n1 	    		= bram_line_num[(bram_line_star+1)*12+:12]		;	// Í¨¹ıDEBUG·¢ÏÖ£¬¸ÃĞÅºÅÔÚ1¸öÊ±ÖÓÖÜÆÚÎŞ·¨×¼±¸ºÃ
+//	wire	[11:0]	video_line_star_n2 	    		= bram_line_num[(bram_line_star+2)*12+:12]		;	// Í¨¹ıDEBUG·¢ÏÖ£¬¸ÃĞÅºÅÔÚ1¸öÊ±ÖÓÖÜÆÚÎŞ·¨×¼±¸ºÃ
 
 
 
@@ -265,14 +265,14 @@ module readbram_to_fifo #(
 
 
 		
-//    bram_line_cur_w   							,	// å½“å‰bramå†™å…¥è¡Œä½ç½® 
-//    bram_line_cur_w_en   						, 	//	1 :è¡¨ç¤ºæˆåŠŸå†™å…¥ç¬¬bram_line_cur_wè¡Œæ•°æ®åœ¨bramä¸­
-//    bram_addrb   								,	// 16bitä½å®½çš„bramåœ°å€
+//    bram_line_cur_w   							,	// µ±Ç°bramĞ´ÈëĞĞÎ»ÖÃ 
+//    bram_line_cur_w_en   						, 	//	1 :±íÊ¾³É¹¦Ğ´ÈëµÚbram_line_cur_wĞĞÊı¾İÔÚbramÖĞ
+//    bram_addrb   								,	// 16bitÎ»¿íµÄbramµØÖ·
 //    bram_doutb   								,     
 
-//    fifo_wr_en									,   // FIFOå†™ä½¿èƒ½
-//    fifo_din									, 	// FIFOæ•°æ®è¾“å…¥
-//    fifo_almost_full       							,    // FIFOæ»¡æ ‡å¿—
+//    fifo_wr_en									,   // FIFOĞ´Ê¹ÄÜ
+//    fifo_din									, 	// FIFOÊı¾İÊäÈë
+//    fifo_almost_full       							,    // FIFOÂú±êÖ¾
     
 //    S_CM,
     

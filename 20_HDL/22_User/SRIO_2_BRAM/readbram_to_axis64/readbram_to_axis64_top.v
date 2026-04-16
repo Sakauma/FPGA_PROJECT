@@ -1,10 +1,10 @@
-ï»¿`timescale 1ns/1ns
+`timescale 1ns/1ns
 // ============================================================================
-// ç»´æŠ¤æ³¨é‡Š
-//   æ–‡ä»¶èŒè´£      : BRAM è¡Œæ•°æ®è¯»å–ä¸ AXIS æ ¼å¼åŒ–é€»è¾‘ã€‚
-//   æºç å±æ€§      : æ‰‹å·¥ç»´æŠ¤æºç ï¼Œä¸è¦æŠŠä¿®æ”¹åŒæ­¥åˆ°ç”Ÿæˆ IP æˆ–ç½‘è¡¨ã€‚
-//   æ›´æ–°è¦æ±‚      : å½“æ—¶é’Ÿã€å¤ä½ã€æ¥å£æˆ–æ•°æ®é¡ºåºå‡è®¾å˜åŒ–æ—¶ï¼ŒåŒæ­¥æ›´æ–°æ³¨é‡Šã€‚
-//   ç»´æŠ¤è¾¹ç•Œ      : æ³¨é‡Šç”¨äºè¯´æ˜å½“å‰å®ç°æ„å›¾ï¼Œä¸æ›¿ä»£æ¥å£åè®®æ–‡æ¡£ã€‚
+// ĞÂÔöÎ¬»¤ËµÃ÷
+// ÎÄ¼şÖ°Ôğ      : µ±Ç°ÎÄ¼şÎªÊÖ¹¤Î¬»¤Ô´Âë£¬³Ğµ£±¾Ä£¿é/½Å±¾µÄÕæÊµÊµÏÖ¡£
+// Î¬»¤±ß½ç      : ±¾×¢ÊÍ¿é½ö²¹³äÎ¬»¤ËµÃ÷£¬²»¸ÄĞ´ÈÎºÎÔ­ÓĞËµÃ÷¡¢ÀúÊ·×¢ÊÍ»òÏÖÓĞÂß¼­¡£
+// ĞŞ¸ÄÔ¼Êø      : ºóĞøÈçĞè¼ÌĞø²¹³äËµÃ÷£¬Ö»ÔÊĞí×·¼ÓÖĞÎÄ×¢ÊÍ£¬²»µÃÌæ»»¾É×¢ÊÍ»ò¸Ä¶¯¾É´úÂë¡£
+// Éú³É¹ØÏµ      : Èô´æÔÚ¶ÔÓ¦Éú³ÉÎï£¬Ó¦ÒÔµ±Ç°ÊÖ¹¤Ô´ÂëÎª×¼£¬½ûÖ¹·´Ïò¸²¸Ç±¾ÎÄ¼ş¡£
 // ============================================================================
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Company			: ZHTY				
@@ -33,26 +33,26 @@
 // Additional Comments:												
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
-å¦‚æœéœ€è¦åŠ é€Ÿè€ƒè™‘æ›´æ¢åŒæ­¥fifo
+Èç¹ûĞèÒª¼ÓËÙ¿¼ÂÇ¸ü»»Í¬²½fifo
 */
 module readbram_to_axis64_top  #(
     parameter		P_D_WIDTH     				= 65        								,
 
     parameter		B_RAM_WIDTH     			= 16        								,
-    parameter		B_RAM_DEPTH  				= 32'h64000	  								,	// 32'h64000ï¼š200è¡Œ
-    parameter		P_LINE_DEPTH     			= 200											// bramä¸­å¯ä»¥å­˜çš„è§†é¢‘è¡Œæ•°	      	
+    parameter		B_RAM_DEPTH  				= 32'h64000	  								,	// 32'h64000£º200ĞĞ
+    parameter		P_LINE_DEPTH     			= 200											// bramÖĞ¿ÉÒÔ´æµÄÊÓÆµĞĞÊı	      	
 ) (
 	input										bram_clk										,
 	input										bram_rstn										,
 //==================================================================================================
-//--è§†é¢‘bramæ¥å£--------------------------	
-    input		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_cur_w   							,	// å½“å‰bramå†™å…¥è¡Œä½ç½® 
-    input      					 				bram_line_cur_w_en   						, 	//	1 :è¡¨ç¤ºæˆåŠŸå†™å…¥ç¬¬bram_line_cur_wè¡Œæ•°æ®åœ¨bramä¸­
+//--ÊÓÆµbram½Ó¿Ú--------------------------	
+    input		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_cur_w   							,	// µ±Ç°bramĞ´ÈëĞĞÎ»ÖÃ 
+    input      					 				bram_line_cur_w_en   						, 	//	1 :±íÊ¾³É¹¦Ğ´ÈëµÚbram_line_cur_wĞĞÊı¾İÔÚbramÖĞ
     
-	output	wire	[clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							,	// æ¯æ®µbramåœ°å€å¯¹åº”çš„è¡Œå·åœ°å€
-    input      		[12-1:0] 					bram_line_num								,	// æ¯æ®µbramåœ°å€å¯¹åº”çš„è¡Œå· , bram_line_num_addr*32'h0~bram_line_num_addr*32'h800å¯¹åº”çš„è¡Œå·,å…·ä½“åˆ—å·å¯¹åº”å½“å‰è¡Œçš„ä¸åŒåœ°å€
+	output	wire	[clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							,	// Ã¿¶ÎbramµØÖ·¶ÔÓ¦µÄĞĞºÅµØÖ·
+    input      		[12-1:0] 					bram_line_num								,	// Ã¿¶ÎbramµØÖ·¶ÔÓ¦µÄĞĞºÅ , bram_line_num_addr*32'h0~bram_line_num_addr*32'h800¶ÔÓ¦µÄĞĞºÅ,¾ßÌåÁĞºÅ¶ÔÓ¦µ±Ç°ĞĞµÄ²»Í¬µØÖ·
    
-        output		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_addrb   								,	// 16bitä½å®½çš„bramåœ°å€
+        output		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_addrb   								,	// 16bitÎ»¿íµÄbramµØÖ·
     input		  	[B_RAM_WIDTH-1:0]           bram_doutb   								,     
 //==================================================================================================
 	/*******************axi_stream************/
@@ -69,9 +69,9 @@ module readbram_to_axis64_top  #(
         for (clogb2=0; depth>0; clogb2=clogb2+1)
             depth = depth >> 1;
     endfunction
-    wire 										fifo_wr_en									;   // FIFOå†™ä½¿èƒ½
-    wire 			[P_D_WIDTH-1:0] 			fifo_din									; 	// FIFOæ•°æ®è¾“å…¥
-    wire 										fifo_almost_full       						;   // FIFOæ»¡æ ‡å¿—
+    wire 										fifo_wr_en									;   // FIFOĞ´Ê¹ÄÜ
+    wire 			[P_D_WIDTH-1:0] 			fifo_din									; 	// FIFOÊı¾İÊäÈë
+    wire 										fifo_almost_full       						;   // FIFOÂú±êÖ¾
 
 	wire 										fifo_ren									;
 	wire			[P_D_WIDTH-1:0] 			fifo_rdata									;
@@ -101,7 +101,7 @@ module readbram_to_axis64_top  #(
 
     async_fifo#(
         .AF                 					( 1                 						),
-        .DATA_BITS          					( P_D_WIDTH                 				),    //ä½†é‡‡ç”¨ipæ ¸æ—¶æ³¨æ„åŒæ­¥æ›´æ–°
+        .DATA_BITS          					( P_D_WIDTH                 				),    //µ«²ÉÓÃipºËÊ±×¢ÒâÍ¬²½¸üĞÂ
         .DEPTH_BITS         					( 4                 						),
         .SHOW_AHEAD         					( 1                 						),
         .RAM_STYLE          					( "distributed"    						)
@@ -152,7 +152,7 @@ module readbram_to_axis64_top  #(
 
 
 		
-//    m_axis_tready   							,	// å½“å‰bramå†™å…¥è¡Œä½ç½® 
+//    m_axis_tready   							,	// µ±Ç°bramĞ´ÈëĞĞÎ»ÖÃ 
 //    m_axis_tdata   					
 
 

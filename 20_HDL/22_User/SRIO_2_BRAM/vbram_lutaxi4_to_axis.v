@@ -1,10 +1,10 @@
-﻿`timescale 1ns/1ns
+`timescale 1ns/1ns
 // ============================================================================
-// 维护注释
-//   文件职责      : BRAM 读出转 AXIS 的打包模块，也是当前视觉预处理插入点。
-//   源码属性      : 手工维护源码，不要把修改同步到生成 IP 或网表。
-//   更新要求      : 当时钟、复位、接口或数据顺序假设变化时，同步更新注释。
-//   维护边界      : 注释用于说明当前实现意图，不替代接口协议文档。
+// ����ά��˵��
+// �ļ�ְ��      : ��ǰ�ļ�Ϊ�ֹ�ά��Դ�룬�е���ģ��/�ű�����ʵʵ�֡�
+// ά���߽�      : ��ע�Ϳ������ά��˵��������д�κ�ԭ��˵������ʷע�ͻ������߼���
+// �޸�Լ��      : ���������������˵����ֻ����׷������ע�ͣ������滻��ע�ͻ�Ķ��ɴ��롣
+// ���ɹ�ϵ      : �����ڶ�Ӧ�����Ӧ�Ե�ǰ�ֹ�Դ��Ϊ׼����ֹ���򸲸Ǳ��ļ���
 // ============================================================================
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Company			: ZHTY				
@@ -16,8 +16,8 @@
 // Target Devices	: K7-V7		        
 // Tool versions	: Vivado2020		
 // Description		: 
-//		1銆佽棰慴ram銆佹煡鎵捐〃axi4鍒皊rio鐨刟xis鐨勬帴鍙?                 
-//		2銆?琛岃棰戝崰鐢?涓猙ram鍗曞厓锛寈c7z100ffg900鎬诲叡755涓崟鍏?   
+//		1、视频bram、查找表axi4到srio的axis的接口                  
+//		2、1行视频占用1个bram单元，xc7z100ffg900总共755个单元    
 // Dependencies		: 					
 // 										
 // Top File			: 					
@@ -32,43 +32,44 @@
 //		2	: 				 	 		
 //																	
 // Additional Comments:	
-/*鎺ュ彛鎻忚堪            
+/*接口描述            
 //======================================================================================
 //  Input / Output Interface Description
 //======================================================================================
-//  Signal Name         | 鏃堕挓鍩?  			|  Description
+//  Signal Name         | 时钟域   			|  Description
 //----------------------|-------------------|--------------------------------------------
-//  bram_            	| clk     			| 瑙嗛bram缂撳瓨鎺ュ彛
-//  V_LUT_            	| clk     			| 鏌ユ壘琛ㄦ帴鍙ｏ紝axi4
-//  m_srio_             | m_srio_axis_aclk  | SRIO杈撳嚭鎺ュ彛
+//  bram_            	| clk     			| 视频bram缓存接口
+//  V_LUT_            	| clk     			| 查找表接口，axi4
+//  m_srio_             | m_srio_axis_aclk  | SRIO输出接口
 //--------------------------------------------------------------------------------------
-//	clk					:	250MHz锛?
-//	m_srio_axis_aclk	:	褰撳墠涓?2.5MHz锛岃皟閫氬悗浼氭洿鏀逛负125MHz銆?
+//	clk					:	250MHz；
+//	m_srio_axis_aclk	:	当前为62.5MHz，调通后会更改为125MHz。
 */									
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 module vbram_lutaxi4_to_axis#(
     parameter		B_RAM_WIDTH     			= 16        								,
-    parameter		B_RAM_DEPTH  				= 32'h64000	  								,	// 32'h64000锛?00琛?
-    parameter		P_LINE_DEPTH     			= 200											// bram涓彲浠ュ瓨鐨勮棰戣鏁?      		
+    parameter		B_RAM_DEPTH  				= 32'h64000	  								,	// 32'h64000：200行
+    parameter		P_LINE_DEPTH     			= 200											// bram中可以存的视频行数	      		
     )(
 //==================================================================================================
 //--Input/Output Port--------------------------
 	input										clk											,	//250M
 	input										rstn										,
-	// 鏂颁唬鐮?	input			[31:0]						video_algo_ctrl								,
+	// 新代码
+	input			[31:0]						video_algo_ctrl								,
 //==================================================================================================
-//--瑙嗛bram鎺ュ彛--------------------------	
-    input		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_cur_w   							,	// 褰撳墠bram鍐欏叆琛屼綅缃?
-    input      					 				bram_line_cur_w_en   						, 	//	1 :琛ㄧず鎴愬姛鍐欏叆绗琤ram_line_cur_w琛屾暟鎹湪bram涓?
+//--视频bram接口--------------------------	
+    input		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_cur_w   							,	// 当前bram写入行位置 
+    input      					 				bram_line_cur_w_en   						, 	//	1 :表示成功写入第bram_line_cur_w行数据在bram中
     
-	output	wire	[clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							,	// 姣忔bram鍦板潃瀵瑰簲鐨勮鍙峰湴鍧€
-    input      		[12-1:0] 					bram_line_num								,	// 姣忔bram鍦板潃瀵瑰簲鐨勮鍙?, bram_line_num_addr*32'h0~bram_line_num_addr*32'h800瀵瑰簲鐨勮鍙?鍏蜂綋鍒楀彿瀵瑰簲褰撳墠琛岀殑涓嶅悓鍦板潃
+	output	wire	[clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							,	// 每段bram地址对应的行号地址
+    input      		[12-1:0] 					bram_line_num								,	// 每段bram地址对应的行号 , bram_line_num_addr*32'h0~bram_line_num_addr*32'h800对应的行号,具体列号对应当前行的不同地址
    
-    output		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_addrb   								,	// 16bit浣嶅鐨刡ram鍦板潃
+    output		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_addrb   								,	// 16bit位宽的bram地址
     input		  	[B_RAM_WIDTH-1:0]           bram_doutb   								,     
 //===========================================================================================
-//--鍙嶅悜鏄犲皠鏌ユ壘琛紙LUT锛塂DR璇诲彇鎺ュ彛                                                         
+//--反向映射查找表（LUT）DDR读取接口                                                         
 	output	wire	[3:0]						V_LUT_AXI_ARID								,
 	output	wire	[31:0]						V_LUT_AXI_ARADDR							,
 	output	wire	[7:0]						V_LUT_AXI_ARLEN								,
@@ -87,24 +88,24 @@ module vbram_lutaxi4_to_axis#(
 	input	wire								V_LUT_AXI_RVALID							,
 	output	wire								V_LUT_AXI_RREADY							,
 //==================================================================================================
-//--杈撳嚭缁橲RIO--------------------------
+//--输出给SRIO--------------------------
 //----------------------------------------------------------------------------------
-// 鏁版嵁瀹藉害: 64bit
+// 数据宽度: 64bit
 //--------------------------------------------------------------------------------
-// 绗?鎷? axis0 (娑堟伅澶?
+// 第1拍: axis0 (消息头)
 // --------------------------------------------------------------------------------
-// |  浣嶅煙鑼冨洿   |   鍚箟璇存槑      |
+// |  位域范围   |   含义说明      |
 // |------------|----------------|
-// | bit63~bit32 | 娑堟伅绫诲瀷 (RapidIO Ttype)		:32'h00600000
-// | bit31~bit0  | 鍦板潃 (RapidIO Target Address):鍙戦€佺粰SRIO鐨勫湴鍧€瀵瑰簲棣栦釜鍍忕礌鐨勫瓧鑺傚湴鍧€
+// | bit63~bit32 | 消息类型 (RapidIO Ttype)		:32'h00600000
+// | bit31~bit0  | 地址 (RapidIO Target Address):发送给SRIO的地址对应首个像素的字节地址
 //--------------------------------------------------------------------------------
-// 绗?~65鎷嶅強浠ュ悗: (瑙嗛鏁版嵁 payload)//鍥哄畾256瀛楄妭
+// 第2~65拍及以后: (视频数据 payload)//固定256字节
 // --------------------------------------------------------------------------------
-// |  浣嶅煙鑼冨洿   |   鍚箟璇存槑      |
+// |  位域范围   |   含义说明      |
 // |------------|----------------|
-// | bit63~bit0  | 璐熻浇鏁版嵁 (Payload Data)
+// | bit63~bit0  | 负载数据 (Payload Data)
 //--------------------------------------------------------------------------------
-	input										m_srio_axis_aclk							,	// 澶栭儴SRIO涓嶅悓妯″紡锛屾椂閽熶笉鍚寈2:125M,x1_62.5M
+	input										m_srio_axis_aclk							,	// 外部SRIO不同模式，时钟不同x2:125M,x1_62.5M
 	input										m_srio_axis_rstn							,
 	output	wire	[63:0]						m_srio_axis_tdata							,
 	input										m_srio_axis_tready							,
@@ -119,7 +120,8 @@ module vbram_lutaxi4_to_axis#(
             depth = depth >> 1;
     endfunction	
 
-	// 鏂颁唬鐮?	wire			[63:0]						raw_srio_axis_tdata							;
+	// 新代码
+	wire			[63:0]						raw_srio_axis_tdata							;
 	wire										raw_srio_axis_tready						;
 	wire										raw_srio_axis_tvalid						;
 	wire										raw_srio_axis_tlast							;
@@ -163,7 +165,8 @@ module vbram_lutaxi4_to_axis#(
 		.m_axis_tlast							( m_srio_axis_tlast							)
 	);
 
-	// 鏃т唬鐮?//	readbram_to_axis64_top #(
+	// 旧代码
+//	readbram_to_axis64_top #(
 //	    .B_RAM_WIDTH        					( B_RAM_WIDTH    							),
 //	    .B_RAM_DEPTH        					( B_RAM_DEPTH      							),
 //	    .P_LINE_DEPTH        					( P_LINE_DEPTH      						)
@@ -190,5 +193,4 @@ module vbram_lutaxi4_to_axis#(
 
 
 endmodule
-
 

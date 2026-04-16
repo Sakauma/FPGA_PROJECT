@@ -1,9 +1,9 @@
-ï»¿// ============================================================================
-// ç»´æŠ¤æ³¨é‡Š
-//   æ–‡ä»¶èŒè´£      : ç»§æ‰¿è‡ª XR2000 çš„ AXI ä¾§æ‰‹å·¥ç»´æŠ¤é€»è¾‘ã€‚
-//   æºç å±æ€§      : æ‰‹å·¥ç»´æŠ¤æºç ï¼Œä¸è¦æŠŠä¿®æ”¹åŒæ­¥åˆ°ç”Ÿæˆ IP æˆ–ç½‘è¡¨ã€‚
-//   æ›´æ–°è¦æ±‚      : å½“æ—¶é’Ÿã€å¤ä½ã€æ¥å£æˆ–æ•°æ®é¡ºåºå‡è®¾å˜åŒ–æ—¶ï¼ŒåŒæ­¥æ›´æ–°æ³¨é‡Šã€‚
-//   ç»´æŠ¤è¾¹ç•Œ      : æ³¨é‡Šç”¨äºè¯´æ˜å½“å‰å®ç°æ„å›¾ï¼Œä¸æ›¿ä»£æ¥å£åè®®æ–‡æ¡£ã€‚
+// ============================================================================
+// ĞÂÔöÎ¬»¤ËµÃ÷
+// ÎÄ¼şÖ°Ôğ      : µ±Ç°ÎÄ¼şÎªÊÖ¹¤Î¬»¤Ô´Âë£¬³Ğµ£±¾Ä£¿é/½Å±¾µÄÕæÊµÊµÏÖ¡£
+// Î¬»¤±ß½ç      : ±¾×¢ÊÍ¿é½ö²¹³äÎ¬»¤ËµÃ÷£¬²»¸ÄĞ´ÈÎºÎÔ­ÓĞËµÃ÷¡¢ÀúÊ·×¢ÊÍ»òÏÖÓĞÂß¼­¡£
+// ĞŞ¸ÄÔ¼Êø      : ºóĞøÈçĞè¼ÌĞø²¹³äËµÃ÷£¬Ö»ÔÊĞí×·¼ÓÖĞÎÄ×¢ÊÍ£¬²»µÃÌæ»»¾É×¢ÊÍ»ò¸Ä¶¯¾É´úÂë¡£
+// Éú³É¹ØÏµ      : Èô´æÔÚ¶ÔÓ¦Éú³ÉÎï£¬Ó¦ÒÔµ±Ç°ÊÖ¹¤Ô´ÂëÎª×¼£¬½ûÖ¹·´Ïò¸²¸Ç±¾ÎÄ¼ş¡£
 // ============================================================================
  `timescale 1ns/1ns
 //////////////////////////////////////////////////////////////////////////////////
@@ -16,9 +16,9 @@
 // Target Devices:	K7-V7
 // Tool Versions: 	Vivado 2016.1 HDL-EDIT UltraEdit TAB=4 Consolas
 // Description:
-//		æ¨¡å—ç”¨äºç»„åˆAXI Lite Cross Bar&axi_lite_clock_conventor,åˆ†åˆ«è¾“å‡ºä¸¤ç§æ—¶é’Ÿä¸‹çš„å¯„å­˜å™¨æ€»çº¿
-//		1-->PCIe Clockæ¨¡å—çš„æ—¶é’Ÿ
-//		2-->Srio_log_clkæ¨¡å—çš„æ—¶é’Ÿ
+//		Ä£¿éÓÃÓÚ×éºÏAXI Lite Cross Bar&axi_lite_clock_conventor,·Ö±ğÊä³öÁ½ÖÖÊ±ÖÓÏÂµÄ¼Ä´æÆ÷×ÜÏß
+//		1-->PCIe ClockÄ£¿éµÄÊ±ÖÓ
+//		2-->Srio_log_clkÄ£¿éµÄÊ±ÖÓ
 // Dependencies:
 //
 // Revision:
@@ -32,11 +32,11 @@ module xr2000_axilite_top #(
 	parameter		P_AXILITE_CH_NUM_R			= 3
 	)(
 //==================================================================================================
-//--è¾“å…¥è¾“å‡ºç«¯å£å®šä¹‰---------------------------
+//--ÊäÈëÊä³ö¶Ë¿Ú¶¨Òå---------------------------
 	/*--------------------------------------------------------------------------------------
 	--Common Interface
-	--|clk-->å¯ä»¥è¿æ¥master clkï¼Œä¹Ÿå¯ä»¥è¿æ¥å¤–éƒ¨æ—¶é’Ÿï¼Œè¿›è¡Œå¿«é€ŸæŸ¥è¯¢å¤„ç†
-	--|rst-->å¤ä½ä¿¡å·ï¼Œé«˜ç”µå¹³åŒæ­¥å¤ä½ä¿¡å·
+	--|clk-->¿ÉÒÔÁ¬½Ómaster clk£¬Ò²¿ÉÒÔÁ¬½ÓÍâ²¿Ê±ÖÓ£¬½øĞĞ¿ìËÙ²éÑ¯´¦Àí
+	--|rst-->¸´Î»ĞÅºÅ£¬¸ßµçÆ½Í¬²½¸´Î»ĞÅºÅ
 	--------------------------------------------------------------------------------------*/
 	input										rst											,
 	input										slave_clk									,
@@ -84,62 +84,62 @@ module xr2000_axilite_top #(
   	input										slave_axi_rready							,
 
 //==================================================================================================
-//--Master Clocké€šé“å®šä¹‰
+//--Master ClockÍ¨µÀ¶¨Òå
 	/*--------------------------------------------------------------------------------------
 	--Write Address Channel Signals
 	--------------------------------------------------------------------------------------*/
-	output			[P_AXILITE_CH_NUM_R*32-1:0] master_axi_awaddr							,    //ä¸»è®¾å¤‡4æ¡
-  	output			[P_AXILITE_CH_NUM_R* 3-1:0]	master_axi_awprot							,    //ä¸»è®¾å¤‡4æ¡
-  	output			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_awvalid							,    //ä¸»è®¾å¤‡4æ¡
-  	input			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_awready							,    //ä¸»è®¾å¤‡4æ¡
+	output			[P_AXILITE_CH_NUM_R*32-1:0] master_axi_awaddr							,    //Ö÷Éè±¸4Ìõ
+  	output			[P_AXILITE_CH_NUM_R* 3-1:0]	master_axi_awprot							,    //Ö÷Éè±¸4Ìõ
+  	output			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_awvalid							,    //Ö÷Éè±¸4Ìõ
+  	input			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_awready							,    //Ö÷Éè±¸4Ìõ
 
-  	output			[P_AXILITE_CH_NUM_R*32-1:0]	master_axi_wdata							,    //ä¸»è®¾å¤‡4æ¡
-  	output			[P_AXILITE_CH_NUM_R* 4-1:0]	master_axi_wstrb							,    //ä¸»è®¾å¤‡4æ¡
-  	output			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_wvalid							,    //ä¸»è®¾å¤‡4æ¡
-  	input			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_wready							,    //ä¸»è®¾å¤‡4æ¡
+  	output			[P_AXILITE_CH_NUM_R*32-1:0]	master_axi_wdata							,    //Ö÷Éè±¸4Ìõ
+  	output			[P_AXILITE_CH_NUM_R* 4-1:0]	master_axi_wstrb							,    //Ö÷Éè±¸4Ìõ
+  	output			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_wvalid							,    //Ö÷Éè±¸4Ìõ
+  	input			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_wready							,    //Ö÷Éè±¸4Ìõ
 
-  	input			[P_AXILITE_CH_NUM_R* 2-1:0]	master_axi_bresp							,    //ä¸»è®¾å¤‡4æ¡
-  	input			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_bvalid							,    //ä¸»è®¾å¤‡4æ¡
-  	output			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_bready							,    //ä¸»è®¾å¤‡4æ¡
+  	input			[P_AXILITE_CH_NUM_R* 2-1:0]	master_axi_bresp							,    //Ö÷Éè±¸4Ìõ
+  	input			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_bvalid							,    //Ö÷Éè±¸4Ìõ
+  	output			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_bready							,    //Ö÷Éè±¸4Ìõ
 
-  	output			[P_AXILITE_CH_NUM_R*32-1:0]	master_axi_araddr							,    //ä¸»è®¾å¤‡4æ¡
-  	output			[P_AXILITE_CH_NUM_R* 3-1:0]	master_axi_arprot							,    //ä¸»è®¾å¤‡4æ¡
-  	output			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_arvalid							,    //ä¸»è®¾å¤‡4æ¡
-  	input			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_arready							,    //ä¸»è®¾å¤‡4æ¡
+  	output			[P_AXILITE_CH_NUM_R*32-1:0]	master_axi_araddr							,    //Ö÷Éè±¸4Ìõ
+  	output			[P_AXILITE_CH_NUM_R* 3-1:0]	master_axi_arprot							,    //Ö÷Éè±¸4Ìõ
+  	output			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_arvalid							,    //Ö÷Éè±¸4Ìõ
+  	input			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_arready							,    //Ö÷Éè±¸4Ìõ
 
-  	input			[P_AXILITE_CH_NUM_R*32-1:0]	master_axi_rdata							,    //ä¸»è®¾å¤‡4æ¡
-  	input			[P_AXILITE_CH_NUM_R* 2-1:0]	master_axi_rresp							,    //ä¸»è®¾å¤‡4æ¡
-  	input			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_rvalid							,    //ä¸»è®¾å¤‡4æ¡
+  	input			[P_AXILITE_CH_NUM_R*32-1:0]	master_axi_rdata							,    //Ö÷Éè±¸4Ìõ
+  	input			[P_AXILITE_CH_NUM_R* 2-1:0]	master_axi_rresp							,    //Ö÷Éè±¸4Ìõ
+  	input			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_rvalid							,    //Ö÷Éè±¸4Ìõ
   	output			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_rready
 	);
 //==================================================================================================
-//--axi_crossbar_0çš„Slaveä¿¡å·å®šä¹‰
+//--axi_crossbar_0µÄSlaveĞÅºÅ¶¨Òå
  /**************** Write Address Channel Signals ****************/
-	wire			[P_AXILITE_CH_NUM_R*32-1:0] s_axi_awaddr								;     //ä»è®¾å¤‡4æ¡
-	wire			[P_AXILITE_CH_NUM_R* 3-1:0]	s_axi_awprot								;     //ä»è®¾å¤‡4æ¡
-	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_awvalid								;     //ä»è®¾å¤‡4æ¡
-	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_awready								;     //ä»è®¾å¤‡4æ¡
+	wire			[P_AXILITE_CH_NUM_R*32-1:0] s_axi_awaddr								;     //´ÓÉè±¸4Ìõ
+	wire			[P_AXILITE_CH_NUM_R* 3-1:0]	s_axi_awprot								;     //´ÓÉè±¸4Ìõ
+	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_awvalid								;     //´ÓÉè±¸4Ìõ
+	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_awready								;     //´ÓÉè±¸4Ìõ
   /**************** Write Data Channel Signals ****************/                                 
-	wire			[P_AXILITE_CH_NUM_R*32-1:0]	s_axi_wdata									;     //ä»è®¾å¤‡4æ¡
-	wire			[P_AXILITE_CH_NUM_R* 4-1:0]	s_axi_wstrb									;     //ä»è®¾å¤‡4æ¡
-	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_wvalid								;     //ä»è®¾å¤‡4æ¡
-	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_wready								;     //ä»è®¾å¤‡4æ¡
+	wire			[P_AXILITE_CH_NUM_R*32-1:0]	s_axi_wdata									;     //´ÓÉè±¸4Ìõ
+	wire			[P_AXILITE_CH_NUM_R* 4-1:0]	s_axi_wstrb									;     //´ÓÉè±¸4Ìõ
+	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_wvalid								;     //´ÓÉè±¸4Ìõ
+	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_wready								;     //´ÓÉè±¸4Ìõ
   /**************** Write Response Channel Signals ****************/                             
-	wire			[P_AXILITE_CH_NUM_R* 2-1:0]	s_axi_bresp									;     //ä»è®¾å¤‡4æ¡
-	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_bvalid								;     //ä»è®¾å¤‡4æ¡
-	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_bready								;     //ä»è®¾å¤‡4æ¡
+	wire			[P_AXILITE_CH_NUM_R* 2-1:0]	s_axi_bresp									;     //´ÓÉè±¸4Ìõ
+	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_bvalid								;     //´ÓÉè±¸4Ìõ
+	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_bready								;     //´ÓÉè±¸4Ìõ
   /**************** Read Address Channel Signals ****************/                                
-	wire			[P_AXILITE_CH_NUM_R*32-1:0]	s_axi_araddr								;     //ä»è®¾å¤‡4æ¡
-	wire			[P_AXILITE_CH_NUM_R* 3-1:0]	s_axi_arprot								;     //ä»è®¾å¤‡4æ¡
-	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_arvalid								;     //ä»è®¾å¤‡4æ¡
-	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_arready								;     //ä»è®¾å¤‡4æ¡
+	wire			[P_AXILITE_CH_NUM_R*32-1:0]	s_axi_araddr								;     //´ÓÉè±¸4Ìõ
+	wire			[P_AXILITE_CH_NUM_R* 3-1:0]	s_axi_arprot								;     //´ÓÉè±¸4Ìõ
+	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_arvalid								;     //´ÓÉè±¸4Ìõ
+	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_arready								;     //´ÓÉè±¸4Ìõ
   /**************** Read Data Channel Signals ****************/                                   
-	wire			[P_AXILITE_CH_NUM_R*32-1:0]	s_axi_rdata									;     //ä»è®¾å¤‡4æ¡
-	wire			[P_AXILITE_CH_NUM_R* 2-1:0]	s_axi_rresp									;     //ä»è®¾å¤‡4æ¡
-	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_rvalid								;     //ä»è®¾å¤‡4æ¡
-	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_rready								;     //ä»è®¾å¤‡4æ¡
+	wire			[P_AXILITE_CH_NUM_R*32-1:0]	s_axi_rdata									;     //´ÓÉè±¸4Ìõ
+	wire			[P_AXILITE_CH_NUM_R* 2-1:0]	s_axi_rresp									;     //´ÓÉè±¸4Ìõ
+	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_rvalid								;     //´ÓÉè±¸4Ìõ
+	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_rready								;     //´ÓÉè±¸4Ìõ
 //==================================================================================================
-//--PCIe Clock AXI-Liteæ€»çº¿å®ç°
+//--PCIe Clock AXI-Lite×ÜÏßÊµÏÖ
 	/*--------------------------------------------------------------------------------------
 	--Write Address Channel Signals Chanenl 0 direct output
 	--------------------------------------------------------------------------------------*/
@@ -430,4 +430,3 @@ generate for (i=1;i<P_AXILITE_CH_NUM_R;i=i+1) begin: CONVERTER_G
 end
 endgenerate
 endmodule
-

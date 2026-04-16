@@ -1,10 +1,10 @@
-ï»¿`timescale 1ns/1ns
+`timescale 1ns/1ns
 // ============================================================================
-// ç»´æŠ¤æ³¨é‡Š
-//   æ–‡ä»¶èŒè´£      : SRIO è§†é¢‘å…¥å£å†™ BRAM çš„ç¼“å­˜ç»„ç»‡é€»è¾‘ã€‚
-//   æºç å±æ€§      : æ‰‹å·¥ç»´æŠ¤æºç ï¼Œä¸è¦æŠŠä¿®æ”¹åŒæ­¥åˆ°ç”Ÿæˆ IP æˆ–ç½‘è¡¨ã€‚
-//   æ›´æ–°è¦æ±‚      : å½“æ—¶é’Ÿã€å¤ä½ã€æ¥å£æˆ–æ•°æ®é¡ºåºå‡è®¾å˜åŒ–æ—¶ï¼ŒåŒæ­¥æ›´æ–°æ³¨é‡Šã€‚
-//   ç»´æŠ¤è¾¹ç•Œ      : æ³¨é‡Šç”¨äºè¯´æ˜å½“å‰å®ç°æ„å›¾ï¼Œä¸æ›¿ä»£æ¥å£åè®®æ–‡æ¡£ã€‚
+// ĞÂÔöÎ¬»¤ËµÃ÷
+// ÎÄ¼şÖ°Ôğ      : µ±Ç°ÎÄ¼şÎªÊÖ¹¤Î¬»¤Ô´Âë£¬³Ğµ£±¾Ä£¿é/½Å±¾µÄÕæÊµÊµÏÖ¡£
+// Î¬»¤±ß½ç      : ±¾×¢ÊÍ¿é½ö²¹³äÎ¬»¤ËµÃ÷£¬²»¸ÄĞ´ÈÎºÎÔ­ÓĞËµÃ÷¡¢ÀúÊ·×¢ÊÍ»òÏÖÓĞÂß¼­¡£
+// ĞŞ¸ÄÔ¼Êø      : ºóĞøÈçĞè¼ÌĞø²¹³äËµÃ÷£¬Ö»ÔÊĞí×·¼ÓÖĞÎÄ×¢ÊÍ£¬²»µÃÌæ»»¾É×¢ÊÍ»ò¸Ä¶¯¾É´úÂë¡£
+// Éú³É¹ØÏµ      : Èô´æÔÚ¶ÔÓ¦Éú³ÉÎï£¬Ó¦ÒÔµ±Ç°ÊÖ¹¤Ô´ÂëÎª×¼£¬½ûÖ¹·´Ïò¸²¸Ç±¾ÎÄ¼ş¡£
 // ============================================================================
 //////////////////////////////////////////////////////////////////////////////////
 // Company:			ZHTY
@@ -16,7 +16,7 @@
 // Target Devices:	K7-V7
 // Tool Versions: 	Vivado 2016.1 HDL-EDIT UltraEdit TAB=4 Consolas
 // Description:
-//		æ¨¡å—å®ç°ä¸¤è·¯LVDSä¿¡å·çš„æ•°æ®çš„æå–ï¼Œå¿«è¿›æ…¢å‘çš„DDR3ç¼“å­˜å’Œæµé‡æ§åˆ¶åŠŸèƒ½
+//		Ä£¿éÊµÏÖÁ½Â·LVDSĞÅºÅµÄÊı¾İµÄÌáÈ¡£¬¿ì½øÂı·¢µÄDDR3»º´æºÍÁ÷Á¿¿ØÖÆ¹¦ÄÜ
 // Dependencies:
 //
 // Revision:
@@ -48,7 +48,7 @@ module srio_v_fifo_to_bram_top #(
 	output										srio_trn_fifo_ren_o							,
 	input										srio_trn_fifo_empty_i						,
 //==================================================================================================
-//--bramå†™æ¥å£
+//--bramĞ´½Ó¿Ú
     output  wire                                bram_wea     								,   
     output  wire    [clogb2(A_RAM_DEPTH-1)-1:0] bram_addra   								,   
     output  wire    [A_RAM_WIDTH-1:0]           bram_dina    								,   
@@ -57,10 +57,10 @@ module srio_v_fifo_to_bram_top #(
     input  	wire                                bram_clkb_rstn     								,  
     
     output  wire    [clogb2(B_RAM_DEPTH-1)-1:0] bram_line_cur_w   							,   
-    output      					 			bram_line_cur_w_en   						, 	//	1 :è¡¨ç¤ºæˆåŠŸå†™å…¥ç¬¬bram_line_cur_wè¡Œæ•°æ®åœ¨bramä¸­
+    output      					 			bram_line_cur_w_en   						, 	//	1 :±íÊ¾³É¹¦Ğ´ÈëµÚbram_line_cur_wĞĞÊı¾İÔÚbramÖĞ
 	
-	input	wire	[clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							,	// æ¯æ®µbramåœ°å€å¯¹åº”çš„è¡Œå·åœ°å€
-    output      	[12-1:0] 					bram_line_num									// æ¯æ®µbramåœ°å€å¯¹åº”çš„è¡Œå· , bram_line_num_addr*32'h0~bram_line_num_addr*32'h800å¯¹åº”çš„è¡Œå·,å…·ä½“åˆ—å·å¯¹åº”å½“å‰è¡Œçš„ä¸åŒåœ°å€
+	input	wire	[clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							,	// Ã¿¶ÎbramµØÖ·¶ÔÓ¦µÄĞĞºÅµØÖ·
+    output      	[12-1:0] 					bram_line_num									// Ã¿¶ÎbramµØÖ·¶ÔÓ¦µÄĞĞºÅ , bram_line_num_addr*32'h0~bram_line_num_addr*32'h800¶ÔÓ¦µÄĞĞºÅ,¾ßÌåÁĞºÅ¶ÔÓ¦µ±Ç°ĞĞµÄ²»Í¬µØÖ·
 	
 	);
 	    //  The following function calculates the address width based on specified RAM depth
@@ -78,7 +78,7 @@ module srio_v_fifo_to_bram_top #(
 	wire										m_axiw_gnt									;
 	wire			[10:0]						m_axiw_len64								;
 	wire			[31:0]						m_axiw_addr									;
-	wire			[7:0]						m_axiw_wstrb								;	//ä»…å½“æœ€åä¸€ä¸ª64æ¯”ç‰¹æ•°æ®æœ‰æ•ˆï¼Œç”¨äºOnlyOneæ¨¡å¼	
+	wire			[7:0]						m_axiw_wstrb								;	//½öµ±×îºóÒ»¸ö64±ÈÌØÊı¾İÓĞĞ§£¬ÓÃÓÚOnlyOneÄ£Ê½	
 	
 //			ila_test	ila_wfifo(
 //		.clk                        			( sys_clk_i								),

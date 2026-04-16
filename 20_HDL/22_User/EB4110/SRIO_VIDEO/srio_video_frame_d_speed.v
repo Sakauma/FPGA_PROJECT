@@ -1,10 +1,10 @@
-﻿`timescale 1ns/1ns
+`timescale 1ns/1ns
 // ============================================================================
-// 维护注释
-//   文件职责      : SRIO 视频收发、解包、节流与协议辅助逻辑。
-//   源码属性      : 手工维护源码，不要把修改同步到生成 IP 或网表。
-//   更新要求      : 当时钟、复位、接口或数据顺序假设变化时，同步更新注释。
-//   维护边界      : 注释用于说明当前实现意图，不替代接口协议文档。
+// ����ά��˵��
+// �ļ�ְ��      : ��ǰ�ļ�Ϊ�ֹ�ά��Դ�룬�е���ģ��/�ű�����ʵʵ�֡�
+// ά���߽�      : ��ע�Ϳ������ά��˵��������д�κ�ԭ��˵������ʷע�ͻ������߼���
+// �޸�Լ��      : ���������������˵����ֻ����׷������ע�ͣ������滻��ע�ͻ�Ķ��ɴ��롣
+// ���ɹ�ϵ      : �����ڶ�Ӧ�����Ӧ�Ե�ǰ�ֹ�Դ��Ϊ׼����ֹ���򸲸Ǳ��ļ���
 // ============================================================================
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Company			: ZHTY				
@@ -36,7 +36,7 @@ module srio_video_frame_d_speed  #(
 	parameter		P_set_lite					= 0											
 ) (
 //==================================================================================================
-//--閸欏秴鎮滈弰鐘茬殸閺屻儲澹樼悰顭掔礄LUT閿涘DR鐠囪褰囬幒銉ュ經
+//--反向映射查找表（LUT）DDR读取接口
 	input	wire								V_LUT_AXI_clk							,
 	input	wire								V_LUT_AXI_rstn							,
 
@@ -62,7 +62,8 @@ module srio_video_frame_d_speed  #(
 
 	input										ps_video_en											,
 	input			[7:0]							ps_frame_ctr											,
-	// 閺傞鍞惍?	input			[31:0]							video_algo_ctrl										,
+	// 新代码
+	input			[31:0]							video_algo_ctrl										,
 	
 	input										video_send_en									,	
 
@@ -131,8 +132,8 @@ module srio_video_frame_d_speed  #(
 	
 	
 );
-//	srio_r srio閺冨爼鎸撻弫鐗堝祦閵嗕够rio_r_f	srio閺冨爼鎸撻妴浣虹病鏉╁洨绱?srio_i閺堫剙婀撮弮鍫曟寭閺?
-//	srio_o	閺堫剙婀撮弮鍫曟寭閺佺増宓侀敍瀹籸io_t_f srio閺冨爼鎸撻弫鐗堝祦 ,srio_t srio閺冨爼鎸撻弫鐗堝祦
+//	srio_r srio时钟数据、srio_r_f	srio时钟、经过缓	srio_i本地时钟数
+//	srio_o	本地时钟数据，srio_t_f srio时钟数据 ,srio_t srio时钟数据
 
 
 
@@ -286,7 +287,9 @@ module srio_video_frame_d_speed  #(
 		.srio_rstn_i							( rst_n										),
 		
  		.user_clk								( user_250m_clk									),	
-		.user_rstn_i							( rst_n										),	//	瀵板懎顦╅悶鍡楊槻娴?		// 閺傞鍞惍?		.video_algo_ctrl						( video_algo_ctrl							),
+		.user_rstn_i							( rst_n										),	//	待处理复位
+		// 新代码
+		.video_algo_ctrl						( video_algo_ctrl							),
 		
 		.SRIO_R_axis_tdata						( srio_t_f_axis_tdata							),	
 		.SRIO_R_axis_tuser						( srio_t_f_axis_tuser							),	
@@ -333,7 +336,7 @@ module srio_video_frame_d_speed  #(
 	--LVDS Cache Addr
 	--------------------------------------------------------------------------------------*/	
 	localparam		P_LVDS_DDR3_START_ADDR_R	= 32'h0000_0000 							;
-	localparam		P_LVDS_DDR3_END_ADDR_R		= P_VIDEO_FRAME_NUM*P_VIDEO_FRAME_SIZE+	P_LVDS_DDR3_START_ADDR_R;	// 32'80_1000h*5=32'h280_5000,閿?2'h80_1000閿?2'h100_2000,32'h180_3000,32'h200_4000,閿?
+	localparam		P_LVDS_DDR3_END_ADDR_R		= P_VIDEO_FRAME_NUM*P_VIDEO_FRAME_SIZE+	P_LVDS_DDR3_START_ADDR_R;	// 32'80_1000h*5=32'h280_5000,（32'h80_1000，32'h100_2000,32'h180_3000,32'h200_4000,）
 	localparam		P_LVDS_DDR3_BLOCK_SIZE_R	= 32'h100									;
 	
 	/*--------------------------------------------------------------------------------------

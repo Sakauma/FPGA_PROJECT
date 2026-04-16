@@ -1,27 +1,27 @@
-﻿// ============================================================================
-// 维护注释
-//   文件职责      : SRIO 输入、BRAM 暂存与 SRIO 输出之间的本地视频主路径。
-//   源码属性      : 手工维护源码，不要把修改同步到生成 IP 或网表。
-//   更新要求      : 当时钟、复位、接口或数据顺序假设变化时，同步更新注释。
-//   维护边界      : 注释用于说明当前实现意图，不替代接口协议文档。
+// ============================================================================
+// ����ά��˵��
+// �ļ�ְ��      : ��ǰ�ļ�Ϊ�ֹ�ά��Դ�룬�е���ģ��/�ű�����ʵʵ�֡�
+// ά���߽�      : ��ע�Ϳ������ά��˵��������д�κ�ԭ��˵������ʷע�ͻ������߼���
+// �޸�Լ��      : ���������������˵����ֻ����׷������ע�ͣ������滻��ע�ͻ�Ķ��ɴ��롣
+// ���ɹ�ϵ      : �����ڶ�Ӧ�����Ӧ�Ե�ǰ�ֹ�Դ��Ϊ׼����ֹ���򸲸Ǳ��ļ���
 // ============================================================================
 module SRIO_2_Video#(
     parameter		A_RAM_WIDTH     			= 64        								,
-    parameter		A_RAM_DEPTH     			= 256*512      								,	// bram濞ｅ崬瀹抽崣鍌涙殶閿?12濮ｅ繗顢?
+    parameter		A_RAM_DEPTH     			= 256*512      								,	// bram深度参数，512每行
     parameter		B_RAM_WIDTH     			= 16        								,
     parameter		B_RAM_DEPTH     			= A_RAM_WIDTH*A_RAM_DEPTH/B_RAM_WIDTH      	,    
     parameter		RAM_OUT_REG_EN  			= "DISABLE"  								,	// ENABLE
     parameter		RAM_STYLE       			= "block"   								,
     parameter		INIT_FILE       			= ""        								,
     
-    parameter		P_LINE_DEPTH     			= A_RAM_DEPTH/512								// bram娑擃厼褰叉禒銉ョ摠閻ㄥ嫯顫嬫０鎴ｎ攽閺?      		
+    parameter		P_LINE_DEPTH     			= A_RAM_DEPTH/512								// bram中可以存的视频行数	      		
 
 /*	
-	濮ｅ繐鎶氶崶鎯у剼2049*2048*2=32'h801000鐎涙濡敍?
-	8鐎涙濡崷鏉挎絻鐎硅棄瀹虫稉?2'h100200閿涘奔璐熸禍鍡楁倵閺堢喎鍣虹亸鎴濇閺冭绱濈亸鍡楁勾閸р偓娣団剝浼?1bit鐎硅棄瀹抽敍灞芥姎鐠佲剝鏆?bit鐎硅棄瀹抽崡蹇撴倱閺佺増宓佹稉鈧挧宄扮摠閸忣櫒ram閿?
-	閹鍙￠棁鈧憰?6鐎硅棄瀹砨ram閿涘苯鑻熺悰?8kbram闂団偓鐟?娑擃亷绱濋崚娆庣鐞涘苯娴橀崓蹇庤礋512濞ｅ崬瀹抽敍灞界杽闂勫懍濞囬悽銊︽付娴?娑?8kbram閿涘苯顕惔鏀?100娑擃厺璐?.5娑撶寵ram閿涘苯鐡ㄩ崒銊よ⒈鐞涘本鏆熼幑顔衡偓?
+	每帧图像2049*2048*2=32'h801000字节，
+	8字节地址宽度为32'h100200，为了后期减少延时，将地址信息21bit宽度，帧计数1bit宽度协同数据一起存入bram；
+	总共需要86宽度bram，并行18kbram需要5个，则一行图像为512深度，实际使用最低5个18kbram，对应z7100中为2.5个bram，存储两行数据。
 	
-	鐠囥儲膩閸ф婀?娑撶寵ram閿涘本鐦＄€涙ê鍋嶆稉銈堫攽闂団偓鐟曚攻ram鐠у嫭绨担?.5*3=7.5娑擃亷绱濈悰灞炬殶鐎电懓绨瞓ram濞戝牐鈧ぞ閲滈弫棰佽礋閿涙熬绱橺7100閹鍙￠張?55娑擃亷绱?
+	该模块有3个bram，每存储两行需要bram资源位2.5*3=7.5个，行数对应bram消耗个数为：（Z7100总共有755个）
 	2	7.5
 	4	15
 	8	30
@@ -29,12 +29,12 @@ module SRIO_2_Video#(
 	32	120
 	64	240      
 	
-	濮ｅ繐鎶氶崶鎯у剼2049*2048*2=32'h801000鐎涙濡敍宀€顑?~2048鐞涘矁顢戦崷鏉挎絻娓氭繃顐奸弰顖ょ窗
-	鐞涘苯婀撮崸鈧?鐞涘苯婀撮崸鈧€圭偤妾?bram_64		bram_16	鐠у嘲顫愰崷鏉挎絻
+	每帧图像2049*2048*2=32'h801000字节，第1~2048行行地址依次是：
+	行地址	行地址实际	bram_64		bram_16	起始地址
 	1000    0000  		 0000    	 0000      
 	2000	1000		 0200    	 0800    
 	3000	2000		 0400    	 1000    
-	閳ワ腹鈧腹鈧腹鈧腹鈧腹鈧腹鈧腹鈧腹鈧腹鈧?                       
+	…………………………                        
 	800000	7FF000		               
 	
 */    
@@ -44,10 +44,13 @@ module SRIO_2_Video#(
 	input										srio_clk									,
 	input										srio_rstn_i									,  
 	
-	input										user_clk									,  // 闁插洨鏁?50M閺冨爼鎸?	input										user_rstn_i									,  
-	// 閺傞鍞惍?	input			[31:0]						video_algo_ctrl								,
+	input										user_clk									,  // 采用250M时钟
+	input										user_rstn_i									,  
+	// 新代码
+	input			[31:0]						video_algo_ctrl								,
 //==================================================================================================
-//--SRIO_缁旑垰褰?	input	wire	[63:0]						SRIO_R_axis_tdata							,
+//--SRIO_端口
+	input	wire	[63:0]						SRIO_R_axis_tdata							,
 	input	wire	[31:0]						SRIO_R_axis_tuser							,
 	output	wire								SRIO_R_axis_tready							,
 	input	wire								SRIO_R_axis_tvalid							,
@@ -59,7 +62,7 @@ module SRIO_2_Video#(
 	output	wire								SRIO_T_axis_tvalid							,
 	output	wire								SRIO_T_axis_tlast							,
 //==================================================================================================
-//--閸欏秴鎮滈弰鐘茬殸閺屻儲澹樼悰顭掔礄LUT閿涘DR鐠囪褰囬幒銉ュ經
+//--反向映射查找表（LUT）DDR读取接口
 	input	wire								V_LUT_AXI_clk							,
 	input	wire								V_LUT_AXI_rstn							,
 
@@ -107,14 +110,14 @@ module SRIO_2_Video#(
     wire		  	[clogb2(A_RAM_DEPTH-1)-1:0] bram_addra   								;  
     wire		  	[A_RAM_WIDTH-1:0]           bram_dina    								;  
 
-    wire		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_cur_w   							;	// 瑜版挸澧燽ram閸愭瑥鍙嗙悰灞肩秴缂?
-    wire      					 				bram_line_cur_w_en   						; 	//	1 :鐞涖劎銇氶幋鎰閸愭瑥鍙嗙粭鐞am_line_cur_w鐞涘本鏆熼幑顔兼躬bram娑?
+    wire		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_cur_w   							;	// 当前bram写入行位置 
+    wire      					 				bram_line_cur_w_en   						; 	//	1 :表示成功写入第bram_line_cur_w行数据在bram中
     
     
-	wire		     [clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							;	// 濮ｅ繑顔宐ram閸︽澘娼冪€电懓绨查惃鍕攽閸欏嘲婀撮崸鈧?
-    wire      		[12-1:0] 					bram_line_num								;	// 濮ｅ繑顔宐ram閸︽澘娼冪€电懓绨查惃鍕攽閸?, bram_line_num_addr*32'h0~bram_line_num_addr*32'h800鐎电懓绨查惃鍕攽閸?閸忚渹缍嬮崚妤€褰跨€电懓绨茶ぐ鎾冲鐞涘瞼娈戞稉宥呮倱閸︽澘娼?
+	wire		     [clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							;	// 每段bram地址对应的行号地址
+    wire      		[12-1:0] 					bram_line_num								;	// 每段bram地址对应的行号 , bram_line_num_addr*32'h0~bram_line_num_addr*32'h800对应的行号,具体列号对应当前行的不同地址
         
-    wire		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_addrb   								;	// 16bit娴ｅ秴顔旈惃鍒am閸︽澘娼?
+    wire		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_addrb   								;	// 16bit位宽的bram地址
     wire		  	[B_RAM_WIDTH-1:0]           bram_doutb   								;     
                                                                                             
 	srio_v_axis_to_bram_top	#(
@@ -177,7 +180,7 @@ module SRIO_2_Video#(
 	    .clkb                					( user_clk                                	),
 	    .rstb                					( ~user_rstn                                ),
 
-	    .enb                					( 1'b1		                                ),	// 瀵板懍鎱ㄩ弨?
+	    .enb                					( 1'b1		                                ),	// 待修改
 	    .addrb              					( bram_addrb               					),
 	    .doutb              					( bram_doutb               					),
 	    .regceb             					( 1'b1                                  	)
@@ -190,7 +193,8 @@ module SRIO_2_Video#(
 	) u_vbram_lutaxi4_to_axis(            
 	    .clk                					( user_clk           						),
 	    .rstn                					( user_rstn           						),
-	    // 閺傞鍞惍?	    .video_algo_ctrl						( video_algo_ctrl							),
+	    // 新代码
+	    .video_algo_ctrl						( video_algo_ctrl							),
 
 	    .bram_line_cur_w   	       				( bram_line_cur_w   						),
 	    

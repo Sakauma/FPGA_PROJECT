@@ -1,9 +1,9 @@
-﻿// ============================================================================
-// 维护注释
-//   文件职责      : SRIO 视频入口写 BRAM 的缓存组织逻辑。
-//   源码属性      : 手工维护源码，不要把修改同步到生成 IP 或网表。
-//   更新要求      : 当时钟、复位、接口或数据顺序假设变化时，同步更新注释。
-//   维护边界      : 注释用于说明当前实现意图，不替代接口协议文档。
+// ============================================================================
+// ����ά��˵��
+// �ļ�ְ��      : ��ǰ�ļ�Ϊ�ֹ�ά��Դ�룬�е���ģ��/�ű�����ʵʵ�֡�
+// ά���߽�      : ��ע�Ϳ������ά��˵��������д�κ�ԭ��˵������ʷע�ͻ������߼���
+// �޸�Լ��      : ���������������˵����ֻ����׷������ע�ͣ������滻��ע�ͻ�Ķ��ɴ��롣
+// ���ɹ�ϵ      : �����ڶ�Ӧ�����Ӧ�Ե�ǰ�ֹ�Դ��Ϊ׼����ֹ���򸲸Ǳ��ļ���
 // ============================================================================
 
 `timescale 1ns/1ns
@@ -17,7 +17,7 @@
 // Target Devices:	K7-V7
 // Tool Versions: 	Vivado 2016.1 HDL-EDIT UltraEdit TAB=4 Consolas
 // Description:
-//		模块实现IRAX DSW的解析，提取LVDS iPort的数据帧，将非LVDS iPort数据帧输出
+//		ģ��ʵ��IRAX DSW�Ľ�������ȡLVDS iPort������֡������LVDS iPort����֡���
 // Dependencies:
 //
 // Revision:
@@ -25,7 +25,7 @@
 
 
 /*
-// 双拍同步器：log_clk → gt_pcs_clk_out
+// ˫��ͬ������log_clk �� gt_pcs_clk_out
 reg [1:0] sync_pipe;
 always @(posedge gt_pcs_clk_out or negedge rst_n) begin
     if(!rst_n)
@@ -34,7 +34,7 @@ always @(posedge gt_pcs_clk_out or negedge rst_n) begin
         sync_pipe <= {sync_pipe[0], signal_from_log_clk};
 end
 
-// 输出就是安全的跨域信号
+// ������ǰ�ȫ�Ŀ����ź�
 wire signal_in_gt_pcs_domain = sync_pipe[1];
 
 */
@@ -434,7 +434,7 @@ module srio_v_axis_to_fifo #(
 //	end	
 	
 /*
-仿真测试方法：
+������Է�����
 80_TB/tb_TOP.v
 
 cd E:/WZ_WORK/complete/key/IR2120/prj/710_G/srio_SIM_PRJ/10_PRJ/00_PRJ.sim/sim_1/behav/modelsim

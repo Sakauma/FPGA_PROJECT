@@ -1,10 +1,10 @@
-ï»¿# ============================================================================
-# ç»´æŠ¤æ³¨é‡Š
-#   æ–‡ä»¶èŒè´£      : EB4110 å·¥ç¨‹ä¸»çº¦æŸæ–‡ä»¶ï¼Œè´Ÿè´£å¼•è„šã€æ—¶é’Ÿä¸æ—¶åºçº¦æŸã€‚
-#   æºç å±æ€§      : æ‰‹å·¥ç»´æŠ¤çº¦æŸæ–‡ä»¶ï¼Œä¸è¦æŠŠä¿®æ”¹å›å†™åˆ°ç”Ÿæˆçº¦æŸä¸­ã€‚
-#   æ›´æ–°è¦æ±‚      : å½“å¼•è„šã€æ—¶é’Ÿæˆ–æ—¶åºä¾‹å¤–å˜åŒ–æ—¶ï¼ŒåŒæ­¥æ›´æ–°æ³¨é‡Šã€‚
-#   ç»´æŠ¤è¾¹ç•Œ      : æ³¨é‡Šåº”ä¸æ¿çº§è¿çº¿å’Œå½“å‰å·¥å…·ç‰ˆæœ¬ä¿æŒä¸€è‡´ã€‚
-# ============================================================================
+// ============================================================================
+// ĞÂÔöÎ¬»¤ËµÃ÷
+// ÎÄ¼şÖ°Ôğ      : µ±Ç°ÎÄ¼şÎªÊÖ¹¤Î¬»¤Ô´Âë£¬³Ğµ£±¾Ä£¿é/½Å±¾µÄÕæÊµÊµÏÖ¡£
+// Î¬»¤±ß½ç      : ±¾×¢ÊÍ¿é½ö²¹³äÎ¬»¤ËµÃ÷£¬²»¸ÄĞ´ÈÎºÎÔ­ÓĞËµÃ÷¡¢ÀúÊ·×¢ÊÍ»òÏÖÓĞÂß¼­¡£
+// ĞŞ¸ÄÔ¼Êø      : ºóĞøÈçĞè¼ÌĞø²¹³äËµÃ÷£¬Ö»ÔÊĞí×·¼ÓÖĞÎÄ×¢ÊÍ£¬²»µÃÌæ»»¾É×¢ÊÍ»ò¸Ä¶¯¾É´úÂë¡£
+// Éú³É¹ØÏµ      : Èô´æÔÚ¶ÔÓ¦Éú³ÉÎï£¬Ó¦ÒÔµ±Ç°ÊÖ¹¤Ô´ÂëÎª×¼£¬½ûÖ¹·´Ïò¸²¸Ç±¾ÎÄ¼ş¡£
+// ============================================================================
 set_property BITSTREAM.CONFIG.UNUSEDPIN PULLNONE [current_design]
 
 #set_property PACKAGE_PIN AH10 [get_ports {fc_gt_rxp[0]}]
@@ -13,7 +13,7 @@ set_property BITSTREAM.CONFIG.UNUSEDPIN PULLNONE [current_design]
 #set_property PACKAGE_PIN AK6 [get_ports {fc_gt_txp[1]}]
 #set_property PACKAGE_PIN AF10 [get_ports gtxrefclk109_p]
 
-#25Mé”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·æ²¡é”Ÿå«çŒ´æ‹·é”Ÿæ–¤æ‹·
+#25Mï¿½ï¿½ï¿½ï¿½Ã»ï¿½Ğºï¿½ï¿½ï¿½
 #set_property PACKAGE_PIN AE22 [get_ports sys_clk_p]
 #set_property	IOSTANDARD	LVCMOS33	[get_ports	sys_clk_p	]
 
@@ -153,7 +153,7 @@ set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins srio_vid
 #set_clock_groups -asynchronous -group [get_clocks clk_fpga_0] -group [get_clocks -of_objects [get_pins srio_video_loop/srio_top/i_srio_support/u_SRIO_5g_2x_8b.u_srio_support/srio_clk_inst/srio_mmcm_inst/CLKOUT2]]
 
 set_false_path -from [get_pins {zynq_i/proc_sys_reset_0/U0/PR_OUT_DFF[0].FDRE_PER/C}]
-##åªé”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é¢‘ä½¿é”Ÿæ–¤æ‹·
+##Ö»ï¿½ï¿½ï¿½ï¿½ÆµÊ¹ï¿½ï¿½
 #set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins srio_video_loop/u_mem/mig_7series_0/u_MY_MEM_mig_7series_0_0_mig/u_ddr3_infrastructure/gen_mmcm.mmcm_i/CLKFBOUT]] -group [get_clocks -of_objects [get_pins srio_video_loop/u_mem/mig_7series_0/u_MY_MEM_mig_7series_0_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_0.u_ddr_phy_4lanes/ddr_byte_lane_D.ddr_byte_lane_D/phaser_in_gen.phaser_in/ICLK]]
 #set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins srio_video_loop/u_mem/mig_7series_0/u_MY_MEM_mig_7series_0_0_mig/u_ddr3_infrastructure/gen_mmcm.mmcm_i/CLKFBOUT]] -group [get_clocks -of_objects [get_pins srio_video_loop/u_mem/mig_7series_0/u_MY_MEM_mig_7series_0_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_2.u_ddr_phy_4lanes/ddr_byte_lane_A.ddr_byte_lane_A/phaser_in_gen.phaser_in/ICLK]]
 #set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins srio_video_loop/u_mem/mig_7series_0/u_MY_MEM_mig_7series_0_0_mig/u_ddr3_infrastructure/gen_mmcm.mmcm_i/CLKFBOUT]] -group [get_clocks -of_objects [get_pins srio_video_loop/u_mem/mig_7series_0/u_MY_MEM_mig_7series_0_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_2.u_ddr_phy_4lanes/ddr_byte_lane_B.ddr_byte_lane_B/phaser_in_gen.phaser_in/ICLK]]
@@ -167,4 +167,3 @@ set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins srio_vid
 
 
 set_clock_groups -asynchronous -group [get_clocks clk_fpga_0] -group [get_clocks -of_objects [get_pins srio_video_loop/srio_top/i_srio_support/u_SRIO_5g_2x_8b.u_srio_support/srio_clk_inst/srio_mmcm_inst/CLKOUT2]] 
-

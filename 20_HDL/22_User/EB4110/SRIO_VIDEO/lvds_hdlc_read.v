@@ -1,10 +1,10 @@
-ï»¿`timescale 1ns/1ns
+`timescale 1ns/1ns
 // ============================================================================
-// ç»´æŠ¤æ³¨é‡Š
-//   æ–‡ä»¶èŒè´£      : SRIO è§†é¢‘æ”¶å‘ã€è§£åŒ…ã€èŠ‚æµä¸åè®®è¾…åŠ©é€»è¾‘ã€‚
-//   æºç å±æ€§      : æ‰‹å·¥ç»´æŠ¤æºç ï¼Œä¸è¦æŠŠä¿®æ”¹åŒæ­¥åˆ°ç”Ÿæˆ IP æˆ–ç½‘è¡¨ã€‚
-//   æ›´æ–°è¦æ±‚      : å½“æ—¶é’Ÿã€å¤ä½ã€æ¥å£æˆ–æ•°æ®é¡ºåºå‡è®¾å˜åŒ–æ—¶ï¼ŒåŒæ­¥æ›´æ–°æ³¨é‡Šã€‚
-//   ç»´æŠ¤è¾¹ç•Œ      : æ³¨é‡Šç”¨äºè¯´æ˜å½“å‰å®ç°æ„å›¾ï¼Œä¸æ›¿ä»£æ¥å£åè®®æ–‡æ¡£ã€‚
+// ĞÂÔöÎ¬»¤ËµÃ÷
+// ÎÄ¼şÖ°Ôğ      : µ±Ç°ÎÄ¼şÎªÊÖ¹¤Î¬»¤Ô´Âë£¬³Ğµ£±¾Ä£¿é/½Å±¾µÄÕæÊµÊµÏÖ¡£
+// Î¬»¤±ß½ç      : ±¾×¢ÊÍ¿é½ö²¹³äÎ¬»¤ËµÃ÷£¬²»¸ÄĞ´ÈÎºÎÔ­ÓĞËµÃ÷¡¢ÀúÊ·×¢ÊÍ»òÏÖÓĞÂß¼­¡£
+// ĞŞ¸ÄÔ¼Êø      : ºóĞøÈçĞè¼ÌĞø²¹³äËµÃ÷£¬Ö»ÔÊĞí×·¼ÓÖĞÎÄ×¢ÊÍ£¬²»µÃÌæ»»¾É×¢ÊÍ»ò¸Ä¶¯¾É´úÂë¡£
+// Éú³É¹ØÏµ      : Èô´æÔÚ¶ÔÓ¦Éú³ÉÎï£¬Ó¦ÒÔµ±Ç°ÊÖ¹¤Ô´ÂëÎª×¼£¬½ûÖ¹·´Ïò¸²¸Ç±¾ÎÄ¼ş¡£
 // ============================================================================
 //////////////////////////////////////////////////////////////////////////////////
 // Company:			ZHTY
@@ -16,7 +16,7 @@
 // Target Devices:	K7-V7
 // Tool Versions: 	Vivado 2016.1 HDL-EDIT UltraEdit TAB=4 Consolas
 // Description:
-//		å¦¯â€³æ½¡çå“ƒVDSéç‰ˆåµæµ å¶¥DRæ¶“î…¡î‡°é‘çŒ´ç´éªå‰æ•“é´æ€šT UP Streaméƒè·ºç°­é”›å²„â‚¬ä½¸ç·šHDLC
+//		Ä£¿é½«LVDSÊı¾İ´ÓDDRÖĞ¶Á³ö£¬²¢Éú³ÉIT UP StreamÊ±Ğò£¬ËÍÍùHDLC
 // Dependencies:
 //
 // Revision:
@@ -71,7 +71,7 @@ module lvds_hdlc_read #(
 	input			[31:0]						lvds_cache_cur_waddr						,
 	output			[31:0]						lvds_cache_cur_raddr						,	
 	/*--------------------------------------------------------------------------------------
-	--AXIéç‰ˆåµé–«æ°¶äº¾ç’‡æ˜î‡¬å§¹å‚›å¸´é™?
+	--AXIÊı¾İÍ¨µÀ¶ÁÇëÇó½Ó¿Ú
 	--------------------------------------------------------------------------------------*/
 	
 	output	reg									m_axir_req					= 0				,
@@ -180,7 +180,7 @@ module lvds_hdlc_read #(
 	end
 	
 	
-	reg				[7:0]						wr_frame_all_cnt		= 7'h00				;	//	éç‰ˆåµéæ¬å†ddræî†¿î‡—å¨†â„ƒæšŸ
+	reg				[7:0]						wr_frame_all_cnt		= 7'h00				;	//	Êı¾İĞ´ÈëddrÂÖÑ¯´ÎÊı
 	reg				[31:0]						lvds_cache_cur_waddr_d	= 'b0				;
 
 
@@ -209,7 +209,7 @@ module lvds_hdlc_read #(
 			S_AXIR_IDLE_M						: begin
 			
 
-				if( (lvds_cache_cur_waddr==P_V_FRAME_DDR3_BLOCK_SIZE_R-32'h100)&& ps_video_en&&wr_frame_all_cnt==0&&video_send_en==1) begin//é—„å¶‰î•¶é™æˆ¦â‚¬?
+				if( (lvds_cache_cur_waddr==P_V_FRAME_DDR3_BLOCK_SIZE_R-32'h100)&& ps_video_en&&wr_frame_all_cnt==0&&video_send_en==1) begin//½µÆµ·¢ËÍ
 					S_AXIR_NM					= S_AXIR_FRAME_STAR_M						;
 				end else begin
 					S_AXIR_NM					= S_AXIR_IDLE_M								;
@@ -276,7 +276,7 @@ module lvds_hdlc_read #(
 		endcase
 	end
 //==================================================================================================
-//--é–«ç†ºå·¼éºÑƒåŸ—
+//--ËÙÂÊ¿ØÖÆ
 
 	always @(posedge sys_clk_i or posedge sys_rst_i) begin
 		if(sys_rst_i) begin
@@ -289,7 +289,7 @@ module lvds_hdlc_read #(
 	end
 
 //==================================================================================================
-//--ç’‡é”‹çœ°é¦æ¿æ½ƒéœå²„æš±æ´ï¹€ç–„éœ?
+//--ÇëÇóµØÖ·ºÍ³¤¶ÈÊµÏÖ
 	always @(posedge sys_clk_i or posedge sys_rst_i) begin
 		if(sys_rst_i) begin
 			m_axir_req							<= 1'b0										;
@@ -300,7 +300,7 @@ module lvds_hdlc_read #(
 		end
 	end
 	/*--------------------------------------------------------------------------------------
-	--HEADæ¶“å¶¥ATAé–®æˆ’ç² æ££æ §æ¹´é§â‚¬å¯®â‚¬æ¿®å¬­î‡°é™æ µç´HEADéç‰ˆåµæ¶“å¶…å•“éî™ŒIFO
+	--HEADÓëDATA¶¼´ÓÊ×µØÖ·¿ªÊ¼¶ÁÈ¡£¬HEADÊı¾İ²»Ğ´ÈëFIFO
 	--------------------------------------------------------------------------------------*/
 	always @(posedge sys_clk_i or posedge sys_rst_i) begin
 		if(sys_rst_i) begin
@@ -326,7 +326,7 @@ module lvds_hdlc_read #(
 	end
 
 //==================================================================================================
-//--éç‰ˆåµç’‡è¯²å½‡é¿å¶„ç¶”
+//--Êı¾İ¶ÁÈ¡²Ù×÷
 	always @(posedge sys_clk_i or posedge sys_rst_i) begin
 		if(sys_rst_i) begin
 			S_RB_CM								<= S_RB_IDLE_M								;
@@ -392,9 +392,9 @@ module lvds_hdlc_read #(
 			DSW_LEN								<= 16'b0									;
 		end else if(S_RB_CM[B_RB_HDATA_M]) begin
 			if(MLVDS_AXI_RVALID && MLVDS_AXI_RREADY) begin
-				//DSW_LEN							<= MLVDS_AXI_RDATA[47:32]					;	//	é‘¾å³°å½‡ç”¯Ñ‡æš±
+				//DSW_LEN							<= MLVDS_AXI_RDATA[47:32]					;	//	»ñÈ¡Ö¡³¤
 				
-				DSW_LEN							<= 16'h100					;	//	é‘¾å³°å½‡ç”¯Ñ‡æš±
+				DSW_LEN							<= 16'h100					;	//	»ñÈ¡Ö¡³¤
 			end else begin
 				DSW_LEN							<= DSW_LEN									;
 			end
@@ -435,7 +435,7 @@ module lvds_hdlc_read #(
 			axis_data_fifo_wen					<= 1'b0										;
 			axis_data_fifo_din[65:0]			<= 66'b0									;
 			
-		end else if(S_RB_CM[B_RB_HDATA_M]) begin	//æ¾§ç‚²å§é‘·î„ç•¾æ¶”å¡–RIOç”¯Ñƒã”
+		end else if(S_RB_CM[B_RB_HDATA_M]) begin	//Ôö¼Ó×Ô¶¨ÒåSRIOÖ¡Í·
 			axis_data_fifo_wen					<= MLVDS_AXI_RVALID && MLVDS_AXI_RREADY		;
 			axis_data_fifo_din[63:0]			<= {32'h0060_2000,	cur_raddr-P_LVDS_DDR3_START_ADDR_R}	;
 			

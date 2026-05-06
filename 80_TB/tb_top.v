@@ -1,10 +1,10 @@
 `timescale 1ns/1ps
 // ============================================================================
-// ����ά��˵��
-// �ļ�ְ��      : ��ǰ�ļ�Ϊ�ֹ�ά��Դ�룬�е���ģ��/�ű�����ʵʵ�֡�
-// ά���߽�      : ��ע�Ϳ������ά��˵��������д�κ�ԭ��˵������ʷע�ͻ������߼���
-// �޸�Լ��      : ���������������˵����ֻ����׷������ע�ͣ������滻��ע�ͻ�Ķ��ɴ��롣
-// ���ɹ�ϵ      : �����ڶ�Ӧ�����Ӧ�Ե�ǰ�ֹ�Դ��Ϊ׼����ֹ���򸲸Ǳ��ļ���
+// 新增维护说明
+// 作者          : Egor Izmaylov
+// 文件职责      : 当前文件为手工维护源码，具体职责见模块名、端口和上层实例化。
+// 维护边界      : 只追加说明性注释；Vivado/IP 生成物和第三方支撑代码不在此处手改。
+// 修改约束      : 功能改动需同步更新仿真、综合结果和相关文档。
 // ============================================================================
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Company			: ZHTY
@@ -33,7 +33,7 @@
 // Additional Comments:
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
-����������Ҫѡ��mixed
+* 历史说明：原块注释编码已损坏，按当前文件头和开发文档维护。
 
 cd E:/FPGA_CBB_WZ/srio_v10/10_PRJ/00_PRJ.sim/sim_1/behav/modelsim
 do tb_top_compile.do
@@ -96,7 +96,7 @@ initial	begin
 		lbe_wr_en								= 1'b0												;
 		lbe_wdata								= 32'h0000_0000										;
 		
-//		//��485����0������
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //		#1000
 //		lbe_addr								= 32'h82b1_0000										;
 //		lbe_req									= 1'b1												;
@@ -106,21 +106,21 @@ initial	begin
 //		lbe_req									= 1'b0												;
 	
 	
-		//д��Ƶʹ��
+		// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 		#1000
 		lbe_addr								= 32'h8122_0000										;
 		lbe_req									= 1'b1												;
 		lbe_wr_en								= 1'b1												;
 		lbe_wdata								= 32'h0000_0001										;
 		#10	
-		//д��Ƶ����
+		// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 		#1000
 		lbe_addr								= 32'h8122_0008										;
 		lbe_req									= 1'b1												;
 		lbe_wr_en								= 1'b1												;
 		lbe_wdata								= 32'h0000_0040										;
 		#10			
-		//д485����0������
+		// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 		#1000
 		lbe_addr								= 32'h82b1_0000										;
 		lbe_req									= 1'b1												;
@@ -129,7 +129,7 @@ initial	begin
 		#10
 		lbe_req									= 1'b0												;		
 
-		//��485����0������
+		// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 		#1000
 		lbe_addr								= 32'h82b1_0000										;
 		lbe_req									= 1'b1												;
@@ -139,7 +139,7 @@ initial	begin
 		lbe_req									= 1'b0												;
 
 
-		//��srio
+		// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 		#1000
 		lbe_addr								= 32'h8400_0000										;
 		lbe_req									= 1'b1												;
@@ -150,7 +150,7 @@ initial	begin
 		
 		
 		
-		//��sid_DID
+		// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 		#1000
 		lbe_addr								= 32'h8600_0000										;
 		lbe_req									= 1'b1												;
@@ -167,7 +167,7 @@ initial	begin
 		lbe_wdata								= 32'h00aa_00cc										;
 		#10
 		lbe_req									= 1'b0												;	
-		//��sid_DID
+		// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 		#1000
 		lbe_addr								= 32'h8600_0000										;
 		lbe_req									= 1'b1												;
@@ -201,71 +201,71 @@ run 10us
 */
 
 
-//// ģ�鹦�ܣ�RapidIOĿ��ˣ�����NREAD�����ͨ��iotx�˿ڷ�����Ӧ��
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //module rapidio_target_nread_response(
-//    input           clk,                // RapidIO IP��ʱ�ӣ�����125MHz��
-//    input           rst_n,              // �첽��λ������Ч��
+//    input           clk,                // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
+//    input           rst_n,              // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
     
-//    // RapidIO Condensed I/O ���ն˿ڣ���NREAD����
-//    input           s_axis_iorx_tvalid, // ������Ч
-//    input           s_axis_iorx_tlast,  // ���������
-//    input  [63:0]   s_axis_iorx_tdata,  // �������ݣ�����ַ/ͷ����
-//    input  [7:0]    s_axis_iorx_tkeep,  // �����ֽ���Ч
-//    input  [31:0]   s_axis_iorx_tuser,  // ���������Ϣ��FTYPE/TTYPE/Device ID��
-//    output          s_axis_iorx_tready, // ����׼������
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//    input           s_axis_iorx_tvalid, // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
+//    input           s_axis_iorx_tlast,  // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
+//    input  [63:0]   s_axis_iorx_tdata,  // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
+//    input  [7:0]    s_axis_iorx_tkeep,  // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
+//    input  [31:0]   s_axis_iorx_tuser,  // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
+//    output          s_axis_iorx_tready, // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
     
-//    // RapidIO Condensed I/O ���Ͷ˿ڣ���NREAD��Ӧ������iotx�˿ڣ�
-//    output          m_axis_iotx_tvalid, // ��Ӧ��Ч
-//    output          m_axis_iotx_tlast,  // ��Ӧ������
-//    output [63:0]   m_axis_iotx_tdata,  // ��Ӧ���ݣ���ͷ��/�غɣ�
-//    output [7:0]    m_axis_iotx_tkeep,  // ��Ӧ�ֽ���Ч
-//    output [31:0]   m_axis_iotx_tuser,  // ��Ӧ������Ϣ��FTYPE/TTYPE/Device ID��
-//    input           m_axis_iotx_tready  // ����׼��������IP�˲ࣩ
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//    output          m_axis_iotx_tvalid, // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
+//    output          m_axis_iotx_tlast,  // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
+//    output [63:0]   m_axis_iotx_tdata,  // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
+//    output [7:0]    m_axis_iotx_tkeep,  // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
+//    output [31:0]   m_axis_iotx_tuser,  // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
+//    input           m_axis_iotx_tready  // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
 //);
 
-//// -------------------------- ����1���������壨���ı��룩 --------------------------
-//// NREAD��Ӧ��FTYPE/TTYPE���루�ο��ĵ���FTYPE=0010, TTYPE=0100��
-//localparam NREAD_RESP_FTYPE = 4'b0010;  // NREAD��Ӧ�������ͱ���
-//localparam NREAD_RESP_TTYPE = 4'b0100;  // NREAD��Ӧ�������ͱ���
-//localparam DEVICE_ID_TARGET = 8'h01;    // Ŀ���8bit Device ID�����Զ��壩
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//localparam NREAD_RESP_FTYPE = 4'b0010;  // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
+//localparam NREAD_RESP_TTYPE = 4'b0100;  // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
+//localparam DEVICE_ID_TARGET = 8'h01;    // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
 
-//// ״̬�����壺����NREAD�����������Ӧ��������Ӧ
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 ////typedef enum {IDLE, PARSE_REQUEST, BUILD_RESPONSE, SEND_RESPONSE} state_t;
 //reg [3:0] current_state, next_state;
 
-//// -------------------------- ����2�������������Ӧ���� --------------------------
-//reg [31:0] req_addr;        // ��������NREAD�����ַ��Ҫ��ȡ�ĵ�ַ��
-//reg [63:0] resp_data;       // NREAD��Ӧ�����غɣ�ģ��ӼĴ�����ȡ��
-//reg        resp_pending;    // ��Ӧ�����ͱ�־
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//reg [31:0] req_addr;        // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
+//reg [63:0] resp_data;       // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
+//reg        resp_pending;    // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
 
-//// ����NREAD������ȡFTYPE/TTYPE/�����ַ
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //always @(posedge clk or negedge rst_n) begin
 //    if(!rst_n) begin
 //        req_addr    <= 32'd0;
 //        resp_pending <= 1'b0;
 //    end else if(s_axis_iorx_tvalid && s_axis_iorx_tready) begin
-//        // ��������ͷ�����ж��Ƿ�ΪNREAD����FTYPE=0010, TTYPE=0100��
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //        if((s_axis_iorx_tuser[31:28] == NREAD_RESP_FTYPE) && 
 //           (s_axis_iorx_tuser[27:24] == NREAD_RESP_TTYPE)) begin
-//            // ��ȡNREAD�����Ŀ���ַ����tdata��32bit������
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //            req_addr <= s_axis_iorx_tdata[63:32];
-//            // ģ�⣺���������ַ��ȡ��Ӧ���ݣ�ʵ����Ŀ���滻Ϊ�Ĵ���/�ڴ��ȡ��
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //            case(req_addr)
-//                32'h00604000: resp_data <= 64'h0001020304050607; // ʾ������1
-//                32'h00604008: resp_data <= 64'h08090a0b0c0d0e0f; // ʾ������2
-//                default:      resp_data <= 64'hdeadbeefdeadbeef; // ��Ч��ַ����Ĭ��ֵ
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //            endcase
-//            resp_pending <= 1'b1; // �����Ҫ������Ӧ
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //        end
-//        // ������ʱ��մ����ͱ�־����ֹ�ظ���Ӧ��
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //        if(s_axis_iorx_tlast) begin
 //            resp_pending <= 1'b0;
 //        end
 //    end
 //end
 
-//// -------------------------- ����3��״̬������ --------------------------
-//// ״̬��ʱ���߼�
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //always @(posedge clk or negedge rst_n) begin
 //    if(!rst_n) begin
 //        current_state <= IDLE;
@@ -274,28 +274,28 @@ run 10us
 //    end
 //end
 
-//// ״̬������߼�
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //always @(*) begin
 //    next_state = current_state;
 //    case(current_state)
 //        IDLE: begin
-//            // �յ���ЧNREAD���󣬽�������׶�
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //            if(s_axis_iorx_tvalid && resp_pending) begin
 //                next_state = PARSE_REQUEST;
 //            end
 //        end
 //        PARSE_REQUEST: begin
-//            // ������ɣ�������Ӧ����׶�
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //            next_state = BUILD_RESPONSE;
 //        end
 //        BUILD_RESPONSE: begin
-//            // ��Ӧ������ɣ�IP��׼����������
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //            if(m_axis_iotx_tready) begin
 //                next_state = SEND_RESPONSE;
 //            end
 //        end
 //        SEND_RESPONSE: begin
-//            // ��Ӧ������ɣ�tlast���ߣ����ص�����
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //            if(m_axis_iotx_tlast) begin
 //                next_state = IDLE;
 //            end
@@ -304,37 +304,37 @@ run 10us
 //    endcase
 //end
 
-//// -------------------------- ����4��iotx�˿���Ӧ���� --------------------------
-//// 1. �����źţ�tvalid����Ӧ��Ч����tlast����Ӧ������
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //reg tvalid_reg, tlast_reg;
 //always @(posedge clk or negedge rst_n) begin
 //    if(!rst_n) begin
 //        tvalid_reg <= 1'b0;
 //        tlast_reg  <= 1'b0;
 //    end else if(current_state == SEND_RESPONSE) begin
-//        tvalid_reg <= 1'b1;        // ��Ӧ��Ч
-//        tlast_reg  <= 1'b1;        // ��beat��Ӧ��ֱ�ӱ�ǽ���
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //    end else begin
 //        tvalid_reg <= 1'b0;
 //        tlast_reg  <= 1'b0;
 //    end
 //end
 
-//// 2. ��Ӧͷ����tuser��FTYPE/TTYPE/Device ID��
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //reg [31:0] tuser_reg;
 //always @(posedge clk or negedge rst_n) begin
 //    if(!rst_n) begin
 //        tuser_reg <= 32'd0;
 //    end else if(current_state == BUILD_RESPONSE) begin
-//        // ����tuser����4bit=FTYPE����4bit=TTYPE��������8bit=Ŀ��Device ID
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //        tuser_reg[31:28] = NREAD_RESP_FTYPE;    // [31:28] = FTYPE
 //        tuser_reg[27:24] = NREAD_RESP_TTYPE;    // [27:24] = TTYPE
 //        tuser_reg[23:16] = DEVICE_ID_TARGET;    // [23:16] = 8bit Device ID
-//        tuser_reg[15:0]  = 16'd0;               // ����λ������չ����ID��
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //    end
 //end
 
-//// 3. ��Ӧ���ݣ�tdata��ͷ��+�����غɣ���tkeep���ֽ���Ч��
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //reg [63:0] tdata_reg;
 //reg [7:0]  tkeep_reg;
 //always @(posedge clk or negedge rst_n) begin
@@ -342,16 +342,16 @@ run 10us
 //        tdata_reg <= 64'd0;
 //        tkeep_reg <= 8'd0;
 //    end else if(current_state == BUILD_RESPONSE) begin
-//        tdata_reg <= resp_data;    // ��Ӧ�����غɣ�ģ���ȡ�����ݣ�
-//        tkeep_reg <= 8'hff;       // 8�ֽ�ȫ��Ч��64bit���ߣ�
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //    end
 //end
 
-//// -------------------------- ����5���˿��źŸ�ֵ --------------------------
-//// ���ն˿ڣ�ʼ��׼���������ɸ���ʵ�ʳ���������
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //assign s_axis_iorx_tready = 1'b1;
 
-//// ���Ͷ˿ڣ�iotx���ģ����󶨼Ĵ������
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //assign m_axis_iotx_tvalid = tvalid_reg;
 //assign m_axis_iotx_tlast  = tlast_reg;
 //assign m_axis_iotx_tdata  = tdata_reg;

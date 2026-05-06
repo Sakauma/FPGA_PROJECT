@@ -1,0 +1,39 @@
+# Repository text policy
+# Author: Egor Izmaylov
+#
+# Keep hand-maintained source and documents as UTF-8 text after clone.
+# HDL/HLS sources intentionally use UTF-8 without BOM so Vivado can parse
+# first-line directives such as `timescale` safely.
+
+* text=auto
+
+*.v      text eol=lf
+*.sv     text eol=lf
+*.vh     text eol=lf
+*.xdc    text eol=lf
+*.tcl    text eol=lf
+*.cpp    text eol=lf
+*.h      text eol=lf
+*.md     text eol=lf
+*.bat    text eol=crlf
+*.xpr    text eol=lf
+*.bd     text eol=lf
+*.xci    text eol=lf
+*.xml    text eol=lf
+*.ui     text eol=lf
+
+# Do not normalize generated or third-party vendor source trees.
+20_HDL/LU0310.V10_SRIO/XR2000_IP/** -text
+hls/undistort_demo/rtl/** -text
+10_PRJ/ip_patch/** -text
+
+*.bit    binary
+*.ltx    binary
+*.dcp    binary
+*.edif   binary
+*.ngc    binary
+*.wdb    binary
+*.ila    binary
+*.zip    binary
+*.xlsx   binary
+*.pdf    binary

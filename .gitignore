@@ -1,11 +1,14 @@
 # Vivado generated data
 10_PRJ/.Xil/
+10_PRJ/.Xil_bak*/
 10_PRJ/00_PRJ.cache/
 10_PRJ/00_PRJ.hw/
 10_PRJ/00_PRJ.ip_user_files/
 10_PRJ/00_PRJ.runs/
 10_PRJ/00_PRJ.sim/
 10_PRJ/NA/
+10_PRJ/*_bak_*/
+10_PRJ/00_PRJ.*_bak_*/
 20_HDL/ip_gen/
 50_IP/ip_gen/
 70_BIN/
@@ -20,6 +23,12 @@
 !10_PRJ/00_PRJ.gen/sources_1/bd/mref/**
 
 # Tool logs and crash dumps
+*.jou
+*.log
+*.pb
+*.str
+*.dmp
+*.debug
 10_PRJ/*.backup.jou
 10_PRJ/*.backup.log
 10_PRJ/*.debug
@@ -31,21 +40,33 @@
 10_PRJ/*.zip
 10_PRJ/hs_err_pid*
 10_PRJ/vivado_pid*
+10_PRJ/reports_*/
+10_PRJ/reports_static_*.txt
 
 # Debug/session artifacts
 10_PRJ/*.ila
+*.wcfg
+*.wdb
 
-# Editor or manual backup files
+# Editor, manual backup, and agent scratch files
 *.bak
+*.tmp
+*.orig
+*~
+__*/
+__*
+_external/
+dfx_runtime.txt
 
 # HLS build outputs
 hls/**/build/
+hls/**/dfx_runtime.txt
+hls_work/
 
-# 新代码: standalone xsim artifacts for phase tests
+# XSim artifacts for standalone phase tests
 xsim.dir/
-*.wdb
 xvlog.log
 xvlog.pb
 xelab.log
 xsim.log
-80_TB/build_vbram_hls_integration/
+80_TB/build_vbram_hls_integration*/

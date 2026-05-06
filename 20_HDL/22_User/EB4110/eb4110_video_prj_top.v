@@ -1,10 +1,10 @@
 `timescale 1ns/1ps
 // ============================================================================
-// ����ά��˵��
-// �ļ�ְ��      : ��ǰ�ļ�Ϊ�ֹ�ά��Դ�룬�е���ģ��/�ű�����ʵʵ�֡�
-// ά���߽�      : ��ע�Ϳ������ά��˵��������д�κ�ԭ��˵������ʷע�ͻ������߼���
-// �޸�Լ��      : ���������������˵����ֻ����׷������ע�ͣ������滻��ע�ͻ�Ķ��ɴ��롣
-// ���ɹ�ϵ      : �����ڶ�Ӧ�����Ӧ�Ե�ǰ�ֹ�Դ��Ϊ׼����ֹ���򸲸Ǳ��ļ���
+// 新增维护说明
+// 作者          : Egor Izmaylov
+// 文件职责      : 当前文件为手工维护源码，具体职责见模块名、端口和上层实例化。
+// 维护边界      : 只追加说明性注释；Vivado/IP 生成物和第三方支撑代码不在此处手改。
+// 修改约束      : 功能改动需同步更新仿真、综合结果和相关文档。
 // ============================================================================
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Company			: ZHTY
@@ -48,7 +48,7 @@ restart
 run 220us
 */
 module srio_test_prj_top	#(
-    parameter 		P_SYS_CLK_FREQ   			= 32'd125000000        						,	//系统时锟斤拷频锟斤拷
+    parameter 		P_SYS_CLK_FREQ   			= 32'd125000000        						,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
 	parameter		P_Srio_PHY_LANE_R			= 4												//Physical lane number,board gtx for SRIO
 )(		
 	input										VP											,
@@ -57,7 +57,7 @@ module srio_test_prj_top	#(
 
 	input										ps_sys_clk											,
 
-   	input 	wire	[11:00]						device_temp        							,	//DDR锟铰度接匡拷
+	input 	wire	[11:00]						device_temp        							,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
   	input			[31:0]						srio_v_sid_did								,
   	input										srio_v_sel_x1								,
 
@@ -66,7 +66,7 @@ module srio_test_prj_top	#(
 	// 新代码
 	input			[31:0]						video_algo_ctrl								,
 //==================================================================================================
-//--锟斤拷锟斤拷映锟斤拷锟斤拷冶锟絃UT锟斤拷DDR锟斤拷取锟接匡拷
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 	output	wire								V_LUT_AXI_clk								,
 	output	wire								V_LUT_AXI_rstn								,
 
@@ -109,18 +109,18 @@ module srio_test_prj_top	#(
 	output			[P_Srio_PHY_LANE_R-1:0]		srio_txn0									,
 	output			[P_Srio_PHY_LANE_R-1:0]		srio_txp0									,
 
-    inout   [63:0]     ddr3_dq             ,   //ddr3 锟斤拷锟斤拷
-    inout   [7:0]      ddr3_dqs_n          ,   //ddr3 dqs锟斤拷
-    inout   [7:0]      ddr3_dqs_p          ,   //ddr3 dqs锟斤拷  
-    output  [14:0]     ddr3_addr           ,   //ddr3 锟斤拷址   
-    output  [2:0]      ddr3_ba             ,   //ddr3 banck 选锟斤拷
-    output             ddr3_ras_n          ,   //ddr3 锟斤拷选锟斤拷
-    output             ddr3_cas_n          ,   //ddr3 锟斤拷选锟斤拷
-    output             ddr3_we_n           ,   //ddr3 锟斤拷写选锟斤拷
-    output             ddr3_reset_n        ,   //ddr3 锟斤拷位
-    output  [0:0]      ddr3_ck_p           ,   //ddr3 时锟斤拷锟斤拷
-    output  [0:0]      ddr3_ck_n           ,   //ddr3 时锟接革拷
-    output  [0:0]      ddr3_cke            ,   //ddr3 时锟斤拷使锟斤拷
+    inout   [63:0]     ddr3_dq             ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+    inout   [7:0]      ddr3_dqs_n          ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+    inout   [7:0]      ddr3_dqs_p          ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+    output  [14:0]     ddr3_addr           ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+    output  [2:0]      ddr3_ba             ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+    output             ddr3_ras_n          ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+    output             ddr3_cas_n          ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+    output             ddr3_we_n           ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+    output             ddr3_reset_n        ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+    output  [0:0]      ddr3_ck_p           ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+    output  [0:0]      ddr3_ck_n           ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+    output  [0:0]      ddr3_cke            ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
     output  [0:0]      ddr3_cs_n           ,   //ddr3 片选
     output  [7:0]      ddr3_dm             ,   //ddr3_dm
     output  [0:0]      ddr3_odt            //,    //ddr3_odt    
@@ -153,7 +153,7 @@ module srio_test_prj_top	#(
 
 
 	/*--------------------------------------------------------------------------------------
-	--SRIO通锟斤拷锟斤拷锟斤拷 AXI Stream锟接匡拷
+	* 历史说明：原块注释编码已损坏，按当前文件头和开发文档维护。
 	--------------------------------------------------------------------------------------*/
 
 	wire			[P_SRIO_DN_NUM_R*1-1	: 0]	srio_m_axis_aclk						;	
@@ -197,7 +197,7 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
     );	
     
 //==================================================================================================
-//ddr锟斤拷锟斤拷藕锟?
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 	wire										ddr_sys_clk_i								;
 	wire										ddr_clk_ref_i								;
 	wire										ddr_init_calib_complete						; 	
@@ -205,7 +205,7 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
     assign			    ddr_sys_clk_i			= clk_200m									;
     assign			    ddr_clk_ref_i			= clk_200m									;	
 //==================================================================================================
-//--Master AXI4写锟接匡拷
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 	wire		[3:0]							M_AXI_AWID									;
 	wire		[31:0]							M_AXI_AWADDR								;
 	wire		[7:0]							M_AXI_AWLEN									;
@@ -298,7 +298,7 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
 
 
 //	/*--------------------------------------------------------------------------------------
-//	--SRIO通锟斤拷锟斤拷锟斤拷 AXI Stream锟接匡拷
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
 //	--------------------------------------------------------------------------------------*/
 
 //	wire			[P_SRIO_DN_NUM_R*1-1	: 0]	srio_m_axis_aclk						;	
@@ -571,13 +571,13 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
       
 
 //     clk_calc_mul_chan #(
-//        .DETECT_CLK_FRE     ( P_SYS_CLK_FREQ                 ),//锟斤拷锟绞憋拷锟?
-//        .CLK_CHAN           ( 16                           ) //支锟斤拷通锟斤拷锟斤拷
+//        .DETECT_CLK_FRE     ( P_SYS_CLK_FREQ                 ),// 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
+//        .CLK_CHAN           ( 16                           ) // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
 //        )
 //      u_freq_calc_top(
 //        .I_rst              ( 1'b0                         ),
-//        .I_clk_detect       ( s_axis_aclk                     ), //锟斤拷锟绞憋拷锟?
-//        .I_clk_in           ( {srio_top.gt_pcs_clk,srio_top.drpclk,srio_top.refclk,srio_top.phy_clk,srio_top.gt_clk,srio_top.log_clk,user_250m_clk}                  ), //锟斤拷锟斤拷锟斤拷时锟斤拷
+//        .I_clk_detect       ( s_axis_aclk                     ), // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
+//        .I_clk_in           ( {srio_top.gt_pcs_clk,srio_top.drpclk,srio_top.refclk,srio_top.phy_clk,srio_top.gt_clk,srio_top.log_clk,user_250m_clk}                  ), // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
 //        .I_fre_detect_chan  ( vio_ctrl_clk_calc[3:0]           ),//(vio_ctrl_clk_calc[3:0]       ),
 //        .O_clk_cnt          ( s_detect_fre                 )
 //    );
@@ -586,7 +586,7 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
 	MY_MEM u_mem	(
  		.device_temp_i								( device_temp									),
 //===============================================================================================
-//--DDR锟解部锟接匡拷
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
  		.DDR3_addr								( ddr3_addr									),
 		.DDR3_ba								( ddr3_ba									),
 		.DDR3_cas_n								( ddr3_cas_n								),
@@ -604,7 +604,7 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
 		.DDR3_we_n								( ddr3_we_n									),
     	.init_calib_complete					( ddr_init_calib_complete					),
 //===============================================================================================
-//--ddr锟脚猴拷
+// 历史说明：原注释编码已损坏，已替换为中文维护说明。
   		.ddr_sys_clk_i							( ddr_sys_clk_i								),
     	.ddr_clk_ref_i							( ddr_clk_ref_i								),
 

@@ -1,21 +1,31 @@
-// ============================================================================
-// ĞÂÔöÎ¬»¤ËµÃ÷
-// ÎÄ¼şÖ°Ôğ      : µ±Ç°ÎÄ¼şÎªÊÖ¹¤Î¬»¤Ô´Âë£¬³Ğµ£±¾Ä£¿é/½Å±¾µÄÕæÊµÊµÏÖ¡£
-// Î¬»¤±ß½ç      : ±¾×¢ÊÍ¿é½ö²¹³äÎ¬»¤ËµÃ÷£¬²»¸ÄĞ´ÈÎºÎÔ­ÓĞËµÃ÷¡¢ÀúÊ·×¢ÊÍ»òÏÖÓĞÂß¼­¡£
-// ĞŞ¸ÄÔ¼Êø      : ºóĞøÈçĞè¼ÌĞø²¹³äËµÃ÷£¬Ö»ÔÊĞí×·¼ÓÖĞÎÄ×¢ÊÍ£¬²»µÃÌæ»»¾É×¢ÊÍ»ò¸Ä¶¯¾É´úÂë¡£
-// Éú³É¹ØÏµ      : Èô´æÔÚ¶ÔÓ¦Éú³ÉÎï£¬Ó¦ÒÔµ±Ç°ÊÖ¹¤Ô´ÂëÎª×¼£¬½ûÖ¹·´Ïò¸²¸Ç±¾ÎÄ¼ş¡£
-// ============================================================================
+# ============================================================================
+# æ–°å¢ç»´æŠ¤è¯´æ˜
+# ä½œè€…          : Egor Izmaylov
+# æ–‡ä»¶èŒè´£      : Vitis HLS C/RTL ååŒä»¿çœŸå…¥å£ï¼ŒéªŒè¯ç»¼åˆå RTL ä¸ C æ¨¡å‹ä¸€è‡´ã€‚
+# æ•°æ®æµä½ç½®      : è¦†ç›– 64bit AXIS è¾“å…¥è¾“å‡ºå’Œ `algo_ctrl` æ¨¡å¼æ§åˆ¶ã€‚
+# ç»´æŠ¤è¾¹ç•Œ      : åªéªŒè¯ HLS æ ¸å†…éƒ¨è¡Œä¸ºï¼Œé¡¶å±‚ RTL é›†æˆç”± `80_TB/` è„šæœ¬è´Ÿè´£ã€‚
+# ä¿®æ”¹çº¦æŸ      : æ–°å¢æ¨¡å¼ä½æˆ–æ”¹å˜å¸§ç›¸ä½è§„åˆ™æ—¶ï¼Œå¿…é¡»åŒæ­¥æ‰©å±• testbench è¦†ç›–ã€‚
+# ============================================================================
+
 set script_dir [file dirname [info script]]
 set root_dir [file normalize [file join $script_dir ..]]
 
-open_project build/cosim_run/undistort_demo_hls
+# æ–°ä»£ç ï¼šEgor Izmaylov æ”¯æŒå¤–éƒ¨ HLS_BUILD_ROOTï¼Œé¿å…æ—§ cosim ç›®å½•æƒé™æˆ–ç¼“å­˜æ±¡æŸ“å½±å“éªŒè¯ã€‚
+if {[info exists ::env(HLS_BUILD_ROOT)]} {
+    set build_root [file normalize $::env(HLS_BUILD_ROOT)]
+} else {
+    set build_root [file join $root_dir build]
+}
+file mkdir $build_root
+
+open_project [file join $build_root cosim_run undistort_demo_hls]
 set_top undistort_demo_hls
 
 add_files [file join $root_dir src undistort_demo_hls.cpp]
 add_files [file join $root_dir src undistort_demo_hls.h]
-# æ–°ä»£ç 
+# æ–°ä»£ç ï¼šEgor Izmaylov ä¸º cosim å¢åŠ ä¸“ç”¨å®ï¼Œé¿å… C testbench ç­‰å¾… RTL å»¶è¿Ÿé€ æˆè¯¯åˆ¤ã€‚
 add_files -tb [file join $root_dir tb undistort_demo_hls_tb.cpp] -cflags [format "-I%s -DUNDISTORT_DEMO_COSIM" [file join $root_dir src]]
-# æ—§ä»£ç 
+# æ—§ä»£ç ï¼šä»¥ä¸‹æ³¨é‡Šä¿ç•™åŸæœ‰å®ç°ï¼Œä»…ä½œä¸ºå†å²è·¯å¾„å‚è€ƒã€‚
 # add_files -tb [file join $root_dir tb undistort_demo_hls_tb.cpp] -cflags [format "-I%s" [file join $root_dir src]]
 
 open_solution "solution1" -flow_target vivado

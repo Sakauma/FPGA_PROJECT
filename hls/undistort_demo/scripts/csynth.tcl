@@ -1,14 +1,24 @@
-// ============================================================================
-// ĞÂÔöÎ¬»¤ËµÃ÷
-// ÎÄ¼şÖ°Ôğ      : µ±Ç°ÎÄ¼şÎªÊÖ¹¤Î¬»¤Ô´Âë£¬³Ğµ£±¾Ä£¿é/½Å±¾µÄÕæÊµÊµÏÖ¡£
-// Î¬»¤±ß½ç      : ±¾×¢ÊÍ¿é½ö²¹³äÎ¬»¤ËµÃ÷£¬²»¸ÄĞ´ÈÎºÎÔ­ÓĞËµÃ÷¡¢ÀúÊ·×¢ÊÍ»òÏÖÓĞÂß¼­¡£
-// ĞŞ¸ÄÔ¼Êø      : ºóĞøÈçĞè¼ÌĞø²¹³äËµÃ÷£¬Ö»ÔÊĞí×·¼ÓÖĞÎÄ×¢ÊÍ£¬²»µÃÌæ»»¾É×¢ÊÍ»ò¸Ä¶¯¾É´úÂë¡£
-// Éú³É¹ØÏµ      : Èô´æÔÚ¶ÔÓ¦Éú³ÉÎï£¬Ó¦ÒÔµ±Ç°ÊÖ¹¤Ô´ÂëÎª×¼£¬½ûÖ¹·´Ïò¸²¸Ç±¾ÎÄ¼ş¡£
-// ============================================================================
+# ============================================================================
+# æ–°å¢ç»´æŠ¤è¯´æ˜
+# ä½œè€…          : Egor Izmaylov
+# æ–‡ä»¶èŒè´£      : Vitis HLS ç»¼åˆä¸ IP å¯¼å‡ºå…¥å£ï¼Œç”Ÿæˆå¯æ¥å…¥ Vivado çš„ Verilog RTLã€‚
+# æ•°æ®æµä½ç½®      : å°† HLS C++ é¡¶å±‚ `undistort_demo_hls` ç»¼åˆä¸º 64bit AXIS æµå¤„ç†æ ¸ã€‚
+# ç»´æŠ¤è¾¹ç•Œ      : `hls/undistort_demo/rtl/` ä¸ºå¯¼å‡ºäº§ç‰©ï¼Œç®—æ³•åº”ä¼˜å…ˆæ”¹ `src/`ã€‚
+# ä¿®æ”¹çº¦æŸ      : C ç»¼åˆé€šè¿‡åå†æ›´æ–° RTL äº§ç‰©ï¼Œå¹¶è®°å½•èµ„æºã€æ—¶åºå’ŒéªŒè¯ç»“è®ºã€‚
+# ============================================================================
+
 set script_dir [file dirname [info script]]
 set root_dir [file normalize [file join $script_dir ..]]
 
-open_project build/tcl_run/undistort_demo_hls
+# æ–°ä»£ç ï¼šEgor Izmaylov æ”¯æŒå¤–éƒ¨ HLS_BUILD_ROOTï¼Œä¾¿äºåœ¨å¹²å‡€å·¥ä½œåŒºé‡è·‘ç»¼åˆå¹¶éš”ç¦»æ´¾ç”Ÿäº§ç‰©ã€‚
+if {[info exists ::env(HLS_BUILD_ROOT)]} {
+    set build_root [file normalize $::env(HLS_BUILD_ROOT)]
+} else {
+    set build_root [file join $root_dir build]
+}
+file mkdir $build_root
+
+open_project [file join $build_root tcl_run undistort_demo_hls]
 set_top undistort_demo_hls
 
 add_files [file join $root_dir src undistort_demo_hls.cpp]
@@ -19,10 +29,9 @@ open_solution "solution1" -flow_target vivado
 set_part xc7z100ffg900-2
 create_clock -period 4.000 -name default
 
-# New code
-# Finish RTL synthesis/export first and keep C simulation as a follow-up task.
+# æ–°ä»£ç ï¼šEgor Izmaylov ä¿ç•™ HLS ç»¼åˆå’Œ RTL/IP å¯¼å‡ºä½œä¸ºæ­£å¼ç®—æ³•äº¤ä»˜å…¥å£ã€‚
 
-# Old code
+# æ—§ä»£ç ï¼šä»¥ä¸‹æ³¨é‡Šä¿ç•™åŸæœ‰å®ç°ï¼Œä»…ä½œä¸ºå†å²è·¯å¾„å‚è€ƒã€‚
 # csim_design
 csynth_design
 export_design -rtl verilog -format ip_catalog

@@ -1,9 +1,9 @@
 // ============================================================================
-// ����ά��˵��
-// �ļ�ְ��      : ��ǰ�ļ�Ϊ�ֹ�ά��Դ�룬�е���ģ��/�ű�����ʵʵ�֡�
-// ά���߽�      : ��ע�Ϳ������ά��˵��������д�κ�ԭ��˵������ʷע�ͻ������߼���
-// �޸�Լ��      : ���������������˵����ֻ����׷������ע�ͣ������滻��ע�ͻ�Ķ��ɴ��롣
-// ���ɹ�ϵ      : �����ڶ�Ӧ�����Ӧ�Ե�ǰ�ֹ�Դ��Ϊ׼����ֹ���򸲸Ǳ��ļ���
+// 新增维护说明
+// 作者          : Egor Izmaylov
+// 文件职责      : 当前文件为手工维护源码，具体职责见模块名、端口和上层实例化。
+// 维护边界      : 只追加说明性注释；Vivado/IP 生成物和第三方支撑代码不在此处手改。
+// 修改约束      : 功能改动需同步更新仿真、综合结果和相关文档。
 // ============================================================================
 #include "undistort_demo_hls.h"
 
@@ -108,7 +108,7 @@ static std::vector<axis64_t> run_case(ap_uint<32> algo_ctrl) {
     push_packet(in_stream, 1, 0, pack_pixels(5, 6, 7, 8));
     push_packet(in_stream, 0, 0, pack_pixels(9, 10, 11, 12));
 
-    // 新代码
+    // 新代码：Egor Izmaylov 用固定输出节拍覆盖 0x0/0x1/0x3/0x7 四种控制模式。
     for (int cycle = 0; cycle < expected_words; ++cycle) {
         undistort_demo_hls(in_stream, out_stream, algo_ctrl);
         outputs.push_back(out_stream.read());
@@ -116,7 +116,7 @@ static std::vector<axis64_t> run_case(ap_uint<32> algo_ctrl) {
 
     assert(outputs.size() == expected_words);
 
-    // 旧代码
+    // 旧代码：以下循环保留为历史参考，当前固定读取 expected_words 个输出更适合 cosim 对齐。
     // for (int cycle = 0; cycle < 24; ++cycle) {
     //     undistort_demo_hls(in_stream, out_stream, algo_ctrl);
     //     if (!out_stream.empty()) {

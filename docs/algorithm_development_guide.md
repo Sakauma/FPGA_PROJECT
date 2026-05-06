@@ -61,6 +61,27 @@ cmd /c "\"D:\AMD\2025.2\Vitis\settings64.bat\" && \"D:\AMD\2025.2\Vitis\bin\viti
 
 `HLS_BUILD_ROOT` 可选；建议多人开发时使用仓库根目录下的 `hls_work/` 隔离派生产物，避免本地旧缓存或权限问题影响验证。
 
+## 学习路线
+
+阶段 1：理解本工程算法边界。先阅读 `hls/undistort_demo/src/undistort_demo_hls.cpp`、`hls/undistort_demo/tb/undistort_demo_hls_tb.cpp` 和 `20_HDL/22_User/SRIO_2_BRAM/undistort_demo_hls_wrap.v`，确认算法人员只处理 64-bit AXIS payload 和 `algo_ctrl`，不修改 SRIO、BRAM、MIG、BD/IP、XDC 等底层硬件内容。
+
+阶段 2：掌握 Vitis HLS 基础。重点学习 `ap_uint`、`hls::stream`、AXIS 接口、`#pragma HLS PIPELINE`、`#pragma HLS UNROLL`、`csim`、`csynth` 和 `cosim`。本工程算法应优先保持 `II=1` 的流式处理思路，避免引入整帧缓存。
+
+阶段 3：学习图像去畸变原理。重点掌握相机内参、畸变系数、反向映射、LUT 查表、定点化和插值。真实算法进入 HLS 前，应先用软件模型验证坐标映射和边界行为，再移植为定点/流式实现。
+
+阶段 4：在本工程内实现和验证。先改 HLS C++ 算法和 testbench，跑通 `csim`；再执行 `csynth` 检查资源和时序；随后执行 `cosim` 确认 C/RTL 一致；如果重新导出 RTL 或修改 wrapper，再运行 `80_TB/run_tb_vbram_hls_integration.bat`，最后由硬件部门协助完成上板验证。
+
+## 推荐开源仓库与网站
+
+- [AMD Vitis HLS UG1399](https://docs.amd.com/r/2024.2-English/ug1399-vitis-hls/Tutorials-and-Examples?contentId=xM4ej9x5Of~UqgiDAqmoXw)：HLS 语法、接口综合、pipeline、AXIS 和 cosim 的权威资料。本工程遇到 pragma、接口协议或 C/RTL 不一致问题时，优先按该文档核对。
+- [Xilinx/Vitis-HLS-Introductory-Examples](https://github.com/Xilinx/Vitis-HLS-Introductory-Examples)：包含 AXIS、数组分割、pipeline、任意精度整数等小例子。适合在修改本工程前先做独立练习，理解 HLS 如何把 C++ 变成硬件结构。
+- [Xilinx/Vitis-Tutorials](https://github.com/Xilinx/Vitis-Tutorials)：覆盖较完整的 Vitis/HLS 工程流程。适合学习从 C 模型、综合、仿真到工程集成的整体节奏。
+- [Xilinx/Vitis_Libraries](https://github.com/Xilinx/Vitis_Libraries)：AMD/Xilinx 官方开源加速库集合，其中 vision 部分可作为 FPGA 图像处理写法参考。本工程可借鉴其流式处理、定点类型和窗口化思路，但不要直接引入大库依赖。
+- [Vitis Vision Library Docs](https://xilinx.github.io/Vitis_Libraries/vision/)：说明 `xf::cv` 图像处理模块、接口和资源权衡。适合参考 remap、resize、filter 等模块如何组织数据流和边界处理。
+- [OpenCV Calibration Tutorial](https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html)：介绍相机标定、畸变参数和去畸变流程。适合算法人员先在 PC 上确认标定参数和去畸变效果，再设计 HLS 版本。
+- [OpenCV calib3d](https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html)：包含相机模型、`initUndistortRectifyMap`、`undistort` 等接口说明。适合作为去畸变数学模型和软件基准，不应直接照搬动态内存或浮点密集实现到 HLS。
+- [opencv/opencv](https://github.com/opencv/opencv)：软件侧图像算法实现参考。可用于理解算法行为、构建 golden model 和生成测试数据，移植到本工程时必须重新做定点化、流式化和资源评估。
+
 ## 提交流程
 
 算法分支提交前应完成：

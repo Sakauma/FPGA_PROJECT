@@ -48,6 +48,13 @@
 *.wcfg
 *.wdb
 
+# Local project notes not synced
+AGENTS.md
+VIVADO_2020_COMPATIBILITY.md
+build_report.md
+preprocess_dev_guide.md
+status.md
+
 # Editor, manual backup, and agent scratch files
 *.bak
 *.tmp

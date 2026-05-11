@@ -16,7 +16,8 @@ enum reader_state_t {
     S_ISSUE_ADDR = 3,
     S_WAIT_DATA = 4,
     S_CAPTURE_PIXEL = 5,
-    S_WRITE_PAYLOAD = 6
+    S_PREPROCESS_PIXEL = 6,
+    S_WRITE_PAYLOAD = 7
 };
 
 static ap_uint<8> calc_delayed_line_slot(bram_addr_t bram_line_cur_w) {
@@ -201,6 +202,7 @@ void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
     static ap_uint<1> payload_last = 0;
     static bram_addr_t bram_addr_reg = 0;
     static line_slot_addr_t line_num_addr_reg = 0;
+    static ap_uint<16> source_pixel_reg = 0;
     // 新代码：Egor Izmaylov 自适应预处理参数。当前帧统计 min/max，下一帧应用黑电平和 Q8 增益。
     static ap_uint<16> frame_min = 65535;
     static ap_uint<16> frame_max = 0;
@@ -220,6 +222,7 @@ void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
 #pragma HLS RESET variable=payload_last
 #pragma HLS RESET variable=bram_addr_reg
 #pragma HLS RESET variable=line_num_addr_reg
+#pragma HLS RESET variable=source_pixel_reg
 #pragma HLS RESET variable=frame_min
 #pragma HLS RESET variable=frame_max
 #pragma HLS RESET variable=adaptive_black
@@ -280,11 +283,17 @@ void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
         state = S_CAPTURE_PIXEL;
         break;
 
-    case S_CAPTURE_PIXEL: {
+    case S_CAPTURE_PIXEL:
+        // 新代码：Egor Izmaylov 先寄存 BRAM 读数据，避免 BRAM 输出同拍进入自适应预处理乘法器导致 250MHz 时序过长。
+        source_pixel_reg = bram_doutb;
+        state = S_PREPROCESS_PIXEL;
+        break;
+
+    case S_PREPROCESS_PIXEL: {
         // 新代码：Egor Izmaylov 用固定分支替代可变 range，降低 HLS 生成动态选择器的风险。
         // 旧代码保留：payload_word.range(pack_idx * 16 + 15, pack_idx * 16) = bram_doutb;
         // 新代码：Egor Izmaylov 对真实源像素执行自适应预处理；第一帧默认单位增益，后续帧使用上一帧统计参数。
-        ap_uint<16> source_pixel = bram_doutb;
+        ap_uint<16> source_pixel = source_pixel_reg;
         if (algo_ctrl[0] && !algo_ctrl[4]) {
             if (source_pixel < frame_min) {
                 frame_min = source_pixel;

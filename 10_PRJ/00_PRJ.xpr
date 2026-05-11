@@ -104,6 +104,30 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../20_HDL/22_User/SRIO_2_BRAM/readbram_to_axis64/readbram_to_axis64_top.v">
+        <FileInfo>
+          <Attr Name="AutoDisabled" Val="1"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../20_HDL/22_User/SRIO_2_BRAM/readbram_to_axis64/readbram_to_fifo.v">
+        <FileInfo>
+          <Attr Name="AutoDisabled" Val="1"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../20_HDL/22_User/SRIO_2_BRAM/undistort_demo_hls_wrap.v">
+        <FileInfo>
+          <Attr Name="AutoDisabled" Val="1"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../20_HDL/22_User/Common/slb_to_axil_m.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -345,20 +369,6 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../20_HDL/22_User/SRIO_2_BRAM/readbram_to_axis64/readbram_to_axis64_top.v">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../20_HDL/22_User/SRIO_2_BRAM/readbram_to_axis64/readbram_to_fifo.v">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
       <File Path="$PPRDIR/../20_HDL/LU0310.V10_SRIO/XR2000_HDL_SIM/regfile_sim_reg.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -584,13 +594,6 @@
         </FileInfo>
       </File>
       <File Path="$PPRDIR/../20_HDL/22_User/Common/sync_nrst.v">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../20_HDL/22_User/SRIO_2_BRAM/undistort_demo_hls_wrap.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>

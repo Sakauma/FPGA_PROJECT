@@ -20,6 +20,216 @@
 //       4. Output data stays stable under backpressure
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+`ifndef USE_OLD_AXIS_POST_HLS_TB
+module tb_vbram_hls_integration;
+
+    localparam [63:0] EXPECTED_HEADER = 64'h00602000_00000000;
+    localparam [63:0] EXPECTED_BYPASS_PAYLOAD = 64'h0003_0002_0001_0000;
+
+    reg             clk                     = 1'b0;
+    // 新代码：Egor Izmaylov 初始为 1，再由 apply_reset 拉低，确保异步复位逻辑看到真实下降沿。
+    reg             rstn                    = 1'b1;
+    reg     [31:0]  video_algo_ctrl         = 32'h0000_0000;
+    reg     [18:0]  bram_line_cur_w         = 19'd128;
+    reg             bram_line_cur_w_en      = 1'b0;
+    reg     [15:0]  bram_doutb              = 16'd0;
+    reg             m_srio_axis_tready      = 1'b1;
+
+    wire    [8:0]   bram_line_num_addr;
+    wire    [11:0]  bram_line_num           = {4'd0, bram_line_num_addr[7:0]};
+    wire    [18:0]  bram_addrb;
+    wire    [63:0]  m_srio_axis_tdata;
+    wire            m_srio_axis_tvalid;
+    wire            m_srio_axis_tlast;
+
+    reg     [63:0]  captured_data [0:7];
+    reg             captured_last [0:7];
+    integer         captured_count          = 0;
+    integer         error_count             = 0;
+
+    always #5 clk = ~clk;
+
+    function [15:0] mock_bram_pixel;
+        input [18:0] addr;
+        begin
+            mock_bram_pixel = {addr[18:11], addr[7:0]};
+        end
+    endfunction
+
+    always @(posedge clk) begin
+        bram_doutb <= mock_bram_pixel(bram_addrb);
+    end
+
+`ifdef DEBUG_FISHEYE_TB
+    always @(posedge clk) begin
+        if (rstn && (bram_line_cur_w_en ||
+                     dut.u_fisheye_remap_bram_to_axis.fifo_wr_en ||
+                     (dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.state != 3'd0))) begin
+            $display("DBG t=%0t en=%0b hls_state=%0d hls_fsm=%h fifo_af=%0b wr=%0b fifo_empty=%0b valid=%0b data=%016h addr=%05h",
+                     $time,
+                     bram_line_cur_w_en,
+                     dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.state,
+                     dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.ap_CS_fsm,
+                     dut.u_fisheye_remap_bram_to_axis.fifo_almost_full,
+                     dut.u_fisheye_remap_bram_to_axis.fifo_wr_en,
+                     dut.u_fisheye_remap_bram_to_axis.fifo_empty,
+                     m_srio_axis_tvalid,
+                     m_srio_axis_tdata,
+                     bram_addrb);
+        end
+    end
+`endif
+
+    vbram_lutaxi4_to_axis #(
+        .B_RAM_WIDTH            ( 16        ),
+        .B_RAM_DEPTH            ( 32'h80000 ),
+        .P_LINE_DEPTH           ( 256       )
+    ) dut (
+        .clk                    ( clk               ),
+        .rstn                   ( rstn              ),
+        .video_algo_ctrl        ( video_algo_ctrl   ),
+
+        .bram_line_cur_w        ( bram_line_cur_w   ),
+        .bram_line_cur_w_en     ( bram_line_cur_w_en),
+        .bram_line_num_addr     ( bram_line_num_addr),
+        .bram_line_num          ( bram_line_num     ),
+        .bram_addrb             ( bram_addrb        ),
+        .bram_doutb             ( bram_doutb        ),
+
+        .V_LUT_AXI_ARID         (                   ),
+        .V_LUT_AXI_ARADDR       (                   ),
+        .V_LUT_AXI_ARLEN        (                   ),
+        .V_LUT_AXI_ARSIZE       (                   ),
+        .V_LUT_AXI_ARBURST      (                   ),
+        .V_LUT_AXI_ARLOCK       (                   ),
+        .V_LUT_AXI_ARCACHE      (                   ),
+        .V_LUT_AXI_ARPROT       (                   ),
+        .V_LUT_AXI_ARQOS        (                   ),
+        .V_LUT_AXI_ARVALID      (                   ),
+        .V_LUT_AXI_ARREADY      ( 1'b0              ),
+        .V_LUT_AXI_RID          ( 4'd0              ),
+        .V_LUT_AXI_RDATA        ( 64'd0             ),
+        .V_LUT_AXI_RRESP        ( 2'd0              ),
+        .V_LUT_AXI_RLAST        ( 1'b0              ),
+        .V_LUT_AXI_RVALID       ( 1'b0              ),
+        .V_LUT_AXI_RREADY       (                   ),
+
+        .m_srio_axis_aclk       ( clk               ),
+        .m_srio_axis_rstn       ( rstn              ),
+        .m_srio_axis_tdata      ( m_srio_axis_tdata ),
+        .m_srio_axis_tready     ( m_srio_axis_tready),
+        .m_srio_axis_tvalid     ( m_srio_axis_tvalid),
+        .m_srio_axis_tlast      ( m_srio_axis_tlast )
+    );
+
+    always @(posedge clk) begin
+        if (!rstn) begin
+            captured_count <= 0;
+        end else if (m_srio_axis_tvalid && m_srio_axis_tready) begin
+            if (captured_count < 8) begin
+                captured_data[captured_count] <= m_srio_axis_tdata;
+                captured_last[captured_count] <= m_srio_axis_tlast;
+                captured_count <= captured_count + 1;
+            end
+        end
+    end
+
+    task automatic apply_reset;
+        begin
+            rstn = 1'b0;
+            bram_line_cur_w_en = 1'b0;
+            captured_count = 0;
+            repeat (8) @(posedge clk);
+            rstn = 1'b1;
+            repeat (8) @(posedge clk);
+        end
+    endtask
+
+    task automatic pulse_line_ready;
+        begin
+            @(negedge clk);
+            bram_line_cur_w = 19'd128;
+            bram_line_cur_w_en = 1'b1;
+            @(negedge clk);
+            bram_line_cur_w_en = 1'b0;
+        end
+    endtask
+
+    task automatic wait_for_words;
+        input integer expected_count;
+        input integer timeout_cycles;
+        integer idx;
+        begin : wait_loop
+            for (idx = 0; idx < timeout_cycles; idx = idx + 1) begin
+                if (captured_count >= expected_count) begin
+                    disable wait_loop;
+                end
+                @(posedge clk);
+            end
+            $display("ERROR: timeout waiting for %0d words, got %0d", expected_count, captured_count);
+            error_count = error_count + 1;
+        end
+    endtask
+
+    task automatic run_case;
+        input [31:0] ctrl;
+        input        expect_bypass;
+        begin
+            $display("INFO: running ctrl=0x%08x", ctrl);
+            video_algo_ctrl = ctrl;
+            apply_reset();
+            pulse_line_ready();
+            wait_for_words(2, 2000);
+
+            if (captured_data[0] !== EXPECTED_HEADER || captured_last[0] !== 1'b0) begin
+                $display("ERROR: header mismatch ctrl=0x%08x data=%016h last=%0d",
+                         ctrl, captured_data[0], captured_last[0]);
+                error_count = error_count + 1;
+            end
+
+            if (expect_bypass) begin
+                if (captured_data[1] !== EXPECTED_BYPASS_PAYLOAD) begin
+                    $display("ERROR: bypass payload mismatch exp=%016h got=%016h",
+                             EXPECTED_BYPASS_PAYLOAD, captured_data[1]);
+                    error_count = error_count + 1;
+                end
+            end else begin
+                if (captured_data[1] === EXPECTED_BYPASS_PAYLOAD) begin
+                    $display("ERROR: remap payload did not change from bypass");
+                    error_count = error_count + 1;
+                end
+            end
+
+            if (captured_last[1] !== 1'b0) begin
+                $display("ERROR: first payload must not assert tlast");
+                error_count = error_count + 1;
+            end
+        end
+    endtask
+
+    initial begin
+        repeat (3) @(posedge clk);
+
+        run_case(32'h0000_0000, 1'b1);
+        run_case(32'h0000_0001, 1'b0);
+        run_case(32'h0000_0007, 1'b0);
+        // 新代码：Egor Izmaylov 覆盖自适应预处理控制位，确认 bit4/bit5 不破坏真实去畸变读出链路。
+        run_case(32'h0000_0011, 1'b0);
+        run_case(32'h0000_0021, 1'b0);
+
+        repeat (10) @(posedge clk);
+
+        if (error_count == 0) begin
+            $display("PASS: tb_vbram_hls_integration");
+        end else begin
+            $display("FAIL: tb_vbram_hls_integration error_count=%0d", error_count);
+        end
+
+        $finish;
+    end
+
+endmodule
+`else
 module tb_vbram_hls_integration;
 
     localparam [63:0] HDR0 = 64'h00602000_00000000;
@@ -339,3 +549,4 @@ module tb_vbram_hls_integration;
     end
 
 endmodule
+`endif

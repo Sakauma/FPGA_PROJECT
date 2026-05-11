@@ -352,13 +352,13 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
 		.srio_v_sel_x1							( 0								),	 
 		.ps_video_en							( 1								),
 		.ps_frame_ctr							( 8'h04								),
-		// 新代码
+		// 新代码：Egor Izmaylov 默认 0x0000_0007 仅启用 bit0 的真实去畸变/自适应预处理；bit1/bit2 已废弃为演示位。
 		.video_algo_ctrl						( 32'h0000_0007							),
 	`else
 		.srio_v_sel_x1							( srio_v_sel_x1								),	 
 		.ps_video_en							( ps_video_en								),
 		.ps_frame_ctr							( ps_frame_ctr								),
-		// 新代码
+		// 新代码：Egor Izmaylov PS 写入 0x8600_0014 时，bit0=去畸变/预处理使能，bit3=表选择，bit4=关闭预处理，bit5=冻结参数。
 		.video_algo_ctrl						( video_algo_ctrl							),
 	`endif	
 

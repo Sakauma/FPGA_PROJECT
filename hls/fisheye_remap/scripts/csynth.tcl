@@ -1,0 +1,62 @@
+# ============================================================================
+# 新增维护说明
+# 作者          : Egor Izmaylov
+# 文件职责      : 真实鱼眼去畸变 BRAM 读出核综合和 RTL 导出入口。
+# 数据流位置    : 生成可接入现有 BRAM->FIFO->SRIO 链路的 Verilog RTL。
+# 维护边界      : `hls/fisheye_remap/rtl/` 为导出产物，算法优先改 `src/`。
+# ============================================================================
+
+set script_dir [file dirname [info script]]
+set root_dir [file normalize [file join $script_dir ..]]
+
+if {[info exists ::env(HLS_BUILD_ROOT)]} {
+    set build_root [file normalize $::env(HLS_BUILD_ROOT)]
+} else {
+    set build_root [file join $root_dir build]
+}
+file mkdir $build_root
+
+open_project [file join $build_root tcl_run fisheye_remap_reader_hls]
+set_top fisheye_remap_reader_hls
+
+add_files [file join $root_dir src fisheye_remap_reader_hls.cpp]
+add_files [file join $root_dir src fisheye_remap_reader_hls.h]
+add_files [file join $root_dir src distortion_lut.h]
+add_files -tb [file join $root_dir tb fisheye_remap_reader_hls_tb.cpp] -cflags [format "-I%s" [file join $root_dir src]]
+
+open_solution "solution1" -flow_target vivado
+set_part xc7z100ffg900-2
+create_clock -period 4.000 -name default
+
+csynth_design
+export_design -rtl verilog -format ip_catalog
+
+file mkdir [file join $root_dir rtl]
+foreach rtl_file [glob -nocomplain [file join $build_root tcl_run fisheye_remap_reader_hls solution1 syn verilog *.v]] {
+    file copy -force $rtl_file [file join $root_dir rtl [file tail $rtl_file]]
+}
+
+# 新代码：Egor Izmaylov HLS 生成的 ROM Verilog 使用 $readmemh 读取 .dat，RTL 仿真必须同步复制。
+foreach rom_file [glob -nocomplain [file join $build_root tcl_run fisheye_remap_reader_hls solution1 syn verilog *.dat]] {
+    file copy -force $rom_file [file join $root_dir rtl [file tail $rom_file]]
+}
+
+# 新代码：Egor Izmaylov HLS 会把 ap_none 输出在中间状态赋为 X；接入真实 FIFO 前必须固定为空闲值。
+set top_rtl [file join $root_dir rtl fisheye_remap_reader_hls.v]
+if {[file exists $top_rtl]} {
+    set fp [open $top_rtl r]
+    fconfigure $fp -encoding utf-8
+    set rtl_text [read $fp]
+    close $fp
+    set fifo_din_idle_replacement "// \u65b0\u4ee3\u7801\uff1aEgor Izmaylov \u7a7a\u95f2\u5468\u671f\u56fa\u5b9a\u4e3a 0\uff0c\u907f\u514d X \u6c61\u67d3 FIFO\u3002\n        // \u65e7\u4ee3\u7801\u4fdd\u7559\uff1afifo_din = 'bx;\n        fifo_din = 65'd0;"
+    set fifo_wr_idle_replacement "// \u65b0\u4ee3\u7801\uff1aEgor Izmaylov \u975e\u5199\u5468\u671f\u56fa\u5b9a wr_en=0\u3002\n        // \u65e7\u4ee3\u7801\u4fdd\u7559\uff1afifo_wr_en = 'bx;\n        fifo_wr_en = 1'd0;"
+    set rtl_text [string map [list \
+        "fifo_din = 'bx;" $fifo_din_idle_replacement \
+        "fifo_wr_en = 'bx;" $fifo_wr_idle_replacement \
+    ] $rtl_text]
+    set fp [open $top_rtl w]
+    fconfigure $fp -encoding utf-8
+    puts -nonewline $fp $rtl_text
+    close $fp
+}
+exit

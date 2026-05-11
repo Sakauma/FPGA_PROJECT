@@ -167,3 +167,30 @@ set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins srio_vid
 
 
 set_clock_groups -asynchronous -group [get_clocks clk_fpga_0] -group [get_clocks -of_objects [get_pins srio_video_loop/srio_top/i_srio_support/u_SRIO_5g_2x_8b.u_srio_support/srio_clk_inst/srio_mmcm_inst/CLKOUT2]] 
+
+# 新代码：Egor Izmaylov
+# 说明：video_algo_ctrl 来自 AXI-Lite/PS 时钟域，新增鱼眼去畸变读出链路在 w_user_250m_clk 域使用。
+# 维护边界：这里只约束新增算法控制位进入第一拍同步寄存器的 CDC 路径，不改变 SRIO/MIG/BD/IP/管脚约束。
+# 新代码：Egor Izmaylov 使用 cell 查询后再取 D pin，避免 get_pins -hierarchical 正则在综合网表中未命中。
+set fisheye_ctrl_sync_stage0 [get_cells -quiet -hierarchical -filter {NAME =~ */u_fisheye_remap_bram_to_axis/video_algo_ctrl_bram_r0_reg*}]
+set fisheye_ctrl_sync_stage1 [get_cells -quiet -hierarchical -filter {NAME =~ */u_fisheye_remap_bram_to_axis/video_algo_ctrl_bram_r1_reg*}]
+set fisheye_ctrl_sync_regs [concat $fisheye_ctrl_sync_stage0 $fisheye_ctrl_sync_stage1]
+if {[llength $fisheye_ctrl_sync_regs] > 0} {
+    set_property ASYNC_REG TRUE $fisheye_ctrl_sync_regs
+}
+set fisheye_ctrl_sync_pins {}
+if {[llength $fisheye_ctrl_sync_stage0] > 0} {
+    set fisheye_ctrl_sync_pins [get_pins -quiet -of_objects $fisheye_ctrl_sync_stage0 -filter {REF_PIN_NAME == D}]
+}
+if {[llength $fisheye_ctrl_sync_pins] > 0} {
+    set_false_path -to $fisheye_ctrl_sync_pins
+}
+# 旧代码保留：以下正则查询在部分 Vivado 网表阶段可能未命中，因此仅保留为历史说明。
+# set fisheye_ctrl_sync_regs [get_cells -quiet -hierarchical -regexp {.*u_fisheye_remap_bram_to_axis/video_algo_ctrl_bram_r[01]_reg\[[0-9]+\]}]
+# if {[llength $fisheye_ctrl_sync_regs] > 0} {
+#     set_property ASYNC_REG TRUE $fisheye_ctrl_sync_regs
+# }
+# set fisheye_ctrl_sync_pins [get_pins -quiet -hierarchical -regexp {.*u_fisheye_remap_bram_to_axis/video_algo_ctrl_bram_r0_reg\[[0-9]+\]/D}]
+# if {[llength $fisheye_ctrl_sync_pins] > 0} {
+#     set_false_path -to $fisheye_ctrl_sync_pins
+# }

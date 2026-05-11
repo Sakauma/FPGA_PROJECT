@@ -1,4 +1,5 @@
 `timescale 1ns/1ns
+`include "fisheye_remap_bram_to_axis.v"
 // ============================================================================
 // 新增维护说明
 // 作者          : Egor Izmaylov
@@ -127,6 +128,33 @@ module vbram_lutaxi4_to_axis#(
 	wire										raw_srio_axis_tvalid						;
 	wire										raw_srio_axis_tlast							;
 
+`ifndef USE_OLD_AXIS_POST_HLS_PATH
+	// 新代码：Egor Izmaylov 将算法前移到 BRAM 读出阶段，实现真实源像素重采样去畸变。
+	// 维护边界：SRIO、MIG、BD/IP、XDC 和板级接口保持不变；旧 AXIS 后处理路径保留在下方宏分支。
+	fisheye_remap_bram_to_axis #(
+		.B_RAM_WIDTH							( B_RAM_WIDTH								),
+		.B_RAM_DEPTH							( B_RAM_DEPTH								),
+		.P_LINE_DEPTH							( P_LINE_DEPTH								)
+	) u_fisheye_remap_bram_to_axis (
+		.bram_clk								( clk										),
+		.bram_rstn								( rstn										),
+		.bram_line_cur_w						( bram_line_cur_w							),
+		.bram_line_cur_w_en						( bram_line_cur_w_en						),
+		.bram_line_num_addr						( bram_line_num_addr						),
+		.bram_line_num							( bram_line_num								),
+		.bram_addrb								( bram_addrb								),
+		.bram_doutb								( bram_doutb								),
+		.video_algo_ctrl						( video_algo_ctrl							),
+
+		.m_axis_aclk							( m_srio_axis_aclk							),
+		.m_axis_aresetn							( m_srio_axis_rstn							),
+		.m_axis_tready							( m_srio_axis_tready						),
+		.m_axis_tdata							( m_srio_axis_tdata							),
+		.m_axis_tvalid							( m_srio_axis_tvalid						),
+		.m_axis_tlast							( m_srio_axis_tlast							)
+	);
+`else
+	// 旧代码：保留原“顺序读 BRAM -> AXIS 后处理 HLS -> SRIO”的实现，默认不再启用。
 	readbram_to_axis64_top #(
 	    .B_RAM_WIDTH        					( B_RAM_WIDTH    							),
 	    .B_RAM_DEPTH        					( B_RAM_DEPTH      							),
@@ -167,6 +195,7 @@ module vbram_lutaxi4_to_axis#(
 		.m_axis_tready							( m_srio_axis_tready						),
 		.m_axis_tlast							( m_srio_axis_tlast							)
 	);
+`endif
 
 	// 旧代码
 //	readbram_to_axis64_top #(

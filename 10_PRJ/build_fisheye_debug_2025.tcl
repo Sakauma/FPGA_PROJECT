@@ -173,8 +173,39 @@ proc bus_pin_nets_any {cell ports width label} {
     return {}
 }
 
+proc net_tail_name {net} {
+    set net_name [get_property NAME $net]
+    set parts [split $net_name "/"]
+    return [lindex $parts end]
+}
+
+proc debug_net_tail_matches {tail prefix} {
+    if {$tail eq $prefix} {
+        return 1
+    }
+    if {![string match ${prefix}* $tail]} {
+        return 0
+    }
+
+    set next [string index $tail [string length $prefix]]
+    set after_next [string index $tail [expr {[string length $prefix] + 1}]]
+    if {$next eq "\[" || $next eq "("} {
+        return 1
+    }
+    if {$next eq "_" && [regexp {[0-9]} $after_next]} {
+        return 1
+    }
+    return 0
+}
+
 proc debug_nets_by_prefix {prefix} {
-    return [lsort -dictionary [get_nets -quiet -hier [format {*%s*} $prefix]]]
+    set matched {}
+    foreach net [get_nets -quiet -hier [format {*%s*} $prefix]] {
+        if {[debug_net_tail_matches [net_tail_name $net] $prefix]} {
+            lappend matched $net
+        }
+    }
+    return [lsort -dictionary $matched]
 }
 
 proc debug_scalar_net {prefix} {

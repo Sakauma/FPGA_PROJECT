@@ -19,6 +19,30 @@ foreach arg $argv {
     }
 }
 
+proc apply_required_ip_patch_hooks {} {
+    # 新代码：Egor Izmaylov
+    # 用户要求：综合前必须加载 JFM_Kits 的 ip_patch，并把 hook Tcl 写回工程。
+    # 这里放在 open_project 之后、reset/launch synth 之前执行。
+    set jfm_bootstrap "D:/Staff/JFM_Kits/ip_patch/run.tcl"
+    if {![file exists $jfm_bootstrap]} {
+        error "ERROR: required ip_patch bootstrap not found: $jfm_bootstrap"
+    }
+
+    source $jfm_bootstrap
+    set run_tcl_path [file join $::env(JFM_PATH) "ip_patch" "run.tcl"]
+    if {![file exists $run_tcl_path]} {
+        error "ERROR: required ip_patch run.tcl not found: $run_tcl_path"
+    }
+
+    if {[catch {source $run_tcl_path -notrace} msg]} {
+        puts "WARN: source \$run_tcl_path -notrace failed: $msg"
+        puts "WARN: retrying with Vivado option order: source -notrace \$run_tcl_path"
+        source -notrace $run_tcl_path
+    }
+    show_ip_patch_version
+    add_hook_tcl_to_prj
+}
+
 proc require_one {objects label} {
     if {[llength $objects] == 0} {
         error "ERROR: cannot find $label"
@@ -144,6 +168,32 @@ proc bus_pin_nets_any {cell ports width label} {
     return {}
 }
 
+proc debug_nets_by_prefix {prefix} {
+    return [lsort -dictionary [get_nets -quiet -hier [format {*%s*} $prefix]]]
+}
+
+proc debug_scalar_net {prefix} {
+    set nets [debug_nets_by_prefix $prefix]
+    if {[llength $nets] == 0} {
+        error "ERROR: cannot find debug tap net '$prefix'. Re-run synthesis with ENABLE_FISHEYE_DEBUG_TAPS."
+    }
+    if {[llength $nets] > 1} {
+        puts "WARN: multiple nets found for $prefix, using first: [lindex $nets 0]"
+    }
+    return [lindex $nets 0]
+}
+
+proc debug_bus_nets {prefix width} {
+    set nets [debug_nets_by_prefix $prefix]
+    if {[llength $nets] < $width} {
+        error "ERROR: debug tap bus '$prefix' has [llength $nets] nets, expected $width. Re-run synthesis with ENABLE_FISHEYE_DEBUG_TAPS."
+    }
+    if {[llength $nets] > $width} {
+        puts "WARN: debug tap bus $prefix has [llength $nets] nets, using first $width."
+    }
+    return [lrange $nets 0 [expr {$width - 1}]]
+}
+
 proc add_ila_probe {core label nets} {
     if {[llength $nets] == 0} {
         puts "WARN: skip empty probe $label"
@@ -183,42 +233,35 @@ proc recreate_ila {core_name clk_net depth} {
 }
 
 proc insert_fisheye_debug_cores {} {
-    set remap [require_one [get_cells -quiet -hier -filter {NAME =~ */u_fisheye_remap_bram_to_axis}] "u_fisheye_remap_bram_to_axis"]
-    set hls [require_one [get_cells -quiet -hier -filter {NAME =~ */u_fisheye_remap_reader_hls}] "u_fisheye_remap_reader_hls"]
-    set fifo [require_one [get_cells -quiet -hier -filter {NAME =~ */u_fisheye_axis_async_fifo}] "u_fisheye_axis_async_fifo"]
-
-    puts "INFO: Remap wrapper = $remap"
-    puts "INFO: HLS reader    = $hls"
-    puts "INFO: Async FIFO    = $fifo"
-
     # 新代码：Egor Izmaylov
-    # fifo_to_axis 层级可能被综合优化或展平，AXIS 调试点改从 remap wrapper
-    # 和 async_fifo 端口取网线，避免脚本依赖可变综合网表实例名。
-    # wrapper/HLS 边界 pin 在综合网表中可能不可见，ILA 时钟优先取异步 FIFO
-    # 的 leaf cell 时钟端口：wr_clk 是 BRAM/user_clk 域，rd_clk 是 SRIO/AXIS 域。
-    set bram_clk_net [pin_net_any $fifo {wr_clk} "fisheye FIFO wr_clk"]
-    set axis_clk_net [pin_net_any $fifo {rd_clk} "fisheye FIFO rd_clk"]
+    # 不再依赖综合后的层级端口名。RTL 在 ENABLE_FISHEYE_DEBUG_TAPS 下
+    # 生成 dbg_fisheye_* 稳定探针网线，脚本只按这些固定前缀连 ILA。
+    set remap_cells [get_cells -quiet -hier -filter {NAME =~ */u_fisheye_remap_bram_to_axis}]
+    puts "INFO: Remap wrapper count = [llength $remap_cells]"
+
+    set bram_clk_net [debug_scalar_net dbg_fisheye_bram_clk]
+    set axis_clk_net [debug_scalar_net dbg_fisheye_axis_clk]
 
     set bram_ila [recreate_ila u_ila_fisheye_bram $bram_clk_net 2048]
-    add_ila_probe $bram_ila bram_line_cur_w      [bus_pin_nets_any $remap {bram_line_cur_w} 19 bram_line_cur_w]
-    add_ila_probe $bram_ila bram_line_cur_w_en   [optional_pin_net_any $remap {bram_line_cur_w_en} bram_line_cur_w_en]
-    add_ila_probe $bram_ila bram_line_num_addr   [bus_pin_nets_any $remap {bram_line_num_addr} 9 bram_line_num_addr]
-    add_ila_probe $bram_ila bram_line_num        [bus_pin_nets_any $remap {bram_line_num} 12 bram_line_num]
-    add_ila_probe $bram_ila bram_addrb           [bus_pin_nets_any $remap {bram_addrb} 19 bram_addrb]
-    add_ila_probe $bram_ila bram_doutb           [bus_pin_nets_any $remap {bram_doutb} 16 bram_doutb]
-    add_ila_probe $bram_ila video_algo_ctrl      [bus_pin_nets_any $remap {video_algo_ctrl} 32 video_algo_ctrl]
-    add_ila_probe $bram_ila fifo_wr_en           [optional_pin_net_any $fifo {wr_en} fifo_wr_en]
-    add_ila_probe $bram_ila fifo_almost_full     [optional_pin_net_any $fifo {prog_full} fifo_almost_full]
-    add_ila_probe $bram_ila fifo_din             [bus_pin_nets_any $fifo {din} 65 fifo_din]
+    add_ila_probe $bram_ila bram_line_cur_w      [debug_bus_nets dbg_fisheye_bram_line_cur_w 19]
+    add_ila_probe $bram_ila bram_line_cur_w_en   [list [debug_scalar_net dbg_fisheye_bram_line_cur_w_en]]
+    add_ila_probe $bram_ila bram_line_num_addr   [debug_bus_nets dbg_fisheye_bram_line_num_addr 9]
+    add_ila_probe $bram_ila bram_line_num        [debug_bus_nets dbg_fisheye_bram_line_num 12]
+    add_ila_probe $bram_ila bram_addrb           [debug_bus_nets dbg_fisheye_bram_addrb 19]
+    add_ila_probe $bram_ila bram_doutb           [debug_bus_nets dbg_fisheye_bram_doutb 16]
+    add_ila_probe $bram_ila video_algo_ctrl      [debug_bus_nets dbg_fisheye_video_algo_ctrl 32]
+    add_ila_probe $bram_ila fifo_wr_en           [list [debug_scalar_net dbg_fisheye_fifo_wr_en]]
+    add_ila_probe $bram_ila fifo_almost_full     [list [debug_scalar_net dbg_fisheye_fifo_almost_full]]
+    add_ila_probe $bram_ila fifo_din             [debug_bus_nets dbg_fisheye_fifo_din 65]
 
     set axis_ila [recreate_ila u_ila_fisheye_axis $axis_clk_net 2048]
-    add_ila_probe $axis_ila fifo_empty           [optional_pin_net_any $fifo {empty} fifo_empty]
-    add_ila_probe $axis_ila fifo_ren             [optional_pin_net_any $fifo {rd_en} fifo_ren]
-    add_ila_probe $axis_ila fifo_rdata           [bus_pin_nets_any $fifo {dout} 65 fifo_rdata]
-    add_ila_probe $axis_ila m_axis_tdata         [bus_pin_nets_any $remap {m_axis_tdata} 64 m_axis_tdata]
-    add_ila_probe $axis_ila m_axis_tvalid        [optional_pin_net_any $remap {m_axis_tvalid} m_axis_tvalid]
-    add_ila_probe $axis_ila m_axis_tready        [optional_pin_net_any $remap {m_axis_tready} m_axis_tready]
-    add_ila_probe $axis_ila m_axis_tlast         [optional_pin_net_any $remap {m_axis_tlast} m_axis_tlast]
+    add_ila_probe $axis_ila fifo_empty           [list [debug_scalar_net dbg_fisheye_fifo_empty]]
+    add_ila_probe $axis_ila fifo_ren             [list [debug_scalar_net dbg_fisheye_fifo_ren]]
+    add_ila_probe $axis_ila fifo_rdata           [debug_bus_nets dbg_fisheye_fifo_rdata 65]
+    add_ila_probe $axis_ila m_axis_tdata         [debug_bus_nets dbg_fisheye_m_axis_tdata 64]
+    add_ila_probe $axis_ila m_axis_tvalid        [list [debug_scalar_net dbg_fisheye_m_axis_tvalid]]
+    add_ila_probe $axis_ila m_axis_tready        [list [debug_scalar_net dbg_fisheye_m_axis_tready]]
+    add_ila_probe $axis_ila m_axis_tlast         [list [debug_scalar_net dbg_fisheye_m_axis_tlast]]
 }
 
 set opened_here 0
@@ -240,10 +283,14 @@ foreach d $defs {
 if {[lsearch -exact $new_defs ENABLE_FISHEYE_REMAP_READER] < 0} {
     lappend new_defs ENABLE_FISHEYE_REMAP_READER
 }
+if {[lsearch -exact $new_defs ENABLE_FISHEYE_DEBUG_TAPS] < 0} {
+    lappend new_defs ENABLE_FISHEYE_DEBUG_TAPS
+}
 set_property verilog_define $new_defs $fs
 puts "INFO: verilog_define = [get_property verilog_define $fs]"
 
 update_compile_order -fileset sources_1
+apply_required_ip_patch_hooks
 
 if {$reuse_synth} {
     puts "INFO: Reusing existing synth_1 result; resetting impl_1 only."

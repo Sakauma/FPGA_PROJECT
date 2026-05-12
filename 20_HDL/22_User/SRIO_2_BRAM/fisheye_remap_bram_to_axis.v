@@ -134,4 +134,29 @@ module fisheye_remap_bram_to_axis #(
     assign m_axis_tlast = axis_word[64];
     assign m_axis_tdata = axis_word[63:0];
 
+`ifdef ENABLE_FISHEYE_DEBUG_TAPS
+    // 新代码：Egor Izmaylov
+    // 仅在调试构建中启用的稳定探针名。Vivado 综合网表会优化层级端口名，
+    // 因此把关键内部信号复制到 mark_debug/keep 网线，供 Tcl 自动插入 ILA。
+    (* mark_debug = "true", keep = "true" *) wire        dbg_fisheye_bram_clk           = bram_clk;
+    (* mark_debug = "true", keep = "true" *) wire        dbg_fisheye_axis_clk           = m_axis_aclk;
+    (* mark_debug = "true", keep = "true" *) wire [18:0] dbg_fisheye_bram_line_cur_w    = bram_line_cur_w[18:0];
+    (* mark_debug = "true", keep = "true" *) wire        dbg_fisheye_bram_line_cur_w_en = bram_line_cur_w_en;
+    (* mark_debug = "true", keep = "true" *) wire [8:0]  dbg_fisheye_bram_line_num_addr = bram_line_num_addr[8:0];
+    (* mark_debug = "true", keep = "true" *) wire [11:0] dbg_fisheye_bram_line_num      = bram_line_num;
+    (* mark_debug = "true", keep = "true" *) wire [18:0] dbg_fisheye_bram_addrb         = bram_addrb[18:0];
+    (* mark_debug = "true", keep = "true" *) wire [15:0] dbg_fisheye_bram_doutb         = bram_doutb;
+    (* mark_debug = "true", keep = "true" *) wire [31:0] dbg_fisheye_video_algo_ctrl    = video_algo_ctrl_bram;
+    (* mark_debug = "true", keep = "true" *) wire        dbg_fisheye_fifo_wr_en         = fifo_wr_en;
+    (* mark_debug = "true", keep = "true" *) wire        dbg_fisheye_fifo_almost_full   = fifo_almost_full;
+    (* mark_debug = "true", keep = "true" *) wire [64:0] dbg_fisheye_fifo_din           = fifo_din;
+    (* mark_debug = "true", keep = "true" *) wire        dbg_fisheye_fifo_empty         = fifo_empty;
+    (* mark_debug = "true", keep = "true" *) wire        dbg_fisheye_fifo_ren           = fifo_ren;
+    (* mark_debug = "true", keep = "true" *) wire [64:0] dbg_fisheye_fifo_rdata         = fifo_rdata;
+    (* mark_debug = "true", keep = "true" *) wire [63:0] dbg_fisheye_m_axis_tdata       = m_axis_tdata;
+    (* mark_debug = "true", keep = "true" *) wire        dbg_fisheye_m_axis_tvalid      = m_axis_tvalid;
+    (* mark_debug = "true", keep = "true" *) wire        dbg_fisheye_m_axis_tready      = m_axis_tready;
+    (* mark_debug = "true", keep = "true" *) wire        dbg_fisheye_m_axis_tlast       = m_axis_tlast;
+`endif
+
 endmodule

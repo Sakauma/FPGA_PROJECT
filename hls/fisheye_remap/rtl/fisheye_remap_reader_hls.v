@@ -157,6 +157,10 @@ wire    ap_CS_fsm_state16;
 reg   [16:0] kInfraredScaleQ16_load_reg_1963;
 wire   [16:0] scale_q16_fu_1056_p3;
 reg   [16:0] scale_q16_reg_1968;
+// 新代码：Egor Izmaylov 手工同步 HLS 源码中的 3 倍径向修正强度，保证 Vivado GUI 重新构建时使用放大后的去畸变 RTL。
+wire  signed [19:0] scale_delta_from_identity_manual;
+wire  signed [21:0] scale_amplified_signed_manual;
+wire   [16:0] scale_amplified_q16_manual;
 wire    ap_CS_fsm_state17;
 wire    ap_CS_fsm_state18;
 reg   [11:0] trunc_ln_reg_1994;
@@ -1163,11 +1167,15 @@ assign frame_span_fu_1386_p2 = (frame_max_load_reg_1795 - new_value_reg_1788);
 
 assign grp_fu_1070_p0 = grp_fu_1070_p00;
 
-assign grp_fu_1070_p00 = scale_q16_reg_1968;
+// 旧代码保留：assign grp_fu_1070_p00 = scale_q16_reg_1968;
+// 新代码：Egor Izmaylov 使用放大后的比例系数驱动 X 方向源坐标映射。
+assign grp_fu_1070_p00 = scale_amplified_q16_manual;
 
 assign grp_fu_1079_p0 = grp_fu_1079_p00;
 
-assign grp_fu_1079_p00 = scale_q16_reg_1968;
+// 旧代码保留：assign grp_fu_1079_p00 = scale_q16_reg_1968;
+// 新代码：Egor Izmaylov 使用放大后的比例系数驱动 Y 方向源坐标映射。
+assign grp_fu_1079_p00 = scale_amplified_q16_manual;
 
 assign grp_fu_1714_p0 = grp_fu_1714_p00;
 
@@ -1268,6 +1276,18 @@ assign radius_2_fu_1032_p3 = ((icmp_ln62_fu_1027_p2[0:0] == 1'b1) ? 11'd1024 : r
 assign radius_fu_1017_p2 = (zext_ln61_2_fu_1013_p1 + zext_ln61_fu_1000_p1);
 
 assign scale_q16_fu_1056_p3 = ((tmp_3_reg_1908[0:0] == 1'b1) ? kLaserScaleQ16_load_reg_1958 : kInfraredScaleQ16_load_reg_1963);
+
+// 新代码：Egor Izmaylov 放大畸变表相对 1.0 的偏移，等价于 HLS 源码中的 kFisheyeRemapStrengthQ8 = 768。
+assign scale_delta_from_identity_manual = $signed({3'b000, scale_q16_reg_1968}) - 20'sd65536;
+
+assign scale_amplified_signed_manual = 22'sd65536
+                                      + $signed({{2{scale_delta_from_identity_manual[19]}}, scale_delta_from_identity_manual})
+                                      + $signed({{2{scale_delta_from_identity_manual[19]}}, scale_delta_from_identity_manual})
+                                      + $signed({{2{scale_delta_from_identity_manual[19]}}, scale_delta_from_identity_manual});
+
+assign scale_amplified_q16_manual = (scale_amplified_signed_manual < 22'sd0) ? 17'd0 :
+                                    ((scale_amplified_signed_manual > 22'sd131071) ? 17'd131071 :
+                                    scale_amplified_signed_manual[16:0]);
 
 assign select_ln120_1_fu_1225_p3 = ((xor_ln120_fu_1219_p2[0:0] == 1'b1) ? 8'd255 : 8'd0);
 

@@ -75,6 +75,20 @@ static ap_int<16> scale_delta(ap_int<13> delta, ap_uint<18> scale_q16) {
     return (ap_int<16>)(product >> 16);
 }
 
+static ap_uint<18> amplify_scale_q16(ap_uint<18> scale_q16) {
+#pragma HLS INLINE
+    // 新代码：Egor Izmaylov 保留畸变表原始含义，只放大 scale 相对 1.0 的径向偏移，便于上板观察差异。
+    ap_int<20> delta_from_identity = (ap_int<20>)scale_q16 - (ap_int<20>)65536;
+    ap_int<30> amplified = (ap_int<30>)65536 + (((ap_int<30>)delta_from_identity * kFisheyeRemapStrengthQ8) >> 8);
+    if (amplified < 0) {
+        return 0;
+    }
+    if (amplified > 262143) {
+        return 262143;
+    }
+    return (ap_uint<18>)amplified;
+}
+
 static ap_uint<8> wrap_source_slot(ap_uint<8> out_slot, ap_int<13> delta_line) {
 #pragma HLS INLINE
     ap_int<14> slot = (ap_int<14>)out_slot + (ap_int<14>)delta_line;
@@ -111,10 +125,14 @@ static void map_source_pixel(ap_uint<11> out_x,
     ap_uint<13> radius = approx_radius(abs_s13(dx), abs_s13(dy));
     ap_uint<7> lut_idx = radius_to_lut_index(radius);
     ap_uint<18> scale_q16 = algo_ctrl[3] ? kLaserScaleQ16[lut_idx] : kInfraredScaleQ16[lut_idx];
+    ap_uint<18> amplified_scale_q16 = amplify_scale_q16(scale_q16);
 
     // 新代码：Egor Izmaylov 按 F-THETA 畸变定义使用 source_radius = ideal_radius * (1 + distortion)。
-    ap_int<16> src_x_s = (ap_int<16>)kFisheyeCenterX + scale_delta(dx, scale_q16);
-    ap_int<16> src_y_s = (ap_int<16>)kFisheyeCenterY + scale_delta(dy, scale_q16);
+    // 旧代码保留：ap_int<16> src_x_s = (ap_int<16>)kFisheyeCenterX + scale_delta(dx, scale_q16);
+    // 旧代码保留：ap_int<16> src_y_s = (ap_int<16>)kFisheyeCenterY + scale_delta(dy, scale_q16);
+    // 新代码：Egor Izmaylov 使用放大后的比例系数增强上板可见的几何变化。
+    ap_int<16> src_x_s = (ap_int<16>)kFisheyeCenterX + scale_delta(dx, amplified_scale_q16);
+    ap_int<16> src_y_s = (ap_int<16>)kFisheyeCenterY + scale_delta(dy, amplified_scale_q16);
     ap_uint<12> src_y = clamp_line(src_y_s);
     src_x = clamp_coord(src_x_s);
     src_slot = wrap_source_slot(out_slot, (ap_int<13>)src_y - (ap_int<13>)out_y);

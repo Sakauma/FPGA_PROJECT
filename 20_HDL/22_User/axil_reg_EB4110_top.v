@@ -211,11 +211,21 @@ module axil_reg_EB4110_top # (
 	// 地址说明：base_addr + 16'h0014，当前系统映射为 0x8600_0014。
 	// 位定义：bit0=去畸变基础补偿使能，bit1=棋盘/黑白演示使能，bit2=按帧翻转演示相位。
 	assign			data_r [5*32+:32]			= video_algo_ctrl						;
+	// 新代码：Egor Izmaylov 将上位机固定保活写 0x00010001 视为默认软件写，不覆盖板上调试值。
+	// 说明：VIO 和上位机最终进入同一个 AXI-Lite 从口，寄存器侧无法区分主机来源；因此按特征值屏蔽软件默认写。
+	wire			video_algo_ctrl_write_hit	= lite_aw_valid && lite_w_valid && waddr_hit && lite_axi_awaddr_r[15:00]==16'h0014	;
+	wire			video_algo_ctrl_sw_keepalive	= video_algo_ctrl_write_hit && sys_axi_wdata[31:0]==32'h0001_0001					;
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
 			video_algo_ctrl					<= 32'h0000_0007						;	// 新代码：Egor Izmaylov 默认开启算法与演示，便于无 PS 操作时直接上板验收。
-		end else if(lite_aw_valid && lite_w_valid &&waddr_hit&&lite_axi_awaddr_r[15:00]==16'h0014) begin
-			video_algo_ctrl					<= sys_axi_wdata[31:0] 					;
+		end else if(video_algo_ctrl_write_hit) begin
+			if(video_algo_ctrl_sw_keepalive) begin
+				video_algo_ctrl				<= video_algo_ctrl						;
+			end else begin
+				// 旧代码保留：video_algo_ctrl <= sys_axi_wdata[31:0];
+				// 新代码：Egor Izmaylov 非保活特征值仍允许 VIO/AXI 调试写入，用于旁路、红外表、激光表和预处理开关切换。
+				video_algo_ctrl				<= sys_axi_wdata[31:0] 					;
+			end
 		end else begin
 			video_algo_ctrl					<= video_algo_ctrl						;	
 		end

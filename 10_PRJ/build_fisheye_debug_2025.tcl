@@ -35,6 +35,40 @@ proc pin_net {cell port} {
     return [require_one [get_nets -quiet -of_objects $pin] "net of $pin_name"]
 }
 
+proc try_pin_net {cell port} {
+    set pin_name [format {%s/%s} $cell $port]
+    set pin [get_pins -quiet $pin_name]
+    if {[llength $pin] == 0} {
+        return ""
+    }
+    set net [get_nets -quiet -of_objects [lindex $pin 0]]
+    if {[llength $net] == 0} {
+        return ""
+    }
+    return [lindex $net 0]
+}
+
+proc pin_net_any {cell ports label} {
+    foreach port $ports {
+        set net [try_pin_net $cell $port]
+        if {$net ne ""} {
+            return $net
+        }
+    }
+    error "ERROR: cannot find any pin/net for $label. Tried ports: $ports"
+}
+
+proc optional_pin_net_any {cell ports label} {
+    foreach port $ports {
+        set net [try_pin_net $cell $port]
+        if {$net ne ""} {
+            return [list $net]
+        }
+    }
+    puts "WARN: skip $label, cannot find scalar pin/net. Tried ports: $ports"
+    return {}
+}
+
 proc bus_pin_nets {cell port width} {
     set nets {}
     for {set idx 0} {$idx < $width} {incr idx} {
@@ -46,12 +80,49 @@ proc bus_pin_nets {cell port width} {
     return $nets
 }
 
+proc try_bus_pin_nets {cell port width} {
+    set nets {}
+    for {set idx 0} {$idx < $width} {incr idx} {
+        set net [try_pin_net $cell [format {%s[%d]} $port $idx]]
+        if {$net eq ""} {
+            return {}
+        }
+        lappend nets $net
+    }
+    return $nets
+}
+
+proc bus_pin_nets_any {cell ports width label} {
+    foreach port $ports {
+        set nets [try_bus_pin_nets $cell $port $width]
+        if {[llength $nets] == $width} {
+            return $nets
+        }
+    }
+    puts "WARN: skip $label, cannot find complete bus. Tried ports: $ports"
+    return {}
+}
+
 proc add_ila_probe {core label nets} {
-    create_debug_port $core probe
-    set probe_idx [expr {[llength [get_debug_ports $core/probe*]] - 1}]
-    set probe [require_one [get_debug_ports [format {%s/probe%d} $core $probe_idx]] "$core probe$probe_idx"]
+    if {[llength $nets] == 0} {
+        puts "WARN: skip empty probe $label"
+        return
+    }
+    global ila_probe_count
+    if {![info exists ila_probe_count($core)]} {
+        set ila_probe_count($core) 0
+    }
+    set probe_idx $ila_probe_count($core)
+    set probe [get_debug_ports -quiet [format {%s/probe%d} $core $probe_idx]]
+    if {[llength $probe] == 0} {
+        create_debug_port $core probe
+        set probe [require_one [get_debug_ports [format {%s/probe%d} $core $probe_idx]] "$core probe$probe_idx"]
+    } else {
+        set probe [lindex $probe 0]
+    }
     set_property PORT_WIDTH [llength $nets] $probe
     connect_debug_port $probe $nets
+    incr ila_probe_count($core)
     puts [format "INFO: %s probe%d width=%d label=%s" $core $probe_idx [llength $nets] $label]
 }
 
@@ -65,6 +136,8 @@ proc recreate_ila {core_name clk_net depth} {
     set_property C_DATA_DEPTH $depth $core
     set_property C_INPUT_PIPE_STAGES 1 $core
     connect_debug_port $core/clk $clk_net
+    global ila_probe_count
+    set ila_probe_count($core) 0
     return $core
 }
 
@@ -77,32 +150,35 @@ proc insert_fisheye_debug_cores {} {
     puts "INFO: HLS reader    = $hls"
     puts "INFO: Async FIFO    = $fifo"
 
-    set bram_clk_net [pin_net $hls ap_clk]
+    # 新代码：Egor Izmaylov
+    # HLS cell 在综合后可能保留层级名但端口名被优化；BRAM 域 ILA 时钟改从
+    # 外层 remap wrapper 的 bram_clk 端口获取，和 RTL 源码连接关系一致。
+    set bram_clk_net [pin_net_any $remap {bram_clk} "remap bram_clk"]
     # 新代码：Egor Izmaylov
     # fifo_to_axis 层级可能被综合优化或展平，AXIS 调试点改从 remap wrapper
     # 和 async_fifo 端口取网线，避免脚本依赖可变综合网表实例名。
-    set axis_clk_net [pin_net $remap m_axis_aclk]
+    set axis_clk_net [pin_net_any $remap {m_axis_aclk} "remap m_axis_aclk"]
 
     set bram_ila [recreate_ila u_ila_fisheye_bram $bram_clk_net 2048]
-    add_ila_probe $bram_ila bram_line_cur_w      [bus_pin_nets $hls bram_line_cur_w 19]
-    add_ila_probe $bram_ila bram_line_cur_w_en   [list [pin_net $hls bram_line_cur_w_en]]
-    add_ila_probe $bram_ila bram_line_num_addr   [bus_pin_nets $hls bram_line_num_addr 9]
-    add_ila_probe $bram_ila bram_line_num        [bus_pin_nets $hls bram_line_num 12]
-    add_ila_probe $bram_ila bram_addrb           [bus_pin_nets $hls bram_addrb 19]
-    add_ila_probe $bram_ila bram_doutb           [bus_pin_nets $hls bram_doutb 16]
-    add_ila_probe $bram_ila video_algo_ctrl_bram [bus_pin_nets $hls algo_ctrl 32]
-    add_ila_probe $bram_ila fifo_wr_en           [list [pin_net $hls fifo_wr_en]]
-    add_ila_probe $bram_ila fifo_almost_full     [list [pin_net $hls fifo_almost_full]]
-    add_ila_probe $bram_ila fifo_din             [bus_pin_nets $hls fifo_din 65]
+    add_ila_probe $bram_ila bram_line_cur_w      [bus_pin_nets_any $remap {bram_line_cur_w} 19 bram_line_cur_w]
+    add_ila_probe $bram_ila bram_line_cur_w_en   [optional_pin_net_any $remap {bram_line_cur_w_en} bram_line_cur_w_en]
+    add_ila_probe $bram_ila bram_line_num_addr   [bus_pin_nets_any $remap {bram_line_num_addr} 9 bram_line_num_addr]
+    add_ila_probe $bram_ila bram_line_num        [bus_pin_nets_any $remap {bram_line_num} 12 bram_line_num]
+    add_ila_probe $bram_ila bram_addrb           [bus_pin_nets_any $remap {bram_addrb} 19 bram_addrb]
+    add_ila_probe $bram_ila bram_doutb           [bus_pin_nets_any $remap {bram_doutb} 16 bram_doutb]
+    add_ila_probe $bram_ila video_algo_ctrl      [bus_pin_nets_any $remap {video_algo_ctrl} 32 video_algo_ctrl]
+    add_ila_probe $bram_ila fifo_wr_en           [optional_pin_net_any $fifo {wr_en} fifo_wr_en]
+    add_ila_probe $bram_ila fifo_almost_full     [optional_pin_net_any $fifo {prog_full} fifo_almost_full]
+    add_ila_probe $bram_ila fifo_din             [bus_pin_nets_any $fifo {din} 65 fifo_din]
 
     set axis_ila [recreate_ila u_ila_fisheye_axis $axis_clk_net 2048]
-    add_ila_probe $axis_ila fifo_empty           [list [pin_net $fifo empty]]
-    add_ila_probe $axis_ila fifo_ren             [list [pin_net $fifo rd_en]]
-    add_ila_probe $axis_ila fifo_rdata           [bus_pin_nets $fifo dout 65]
-    add_ila_probe $axis_ila m_axis_tdata         [bus_pin_nets $remap m_axis_tdata 64]
-    add_ila_probe $axis_ila m_axis_tvalid        [list [pin_net $remap m_axis_tvalid]]
-    add_ila_probe $axis_ila m_axis_tready        [list [pin_net $remap m_axis_tready]]
-    add_ila_probe $axis_ila m_axis_tlast         [list [pin_net $remap m_axis_tlast]]
+    add_ila_probe $axis_ila fifo_empty           [optional_pin_net_any $fifo {empty} fifo_empty]
+    add_ila_probe $axis_ila fifo_ren             [optional_pin_net_any $fifo {rd_en} fifo_ren]
+    add_ila_probe $axis_ila fifo_rdata           [bus_pin_nets_any $fifo {dout} 65 fifo_rdata]
+    add_ila_probe $axis_ila m_axis_tdata         [bus_pin_nets_any $remap {m_axis_tdata} 64 m_axis_tdata]
+    add_ila_probe $axis_ila m_axis_tvalid        [optional_pin_net_any $remap {m_axis_tvalid} m_axis_tvalid]
+    add_ila_probe $axis_ila m_axis_tready        [optional_pin_net_any $remap {m_axis_tready} m_axis_tready]
+    add_ila_probe $axis_ila m_axis_tlast         [optional_pin_net_any $remap {m_axis_tlast} m_axis_tlast]
 }
 
 set opened_here 0

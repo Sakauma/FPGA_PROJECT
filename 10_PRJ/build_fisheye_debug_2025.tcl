@@ -35,13 +35,53 @@ proc pin_net {cell port} {
     return [require_one [get_nets -quiet -of_objects $pin] "net of $pin_name"]
 }
 
-proc try_pin_net {cell port} {
+proc pin_tail_name {pin} {
+    set pin_name [get_property NAME $pin]
+    set parts [split $pin_name "/"]
+    return [lindex $parts end]
+}
+
+proc find_pin_by_tail {cell port} {
     set pin_name [format {%s/%s} $cell $port]
-    set pin [get_pins -quiet $pin_name]
+    set exact [get_pins -quiet $pin_name]
+    if {[llength $exact] > 0} {
+        return [lindex $exact 0]
+    }
+
+    # 新代码：Egor Izmaylov
+    # 综合后有些层级 cell 仍可见，但 pin 的完整路径不再能用 cell/port 精确命中。
+    # 因此遍历该 cell 实际 pins，按最后一级 pin 名匹配，兼容 bus bit 名称如 dout[0]。
+    foreach pin [get_pins -quiet -of_objects $cell] {
+        if {[pin_tail_name $pin] eq $port} {
+            return $pin
+        }
+    }
+
+    return ""
+}
+
+proc dump_cell_pins {cell label} {
+    puts "WARN: available pins for $label:"
+    set count 0
+    foreach pin [get_pins -quiet -of_objects $cell] {
+        puts "WARN:   $pin"
+        incr count
+        if {$count >= 80} {
+            puts "WARN:   ... truncated after 80 pins"
+            break
+        }
+    }
+    if {$count == 0} {
+        puts "WARN:   no pins returned by get_pins -of_objects"
+    }
+}
+
+proc try_pin_net {cell port} {
+    set pin [find_pin_by_tail $cell $port]
     if {[llength $pin] == 0} {
         return ""
     }
-    set net [get_nets -quiet -of_objects [lindex $pin 0]]
+    set net [get_nets -quiet -of_objects $pin]
     if {[llength $net] == 0} {
         return ""
     }
@@ -55,6 +95,7 @@ proc pin_net_any {cell ports label} {
             return $net
         }
     }
+    dump_cell_pins $cell $label
     error "ERROR: cannot find any pin/net for $label. Tried ports: $ports"
 }
 
@@ -151,13 +192,12 @@ proc insert_fisheye_debug_cores {} {
     puts "INFO: Async FIFO    = $fifo"
 
     # 新代码：Egor Izmaylov
-    # HLS cell 在综合后可能保留层级名但端口名被优化；BRAM 域 ILA 时钟改从
-    # 外层 remap wrapper 的 bram_clk 端口获取，和 RTL 源码连接关系一致。
-    set bram_clk_net [pin_net_any $remap {bram_clk} "remap bram_clk"]
-    # 新代码：Egor Izmaylov
     # fifo_to_axis 层级可能被综合优化或展平，AXIS 调试点改从 remap wrapper
     # 和 async_fifo 端口取网线，避免脚本依赖可变综合网表实例名。
-    set axis_clk_net [pin_net_any $remap {m_axis_aclk} "remap m_axis_aclk"]
+    # wrapper/HLS 边界 pin 在综合网表中可能不可见，ILA 时钟优先取异步 FIFO
+    # 的 leaf cell 时钟端口：wr_clk 是 BRAM/user_clk 域，rd_clk 是 SRIO/AXIS 域。
+    set bram_clk_net [pin_net_any $fifo {wr_clk} "fisheye FIFO wr_clk"]
+    set axis_clk_net [pin_net_any $fifo {rd_clk} "fisheye FIFO rd_clk"]
 
     set bram_ila [recreate_ila u_ila_fisheye_bram $bram_clk_net 2048]
     add_ila_probe $bram_ila bram_line_cur_w      [bus_pin_nets_any $remap {bram_line_cur_w} 19 bram_line_cur_w]

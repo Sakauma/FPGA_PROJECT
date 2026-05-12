@@ -128,7 +128,7 @@ module vbram_lutaxi4_to_axis#(
 	wire										raw_srio_axis_tvalid						;
 	wire										raw_srio_axis_tlast							;
 
-`ifndef USE_OLD_AXIS_POST_HLS_PATH
+`ifdef ENABLE_FISHEYE_REMAP_READER
 	// 新代码：Egor Izmaylov 将算法前移到 BRAM 读出阶段，实现真实源像素重采样去畸变。
 	// 维护边界：SRIO、MIG、BD/IP、XDC 和板级接口保持不变；旧 AXIS 后处理路径保留在下方宏分支。
 	fisheye_remap_bram_to_axis #(
@@ -154,7 +154,8 @@ module vbram_lutaxi4_to_axis#(
 		.m_axis_tlast							( m_srio_axis_tlast							)
 	);
 `else
-	// 旧代码：保留原“顺序读 BRAM -> AXIS 后处理 HLS -> SRIO”的实现，默认不再启用。
+	// 新代码：Egor Izmaylov 默认恢复旧稳定“顺序读 BRAM -> SRIO AXIS”路径，优先恢复板上出图。
+	// 旧代码保留：退役 AXIS 后处理 HLS 只在 ENABLE_RETIRED_AXIS_POST_HLS_PATH 下参与链路。
 	readbram_to_axis64_top #(
 	    .B_RAM_WIDTH        					( B_RAM_WIDTH    							),
 	    .B_RAM_DEPTH        					( B_RAM_DEPTH      							),
@@ -174,10 +175,18 @@ module vbram_lutaxi4_to_axis#(
         .m_axis_aclk		     				( m_srio_axis_aclk               			),
         .m_axis_aresetn	                        ( m_srio_axis_rstn          				),      
                         
+`ifdef ENABLE_RETIRED_AXIS_POST_HLS_PATH
         .m_axis_tready	     					( raw_srio_axis_tready						),
         .m_axis_tdata	         				( {raw_srio_axis_tlast,raw_srio_axis_tdata}	),
         .m_axis_tvalid	         				( raw_srio_axis_tvalid	      				));
+`else
+        .m_axis_tready	     					( m_srio_axis_tready						),
+        .m_axis_tdata	         				( {m_srio_axis_tlast,m_srio_axis_tdata}		),
+        .m_axis_tvalid	         				( m_srio_axis_tvalid	      				));
+`endif
 
+`ifdef ENABLE_RETIRED_AXIS_POST_HLS_PATH
+	// 新代码：Egor Izmaylov 退役演示 HLS 路径仅在显式定义 ENABLE_RETIRED_AXIS_POST_HLS_PATH 时启用。
 	// 新代码：Egor Izmaylov 在 SRIO 输出前插入 HLS 去畸变/演示处理。
 	// 数据契约：输入输出均保持 64bit AXIS payload 和 tlast 语义，避免影响后级 SRIO 发送模块。
 	undistort_demo_hls_wrap u_undistort_demo_hls_wrap(
@@ -195,6 +204,7 @@ module vbram_lutaxi4_to_axis#(
 		.m_axis_tready							( m_srio_axis_tready						),
 		.m_axis_tlast							( m_srio_axis_tlast							)
 	);
+`endif
 `endif
 
 	// 旧代码

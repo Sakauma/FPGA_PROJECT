@@ -12,10 +12,10 @@
 // Create Date     : 2026/04/15
 // Module Name     : tb_vbram_hls_integration
 // Description     :
-//     Lightweight RTL integration test for the vbram -> HLS wrapper insertion point.
-//     The test drives the real raw stream inside vbram_lutaxi4_to_axis and checks:
+//     Lightweight RTL integration test for the vbram -> SRIO AXIS insertion point.
+//     The test drives the real BRAM reader inside vbram_lutaxi4_to_axis and checks:
 //       1. Header words pass through unchanged
-//       2. Payload words match the four validated control modes
+//       2. Default build restores the old stable bypass output path
 //       3. TLAST is preserved
 //       4. Output data stays stable under backpressure
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25,12 +25,18 @@ module tb_vbram_hls_integration;
 
     localparam [63:0] EXPECTED_HEADER = 64'h00602000_00000000;
     localparam [63:0] EXPECTED_BYPASS_PAYLOAD = 64'h0003_0002_0001_0000;
+`ifdef ENABLE_FISHEYE_REMAP_READER
+    localparam        DEFAULT_REMAP_ENABLED = 1'b1;
+`else
+    localparam        DEFAULT_REMAP_ENABLED = 1'b0;
+`endif
 
     reg             clk                     = 1'b0;
     // 新代码：Egor Izmaylov 初始为 1，再由 apply_reset 拉低，确保异步复位逻辑看到真实下降沿。
     reg             rstn                    = 1'b1;
     reg     [31:0]  video_algo_ctrl         = 32'h0000_0000;
-    reg     [18:0]  bram_line_cur_w         = 19'd128;
+    // 新代码：Egor Izmaylov 与工程实际 200 行缓存保持一致，半深度位置为 100。
+    reg     [18:0]  bram_line_cur_w         = 19'd100;
     reg             bram_line_cur_w_en      = 1'b0;
     reg     [15:0]  bram_doutb              = 16'd0;
     reg             m_srio_axis_tready      = 1'b1;
@@ -61,6 +67,7 @@ module tb_vbram_hls_integration;
     end
 
 `ifdef DEBUG_FISHEYE_TB
+`ifdef ENABLE_FISHEYE_REMAP_READER
     always @(posedge clk) begin
         if (rstn && (bram_line_cur_w_en ||
                      dut.u_fisheye_remap_bram_to_axis.fifo_wr_en ||
@@ -79,11 +86,12 @@ module tb_vbram_hls_integration;
         end
     end
 `endif
+`endif
 
     vbram_lutaxi4_to_axis #(
         .B_RAM_WIDTH            ( 16        ),
         .B_RAM_DEPTH            ( 32'h80000 ),
-        .P_LINE_DEPTH           ( 256       )
+        .P_LINE_DEPTH           ( 200       )
     ) dut (
         .clk                    ( clk               ),
         .rstn                   ( rstn              ),
@@ -148,7 +156,7 @@ module tb_vbram_hls_integration;
     task automatic pulse_line_ready;
         begin
             @(negedge clk);
-            bram_line_cur_w = 19'd128;
+            bram_line_cur_w = 19'd100;
             bram_line_cur_w_en = 1'b1;
             @(negedge clk);
             bram_line_cur_w_en = 1'b0;
@@ -211,11 +219,12 @@ module tb_vbram_hls_integration;
         repeat (3) @(posedge clk);
 
         run_case(32'h0000_0000, 1'b1);
-        run_case(32'h0000_0001, 1'b0);
-        run_case(32'h0000_0007, 1'b0);
-        // 新代码：Egor Izmaylov 覆盖自适应预处理控制位，确认 bit4/bit5 不破坏真实去畸变读出链路。
-        run_case(32'h0000_0011, 1'b0);
-        run_case(32'h0000_0021, 1'b0);
+        // 新代码：Egor Izmaylov 默认不定义 ENABLE_FISHEYE_REMAP_READER 时，所有控制值都应走旧稳定直通路径。
+        run_case(32'h0000_0001, ~DEFAULT_REMAP_ENABLED);
+        run_case(32'h0000_0007, ~DEFAULT_REMAP_ENABLED);
+        // 新代码：Egor Izmaylov 覆盖自适应预处理控制位，确认 bit4/bit5 不破坏默认稳定输出。
+        run_case(32'h0000_0011, ~DEFAULT_REMAP_ENABLED);
+        run_case(32'h0000_0021, ~DEFAULT_REMAP_ENABLED);
 
         repeat (10) @(posedge clk);
 

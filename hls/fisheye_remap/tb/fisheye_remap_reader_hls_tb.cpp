@@ -37,7 +37,8 @@ static void run_reader(uint32_t ctrl,
                        std::vector<uint64_t>& payloads,
                        uint16_t forced_line = 0,
                        image_model_t model = kImageModelByteRamp) {
-    bram_addr_t bram_line_cur_w = 128;
+    // 新代码：Egor Izmaylov 与工程实际 200 行环形缓存对齐，当前写槽位于半深度位置时应读到 0 号延迟槽。
+    bram_addr_t bram_line_cur_w = kFisheyeHalfLineBufferDepth;
     ap_uint<1> bram_line_cur_w_en = 0;
     ap_uint<12> bram_line_num = 0;
     ap_uint<16> bram_doutb = 0;

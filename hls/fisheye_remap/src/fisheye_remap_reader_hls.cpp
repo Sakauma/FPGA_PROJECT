@@ -23,8 +23,10 @@ enum reader_state_t {
 static ap_uint<8> calc_delayed_line_slot(bram_addr_t bram_line_cur_w) {
 #pragma HLS INLINE
     ap_uint<8> cur_slot = bram_line_cur_w.range(7, 0);
-    return cur_slot[7] ? (ap_uint<8>)(cur_slot - kFisheyeHalfLineBufferDepth)
-                       : (ap_uint<8>)(cur_slot + kFisheyeHalfLineBufferDepth);
+    // 新代码：Egor Izmaylov 原实现用 bit7 翻转 128 行半区，只适合 256 深度；当前工程实际为 200/100。
+    return (cur_slot >= kFisheyeHalfLineBufferDepth)
+               ? (ap_uint<8>)(cur_slot - kFisheyeHalfLineBufferDepth)
+               : (ap_uint<8>)(cur_slot + kFisheyeHalfLineBufferDepth);
 }
 
 static ap_uint<13> abs_s13(ap_int<13> value) {

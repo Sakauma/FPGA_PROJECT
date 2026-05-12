@@ -22,7 +22,8 @@ module fisheye_remap_bram_to_axis #(
     parameter       P_D_WIDTH                   = 65,
     parameter       B_RAM_WIDTH                 = 16,
     parameter       B_RAM_DEPTH                 = 32'h80000,
-    parameter       P_LINE_DEPTH                = 256
+    // 新代码：Egor Izmaylov 默认值与当前工程 BRAM 行缓存深度保持一致；顶层仍可按需覆盖。
+    parameter       P_LINE_DEPTH                = 200
 )(
     input                                       bram_clk,
     input                                       bram_rstn,

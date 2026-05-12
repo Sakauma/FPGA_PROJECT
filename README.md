@@ -31,6 +31,8 @@ cd hls\fisheye_remap
 
 然后按 `hls/fisheye_remap/README.md` 执行 `csim`、`csynth`。`cosim` 目前受 Vitis HLS 对 `ap_ctrl_none` 多周期 BRAM 控制状态机的限制，不作为本核通过标准；RTL 集成验证使用 `80_TB/run_tb_vbram_hls_integration.bat`。
 
+上板烧录和调试流程见 `docs/board_bringup_debug_guide.md`。
+
 ## 算法开发边界
 
 算法开发优先修改：

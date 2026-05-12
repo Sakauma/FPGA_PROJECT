@@ -29,6 +29,11 @@ proc apply_required_ip_patch_hooks {} {
     }
 
     source $jfm_bootstrap
+    if {![info exists ::env(JFM_PATH)] || ![file exists [file join $::env(JFM_PATH) "ip_patch" "run.tcl"]]} {
+        puts "WARN: JFM_PATH after bootstrap is invalid or incomplete: [expr {[info exists ::env(JFM_PATH)] ? $::env(JFM_PATH) : "<unset>"}]"
+        puts "WARN: forcing JFM_PATH to D:/Staff/JFM_Kits before loading project hooks."
+        set ::env(JFM_PATH) "D:/Staff/JFM_Kits"
+    }
     set run_tcl_path [file join $::env(JFM_PATH) "ip_patch" "run.tcl"]
     if {![file exists $run_tcl_path]} {
         error "ERROR: required ip_patch run.tcl not found: $run_tcl_path"

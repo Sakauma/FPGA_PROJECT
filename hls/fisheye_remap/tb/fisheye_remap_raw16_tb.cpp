@@ -1,0 +1,361 @@
+// ============================================================================
+// 新增维护说明
+// 作者          : Egor Izmaylov
+// 文件职责      : 使用真实 2048x2048 raw16 相机帧验证 fisheye_remap HLS 输出效果。
+// 数据流位置    : 软件侧模拟 200 行环形 BRAM，驱动 HLS 核输出旧 SRIO packet 协议。
+// 维护边界      : 仅用于 HLS C 仿真和图像可视化，不改变板级硬件接口。
+// ============================================================================
+#include "fisheye_remap_reader_hls.h"
+#include "distortion_lut.h"
+
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include <limits>
+#include <sstream>
+#include <string>
+#include <vector>
+
+#ifdef _WIN32
+#include <direct.h>
+#else
+#include <sys/stat.h>
+#endif
+
+static const int kRawFramePixels = kFisheyeImageWidth * kFisheyeImageHeight;
+static const int kRawFrameBytes = kRawFramePixels * 2;
+
+struct captured_frame_t {
+    std::vector<uint16_t> pixels;
+    uint64_t headers;
+    uint64_t payloads;
+    uint64_t tlasts;
+    uint64_t protocol_errors;
+    int completed_frames;
+
+    captured_frame_t()
+        : pixels(kRawFramePixels, 0),
+          headers(0),
+          payloads(0),
+          tlasts(0),
+          protocol_errors(0),
+          completed_frames(0) {}
+};
+
+static void make_dir(const std::string& path) {
+#ifdef _WIN32
+    _mkdir(path.c_str());
+#else
+    mkdir(path.c_str(), 0755);
+#endif
+}
+
+static std::string env_or_default(const char* name, const std::string& fallback) {
+    const char* value = std::getenv(name);
+    return (value && value[0]) ? std::string(value) : fallback;
+}
+
+static int env_int_or_default(const char* name, int fallback) {
+    const char* value = std::getenv(name);
+    return (value && value[0]) ? std::atoi(value) : fallback;
+}
+
+static std::vector<uint16_t> read_raw16(const std::string& path, bool big_endian) {
+    std::ifstream in(path.c_str(), std::ios::binary);
+    if (!in) {
+        std::cerr << "ERROR: cannot open raw file: " << path << std::endl;
+        std::exit(2);
+    }
+    in.seekg(0, std::ios::end);
+    const std::streamoff size = in.tellg();
+    in.seekg(0, std::ios::beg);
+    if (size != kRawFrameBytes) {
+        std::cerr << "ERROR: raw file size mismatch: " << path
+                  << " size=" << size
+                  << " expected=" << kRawFrameBytes << std::endl;
+        std::exit(3);
+    }
+
+    std::vector<unsigned char> bytes(kRawFrameBytes);
+    in.read(reinterpret_cast<char*>(&bytes[0]), bytes.size());
+    std::vector<uint16_t> pixels(kRawFramePixels);
+    for (int i = 0; i < kRawFramePixels; ++i) {
+        const unsigned char b0 = bytes[i * 2 + 0];
+        const unsigned char b1 = bytes[i * 2 + 1];
+        pixels[i] = big_endian
+                        ? static_cast<uint16_t>((b0 << 8) | b1)
+                        : static_cast<uint16_t>(b0 | (b1 << 8));
+    }
+    return pixels;
+}
+
+static void write_raw16_le(const std::string& path, const std::vector<uint16_t>& pixels) {
+    std::ofstream out(path.c_str(), std::ios::binary);
+    for (size_t i = 0; i < pixels.size(); ++i) {
+        const unsigned char lo = static_cast<unsigned char>(pixels[i] & 0xff);
+        const unsigned char hi = static_cast<unsigned char>((pixels[i] >> 8) & 0xff);
+        out.put(static_cast<char>(lo));
+        out.put(static_cast<char>(hi));
+    }
+}
+
+static void write_pgm16(const std::string& path, const std::vector<uint16_t>& pixels) {
+    std::ofstream out(path.c_str(), std::ios::binary);
+    out << "P5\n" << kFisheyeImageWidth << " " << kFisheyeImageHeight << "\n65535\n";
+    for (size_t i = 0; i < pixels.size(); ++i) {
+        const unsigned char hi = static_cast<unsigned char>((pixels[i] >> 8) & 0xff);
+        const unsigned char lo = static_cast<unsigned char>(pixels[i] & 0xff);
+        out.put(static_cast<char>(hi));
+        out.put(static_cast<char>(lo));
+    }
+}
+
+static void reset_reader() {
+    bram_addr_t bram_line_cur_w = 0;
+    ap_uint<1> bram_line_cur_w_en = 0;
+    ap_uint<12> bram_line_num = 0;
+    ap_uint<16> bram_doutb = 0;
+    ap_uint<1> fifo_almost_full = 0;
+    ap_uint<32> algo_ctrl = 0x80000000U;
+    line_slot_addr_t bram_line_num_addr = 0;
+    bram_addr_t bram_addrb = 0;
+    ap_uint<1> fifo_wr_en = 0;
+    fifo_word_t fifo_din = 0;
+
+    for (int i = 0; i < 8; ++i) {
+        fisheye_remap_reader_hls(bram_line_cur_w,
+                                 bram_line_cur_w_en,
+                                 bram_line_num,
+                                 bram_doutb,
+                                 fifo_almost_full,
+                                 algo_ctrl,
+                                 bram_line_num_addr,
+                                 bram_addrb,
+                                 fifo_wr_en,
+                                 fifo_din);
+    }
+}
+
+static uint16_t ring_read(const std::vector<uint16_t>& ring, bram_addr_t addr) {
+    const uint32_t slot = static_cast<uint32_t>((addr >> 11) & 0xff);
+    const uint32_t x = static_cast<uint32_t>(addr & 0x7ff);
+    return ring[(slot % kFisheyeLineBufferDepth) * kFisheyeImageWidth + x];
+}
+
+static void accept_word(captured_frame_t& result,
+                        uint64_t data,
+                        bool last,
+                        int& active_line,
+                        int& active_packet,
+                        int& payload_index) {
+    const bool is_header = ((data >> 32) == 0x00602000ULL);
+    if (is_header) {
+        active_line = static_cast<int>((data >> 12) & 0xfff);
+        active_packet = static_cast<int>((data >> 8) & 0xf);
+        payload_index = 0;
+        result.headers++;
+        if (last || active_line >= kFisheyeImageHeight || active_packet >= kFisheyePacketsPerLine) {
+            result.protocol_errors++;
+        }
+        return;
+    }
+
+    if (active_line < 0 || active_packet < 0 || payload_index >= kFisheyePayloadWordsPerPacket) {
+        result.protocol_errors++;
+        return;
+    }
+
+    const int base_x = active_packet * kFisheyePacketPixels + payload_index * kFisheyePixelsPerWord;
+    for (int lane = 0; lane < kFisheyePixelsPerWord; ++lane) {
+        const int x = base_x + lane;
+        const uint16_t pixel = static_cast<uint16_t>((data >> (lane * 16)) & 0xffff);
+        if (x < kFisheyeImageWidth) {
+            result.pixels[active_line * kFisheyeImageWidth + x] = pixel;
+        }
+    }
+
+    result.payloads++;
+    if (last) {
+        result.tlasts++;
+        if (payload_index != (kFisheyePayloadWordsPerPacket - 1)) {
+            result.protocol_errors++;
+        }
+    } else if (payload_index == (kFisheyePayloadWordsPerPacket - 1)) {
+        result.protocol_errors++;
+    }
+    payload_index++;
+}
+
+static captured_frame_t simulate_mode(const std::vector<std::vector<uint16_t> >& frames, uint32_t ctrl) {
+    reset_reader();
+
+    std::vector<uint16_t> ring(kFisheyeLineBufferDepth * kFisheyeImageWidth, 0);
+    std::vector<uint16_t> line_table(kFisheyeLineBufferDepth, 0);
+    captured_frame_t result;
+
+    bram_addr_t delayed_addr = 0;
+    line_slot_addr_t bram_line_num_addr = 0;
+    bram_addr_t bram_addrb = 0;
+    int active_line = -1;
+    int active_packet = -1;
+    int payload_index = 0;
+    int emitted_lines = 0;
+
+    const int total_input_lines = static_cast<int>(frames.size()) * kFisheyeImageHeight;
+    const int total_lines_with_flush = total_input_lines + kFisheyeHalfLineBufferDepth;
+    for (int global_line = 0; global_line < total_lines_with_flush; ++global_line) {
+        const int slot = global_line % kFisheyeLineBufferDepth;
+        const int frame_idx = (global_line < total_input_lines)
+                                  ? (global_line / kFisheyeImageHeight)
+                                  : 0;
+        const int line = global_line % kFisheyeImageHeight;
+        const std::vector<uint16_t>& src = frames[std::min(frame_idx, static_cast<int>(frames.size()) - 1)];
+        std::copy(src.begin() + line * kFisheyeImageWidth,
+                  src.begin() + (line + 1) * kFisheyeImageWidth,
+                  ring.begin() + slot * kFisheyeImageWidth);
+        line_table[slot] = static_cast<uint16_t>(line);
+
+        const bool should_emit_line = (global_line >= kFisheyeHalfLineBufferDepth);
+        const int target_lines = emitted_lines + (should_emit_line ? 1 : 0);
+        for (int cycle = 0; cycle < 40000; ++cycle) {
+            ap_uint<1> bram_line_cur_w_en = (cycle == 0) ? 1 : 0;
+            ap_uint<12> bram_line_num = line_table[bram_line_num_addr.to_uint() % kFisheyeLineBufferDepth];
+            ap_uint<16> bram_doutb = ring_read(ring, delayed_addr);
+            ap_uint<1> fifo_almost_full = 0;
+            ap_uint<32> algo_ctrl = ctrl;
+            ap_uint<1> fifo_wr_en = 0;
+            fifo_word_t fifo_din = 0;
+
+            fisheye_remap_reader_hls(static_cast<bram_addr_t>(slot),
+                                     bram_line_cur_w_en,
+                                     bram_line_num,
+                                     bram_doutb,
+                                     fifo_almost_full,
+                                     algo_ctrl,
+                                     bram_line_num_addr,
+                                     bram_addrb,
+                                     fifo_wr_en,
+                                     fifo_din);
+
+            delayed_addr = bram_addrb;
+            if (fifo_wr_en) {
+                const uint64_t data = static_cast<uint64_t>(fifo_din.range(63, 0));
+                const bool last = fifo_din[64].to_bool();
+                const int before_tlasts = static_cast<int>(result.tlasts);
+                accept_word(result, data, last, active_line, active_packet, payload_index);
+                if (last && result.tlasts != static_cast<uint64_t>(before_tlasts)) {
+                    if (active_packet == (kFisheyePacketsPerLine - 1)) {
+                        emitted_lines++;
+                    }
+                }
+            }
+
+            if (!should_emit_line && cycle >= 8) {
+                break;
+            }
+            if (should_emit_line && emitted_lines >= target_lines) {
+                break;
+            }
+            if (cycle == 39999) {
+                result.protocol_errors++;
+                std::cerr << "ERROR: timeout while simulating line " << global_line << std::endl;
+            }
+        }
+    }
+
+    result.completed_frames = emitted_lines / kFisheyeImageHeight;
+    return result;
+}
+
+static uint64_t count_diff(const std::vector<uint16_t>& a, const std::vector<uint16_t>& b) {
+    uint64_t diff = 0;
+    for (size_t i = 0; i < a.size() && i < b.size(); ++i) {
+        if (a[i] != b[i]) {
+            diff++;
+        }
+    }
+    return diff;
+}
+
+static void append_stats(std::ostream& os, const char* name, const captured_frame_t& r) {
+    uint16_t min_v = std::numeric_limits<uint16_t>::max();
+    uint16_t max_v = 0;
+    uint64_t sum = 0;
+    uint64_t saturated = 0;
+    for (size_t i = 0; i < r.pixels.size(); ++i) {
+        min_v = std::min(min_v, r.pixels[i]);
+        max_v = std::max(max_v, r.pixels[i]);
+        sum += r.pixels[i];
+        saturated += (r.pixels[i] == 65535) ? 1 : 0;
+    }
+    os << name
+       << " headers=" << r.headers
+       << " payloads=" << r.payloads
+       << " tlasts=" << r.tlasts
+       << " completed_frames=" << r.completed_frames
+       << " protocol_errors=" << r.protocol_errors
+       << " min=" << min_v
+       << " max=" << max_v
+       << " mean=" << (sum / r.pixels.size())
+       << " saturated=" << saturated
+       << "\n";
+}
+
+int main(int argc, char** argv) {
+    const bool big_endian = (env_or_default("FISHEYE_RAW_ENDIAN", "little") == "big");
+    const int max_frames = std::max(1, env_int_or_default("FISHEYE_RAW_MAX_FRAMES", 3));
+    const std::string out_dir = env_or_default("FISHEYE_RAW_OUT_DIR", "fisheye_raw_outputs");
+    make_dir(out_dir);
+
+    std::vector<std::string> paths;
+    for (int i = 1; i < argc && static_cast<int>(paths.size()) < max_frames; ++i) {
+        paths.push_back(argv[i]);
+    }
+    if (paths.empty()) {
+        std::cerr << "ERROR: no raw16 input files. Pass files through csim_design -argv." << std::endl;
+        return 4;
+    }
+
+    std::vector<std::vector<uint16_t> > frames;
+    for (size_t i = 0; i < paths.size(); ++i) {
+        frames.push_back(read_raw16(paths[i], big_endian));
+        std::cout << "INFO: loaded raw frame " << paths[i] << std::endl;
+    }
+
+    captured_frame_t bypass = simulate_mode(frames, 0x00000000U);
+    captured_frame_t remap_no_adaptive = simulate_mode(frames, 0x00000011U);
+    captured_frame_t remap_infrared = simulate_mode(frames, 0x00000001U);
+
+    write_pgm16(out_dir + "/input.pgm", frames.back());
+    write_pgm16(out_dir + "/bypass.pgm", bypass.pixels);
+    write_pgm16(out_dir + "/remap_no_adaptive.pgm", remap_no_adaptive.pixels);
+    write_pgm16(out_dir + "/remap_infrared.pgm", remap_infrared.pixels);
+    write_raw16_le(out_dir + "/bypass.raw", bypass.pixels);
+    write_raw16_le(out_dir + "/remap_no_adaptive.raw", remap_no_adaptive.pixels);
+    write_raw16_le(out_dir + "/remap_infrared.raw", remap_infrared.pixels);
+
+    std::ofstream summary((out_dir + "/summary.txt").c_str());
+    summary << "raw_endian=" << (big_endian ? "big" : "little") << "\n";
+    summary << "frames=" << frames.size() << "\n";
+    append_stats(summary, "bypass", bypass);
+    append_stats(summary, "remap_no_adaptive", remap_no_adaptive);
+    append_stats(summary, "remap_infrared", remap_infrared);
+    summary << "diff_bypass_vs_no_adaptive=" << count_diff(bypass.pixels, remap_no_adaptive.pixels) << "\n";
+    summary << "diff_bypass_vs_infrared=" << count_diff(bypass.pixels, remap_infrared.pixels) << "\n";
+    summary.close();
+
+    append_stats(std::cout, "bypass", bypass);
+    append_stats(std::cout, "remap_no_adaptive", remap_no_adaptive);
+    append_stats(std::cout, "remap_infrared", remap_infrared);
+    std::cout << "INFO: raw16 outputs written to " << out_dir << std::endl;
+
+    assert(bypass.protocol_errors == 0);
+    assert(remap_no_adaptive.protocol_errors == 0);
+    assert(remap_infrared.protocol_errors == 0);
+    assert(count_diff(bypass.pixels, remap_no_adaptive.pixels) > 0);
+    assert(count_diff(bypass.pixels, remap_infrared.pixels) > 0);
+    return 0;
+}

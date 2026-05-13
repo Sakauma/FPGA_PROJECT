@@ -11,11 +11,17 @@
 `include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_kInfraredScaleQ16_ROM_AUTO_1R.v"
 `include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_kLaserScaleQ16_ROM_AUTO_1R.v"
 `include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_mac_muladd_11ns_7ns_10ns_17_4_1.v"
-`include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_mul_16ns_16ns_32_2_1.v"
+// 新代码：Egor Izmaylov
+// HLS 重新综合后预处理乘法位宽收敛为 16x12->28，RTL wrapper 必须同步 include 最新生成模块。
+`include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_mul_16ns_12ns_28_2_1.v"
+// 旧代码保留：`include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_mul_16ns_16ns_32_2_1.v"
 `include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_mul_17ns_11s_28_2_1.v"
 `include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_mul_17ns_13s_30_2_1.v"
 `include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_partset_65ns_65ns_16ns_6ns_65_1_1.v"
-`include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_sparsemux_9_3_14_1_1.v"
+// 新代码：Egor Izmaylov
+// 最新 HLS RTL 将 LUT 地址 mux 缩为 12bit 输出，保持 wrapper 与生成 RTL 一致。
+`include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_sparsemux_9_3_12_1_1.v"
+// 旧代码保留：`include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_sparsemux_9_3_14_1_1.v"
 `include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls.v"
 
 module fisheye_remap_bram_to_axis #(
@@ -55,6 +61,18 @@ module fisheye_remap_bram_to_axis #(
     wire        [P_D_WIDTH-1:0]                 fifo_rdata;
     wire                                        fifo_empty;
     wire        [P_D_WIDTH-1:0]                 axis_word;
+    wire                                        fifo_wr_en_to_fifo;
+    wire        [P_D_WIDTH-1:0]                 fifo_din_to_fifo;
+
+`ifdef FISHEYE_SIM_X_SAFE
+    // 新代码：Egor Izmaylov
+    // 仅 RTL 仿真启用，防止 HLS pipeline 复位释放初期的 X 写使能污染异步 FIFO。
+    assign fifo_wr_en_to_fifo = (fifo_wr_en === 1'b1);
+    assign fifo_din_to_fifo   = (fifo_wr_en === 1'b1) ? fifo_din : {P_D_WIDTH{1'b0}};
+`else
+    assign fifo_wr_en_to_fifo = fifo_wr_en;
+    assign fifo_din_to_fifo   = fifo_din;
+`endif
 
     // 新代码：Egor Izmaylov 将 AXI-Lite 控制寄存器同步到 BRAM 读出时钟域。
     // 旧代码保留：HLS 核曾直接使用 video_algo_ctrl，综合后控制位到 250MHz 逻辑路径过长。
@@ -101,8 +119,8 @@ module fisheye_remap_bram_to_axis #(
     ) u_fisheye_axis_async_fifo (
         .wr_clk                                 ( bram_clk              ),
         .wr_rstn                                ( bram_rstn             ),
-        .wr_en                                  ( fifo_wr_en            ),
-        .din                                    ( fifo_din              ),
+        .wr_en                                  ( fifo_wr_en_to_fifo    ),
+        .din                                    ( fifo_din_to_fifo      ),
         .wr_data_count                          (                       ),
         .prog_full                              ( fifo_almost_full      ),
         .full                                   (                       ),

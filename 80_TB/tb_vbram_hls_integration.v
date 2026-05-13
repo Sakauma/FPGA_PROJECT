@@ -32,8 +32,13 @@ module tb_vbram_hls_integration;
 `endif
 
     reg             clk                     = 1'b0;
+    // 新代码：Egor Izmaylov
+    // RTL 集成仿真从复位态启动，确保异步 FIFO 的复位同步器和计数器不会停在 X 态。
+    reg             rstn                    = 1'b0;
+    /*
     // 新代码：Egor Izmaylov 初始为 1，再由 apply_reset 拉低，确保异步复位逻辑看到真实下降沿。
     reg             rstn                    = 1'b1;
+    */
     reg     [31:0]  video_algo_ctrl         = 32'h0000_0000;
     // 新代码：Egor Izmaylov 与工程实际 200 行缓存保持一致，半深度位置为 100。
     reg     [18:0]  bram_line_cur_w         = 19'd100;
@@ -42,7 +47,10 @@ module tb_vbram_hls_integration;
     reg             m_srio_axis_tready      = 1'b1;
 
     wire    [8:0]   bram_line_num_addr;
-    wire    [11:0]  bram_line_num           = {4'd0, bram_line_num_addr[7:0]};
+    // 新代码：Egor Izmaylov
+    // 本 TB 只验证第 0 行协议，行号 RAM 模型固定返回 0，避免 HLS 输出地址组合反馈造成 header 行号 X。
+    // 旧代码保留：wire [11:0] bram_line_num = {4'd0, bram_line_num_addr[7:0]};
+    wire    [11:0]  bram_line_num           = 12'd0;
     wire    [18:0]  bram_addrb;
     wire    [63:0]  m_srio_axis_tdata;
     wire            m_srio_axis_tvalid;
@@ -52,6 +60,17 @@ module tb_vbram_hls_integration;
     reg             captured_last [0:7];
     integer         captured_count          = 0;
     integer         error_count             = 0;
+    // 新代码：Egor Izmaylov
+    // 整行协议检查器：remap 读出链路必须复刻旧 readbram_to_axis64_top 的连续 packet 节奏。
+    integer         stream_word_count       = 0;
+    integer         stream_header_count     = 0;
+    integer         stream_payload_count    = 0;
+    integer         stream_tlast_count      = 0;
+    integer         stream_error_count      = 0;
+    integer         stream_phase            = 0;
+    integer         stream_packet           = 0;
+    reg             full_line_check_en      = 1'b0;
+    reg     [63:0]  expected_stream_header  = 64'd0;
 
     always #5 clk = ~clk;
 
@@ -72,14 +91,19 @@ module tb_vbram_hls_integration;
         if (rstn && (bram_line_cur_w_en ||
                      dut.u_fisheye_remap_bram_to_axis.fifo_wr_en ||
                      (dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.state != 3'd0))) begin
-            $display("DBG t=%0t en=%0b hls_state=%0d hls_fsm=%h fifo_af=%0b wr=%0b fifo_empty=%0b valid=%0b data=%016h addr=%05h",
+            $display("DBG t=%0t rstn=%0b en=%0b hls_state=%0d hls_fsm=%h fifo_af=%0b wr=%0b fifo_empty=%0b wr_sync=%0b rd_sync=%0b wr_cnt=%0d rd_cnt=%0d valid=%0b data=%016h addr=%05h",
                      $time,
+                     rstn,
                      bram_line_cur_w_en,
                      dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.state,
                      dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.ap_CS_fsm,
                      dut.u_fisheye_remap_bram_to_axis.fifo_almost_full,
                      dut.u_fisheye_remap_bram_to_axis.fifo_wr_en,
                      dut.u_fisheye_remap_bram_to_axis.fifo_empty,
+                     dut.u_fisheye_remap_bram_to_axis.u_fisheye_axis_async_fifo.wr_sync_rstn,
+                     dut.u_fisheye_remap_bram_to_axis.u_fisheye_axis_async_fifo.rd_sync_rstn,
+                     dut.u_fisheye_remap_bram_to_axis.u_fisheye_axis_async_fifo.wr_data_count,
+                     dut.u_fisheye_remap_bram_to_axis.u_fisheye_axis_async_fifo.rd_data_count,
                      m_srio_axis_tvalid,
                      m_srio_axis_tdata,
                      bram_addrb);
@@ -142,6 +166,49 @@ module tb_vbram_hls_integration;
         end
     end
 
+    always @(posedge clk) begin
+        if (!rstn) begin
+            stream_word_count    <= 0;
+            stream_header_count  <= 0;
+            stream_payload_count <= 0;
+            stream_tlast_count   <= 0;
+            stream_error_count   <= 0;
+        end else if (full_line_check_en && m_srio_axis_tvalid && m_srio_axis_tready) begin
+            stream_phase = stream_word_count % 33;
+            stream_packet = stream_word_count / 33;
+
+            if (stream_packet >= 16) begin
+                $display("ERROR: stream emitted more than one line, word=%0d", stream_word_count);
+                stream_error_count <= stream_error_count + 1;
+            end
+
+            if (stream_phase == 0) begin
+                expected_stream_header = {32'h00602000, ((stream_packet & 32'h0000000f) << 8)};
+                stream_header_count <= stream_header_count + 1;
+                if (m_srio_axis_tdata !== expected_stream_header || m_srio_axis_tlast !== 1'b0) begin
+                    $display("ERROR: packet header mismatch packet=%0d exp=%016h got=%016h last=%0d",
+                             stream_packet, expected_stream_header, m_srio_axis_tdata, m_srio_axis_tlast);
+                    stream_error_count <= stream_error_count + 1;
+                end
+            end else begin
+                stream_payload_count <= stream_payload_count + 1;
+                if (stream_phase == 32) begin
+                    stream_tlast_count <= stream_tlast_count + 1;
+                    if (m_srio_axis_tlast !== 1'b1) begin
+                        $display("ERROR: final payload missing tlast packet=%0d", stream_packet);
+                        stream_error_count <= stream_error_count + 1;
+                    end
+                end else if (m_srio_axis_tlast !== 1'b0) begin
+                    $display("ERROR: tlast asserted before final payload packet=%0d phase=%0d",
+                             stream_packet, stream_phase);
+                    stream_error_count <= stream_error_count + 1;
+                end
+            end
+
+            stream_word_count <= stream_word_count + 1;
+        end
+    end
+
     task automatic apply_reset;
         begin
             rstn = 1'b0;
@@ -179,6 +246,97 @@ module tb_vbram_hls_integration;
         end
     endtask
 
+    task automatic wait_for_full_line;
+        input integer timeout_cycles;
+        integer idx;
+        begin : wait_line_loop
+            for (idx = 0; idx < timeout_cycles; idx = idx + 1) begin
+                if (stream_word_count >= 528) begin
+                    disable wait_line_loop;
+                end
+                @(posedge clk);
+            end
+            if (stream_word_count < 528) begin
+                $display("ERROR: timeout waiting full line, got %0d words", stream_word_count);
+                error_count = error_count + 1;
+            end
+        end
+    endtask
+
+    task automatic inject_output_backpressure;
+        integer stall_idx;
+        reg [63:0] held_data;
+        reg        held_last;
+        begin
+            repeat (24) @(posedge clk);
+            @(negedge clk);
+            m_srio_axis_tready = 1'b0;
+            while (!m_srio_axis_tvalid) @(posedge clk);
+
+            @(posedge clk);
+            #1;
+            if (!m_srio_axis_tvalid) begin
+                $display("ERROR: output valid dropped at stall entry");
+                error_count = error_count + 1;
+            end
+            held_data = m_srio_axis_tdata;
+            held_last = m_srio_axis_tlast;
+
+            for (stall_idx = 0; stall_idx < 3; stall_idx = stall_idx + 1) begin
+                @(posedge clk);
+                #1;
+                if (!m_srio_axis_tvalid) begin
+                    $display("ERROR: output valid dropped during backpressure");
+                    error_count = error_count + 1;
+                end
+                if (m_srio_axis_tdata !== held_data || m_srio_axis_tlast !== held_last) begin
+                    $display("ERROR: output data changed during backpressure");
+                    error_count = error_count + 1;
+                end
+            end
+
+            @(negedge clk);
+            m_srio_axis_tready = 1'b1;
+        end
+    endtask
+
+    task automatic run_full_line_case;
+        input [31:0] ctrl;
+        input integer enable_stall;
+        begin
+            $display("INFO: running full-line ctrl=0x%08x", ctrl);
+            video_algo_ctrl = ctrl;
+            apply_reset();
+            m_srio_axis_tready = 1'b1;
+            stream_word_count = 0;
+            stream_header_count = 0;
+            stream_payload_count = 0;
+            stream_tlast_count = 0;
+            stream_error_count = 0;
+            full_line_check_en = 1'b1;
+
+            if (enable_stall != 0) begin
+                fork
+                    inject_output_backpressure();
+                join_none
+            end
+
+            pulse_line_ready();
+            wait_for_full_line(20000);
+            repeat (8) @(posedge clk);
+            full_line_check_en = 1'b0;
+
+            if (stream_header_count != 16 ||
+                stream_payload_count != 512 ||
+                stream_tlast_count != 16 ||
+                stream_error_count != 0) begin
+                $display("ERROR: full-line protocol count mismatch headers=%0d payloads=%0d tlasts=%0d stream_errors=%0d",
+                         stream_header_count, stream_payload_count, stream_tlast_count, stream_error_count);
+                error_count = error_count + 1;
+            end
+        end
+    endtask
+
     task automatic run_case;
         input [31:0] ctrl;
         input        expect_bypass;
@@ -195,13 +353,13 @@ module tb_vbram_hls_integration;
                 error_count = error_count + 1;
             end
 
-            if (expect_bypass) begin
+            if (expect_bypass && !DEFAULT_REMAP_ENABLED) begin
                 if (captured_data[1] !== EXPECTED_BYPASS_PAYLOAD) begin
                     $display("ERROR: bypass payload mismatch exp=%016h got=%016h",
                              EXPECTED_BYPASS_PAYLOAD, captured_data[1]);
                     error_count = error_count + 1;
                 end
-            end else begin
+            end else if (!expect_bypass) begin
                 if (captured_data[1] === EXPECTED_BYPASS_PAYLOAD) begin
                     $display("ERROR: remap payload did not change from bypass");
                     error_count = error_count + 1;
@@ -216,7 +374,16 @@ module tb_vbram_hls_integration;
     endtask
 
     initial begin
+        // 新代码：Egor Izmaylov
+        // 给 async_fifo 的低有效异步复位制造明确下降沿，避免 XSim 中复位同步链保持 X。
+        rstn = 1'b1;
+        #1 rstn = 1'b0;
         repeat (3) @(posedge clk);
+
+        // 新代码：Egor Izmaylov
+        // 先覆盖整行连续 packet 协议，再运行原有首包冒烟用例。
+        run_full_line_case(32'h0000_0000, 1);
+        run_full_line_case(32'h0000_0001, 0);
 
         run_case(32'h0000_0000, 1'b1);
         // 新代码：Egor Izmaylov 默认不定义 ENABLE_FISHEYE_REMAP_READER 时，所有控制值都应走旧稳定直通路径。

@@ -151,18 +151,33 @@ static ap_uint<16> calc_adaptive_gain_q8(ap_uint<16> span) {
         return kFisheyeAdaptiveGainIdentityQ8;
     }
     if (span >= 32768) {
-        return 512;
+        // 新代码：Egor Izmaylov
+        // 真实 raw16 帧动态范围已经足够大时保持 1x，避免默认算法模式把高亮区域整体打到饱和。
+        // 旧代码保留：return 512;
+        return kFisheyeAdaptiveGainIdentityQ8;
     }
     if (span >= 16384) {
-        return 1024;
+        // 新代码：Egor Izmaylov
+        // 中高动态范围只做温和增强，避免上板画面亮部细节被预处理吞掉。
+        // 旧代码保留：return 1024;
+        return 384;
     }
     if (span >= 8192) {
-        return 2048;
+        // 新代码：Egor Izmaylov
+        // 中动态范围按 2x 增益处理，主要服务偏暗场景。
+        // 旧代码保留：return 2048;
+        return 512;
     }
     if (span >= 4096) {
-        return 4096;
+        // 新代码：Egor Izmaylov
+        // 低动态范围才进入较强拉伸。
+        // 旧代码保留：return 4096;
+        return 1024;
     }
-    return kFisheyeAdaptiveGainMaxQ8;
+    // 新代码：Egor Izmaylov
+    // 极低动态范围限制在 8x，保留暗场可见性，同时避免噪声被过度放大。
+    // 旧代码保留：return kFisheyeAdaptiveGainMaxQ8;
+    return 2048;
 }
 
 static ap_uint<16> smooth_u16(ap_uint<16> old_value, ap_uint<16> new_value) {
@@ -207,6 +222,10 @@ void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
 #pragma HLS INTERFACE ap_none port=bram_addrb
 #pragma HLS INTERFACE ap_none port=fifo_wr_en
 #pragma HLS INTERFACE ap_none port=fifo_din
+    // 新代码：Egor Izmaylov
+    // 顶层为逐拍推进的协议状态机，必须保持 II=1；否则 HLS 会把乘法/查表调度成长延迟事务，
+    // 板上表现为 fifo_wr_en 稀疏脉冲，无法复刻旧 readbram_to_axis64_top 的连续 packet 节奏。
+#pragma HLS PIPELINE II=1
     // 新代码：Egor Izmaylov 本函数是逐拍推进的状态机，不强制顶层 PIPELINE，避免 HLS 报出误导性 II 警告。
     // 旧代码保留：#pragma HLS PIPELINE II=1
 
@@ -249,10 +268,38 @@ void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
 #pragma HLS RESET variable=adaptive_gain_q8
 #pragma HLS RESET variable=adaptive_valid
 
-    fifo_wr_en = 0;
-    fifo_din = 0;
-    bram_addrb = bram_addr_reg;
-    bram_line_num_addr = line_num_addr_reg;
+    // 新代码：Egor Izmaylov
+    // 所有 ap_none 输出端口统一在函数末尾赋值一次，避免 HLS 因多分支写端口而把顶层 pipeline 退化到大 II。
+    ap_uint<1> fifo_wr_en_out = 0;
+    fifo_word_t fifo_din_out = 0;
+    bram_addr_t bram_addrb_out = bram_addr_reg;
+    line_slot_addr_t bram_line_num_addr_out = line_num_addr_reg;
+    ap_uint<3> state_next = state;
+
+    if (algo_ctrl[31]) {
+        // 新代码：Egor Izmaylov
+        // 调试/仿真复位位。正常上板控制值不会置位 bit31；raw16 多模式 C 仿真用它隔离各模式状态。
+        state_next = S_IDLE;
+        video_started = 0;
+        out_slot = 0;
+        out_line = 0;
+        packet_idx = 0;
+        packet_pixel_idx = 0;
+        line_pixel_idx = 0;
+        pack_idx = 0;
+        payload_word = 0;
+        payload_last = 0;
+        bram_addr_reg = 0;
+        line_num_addr_reg = 0;
+        source_pixel_reg = 0;
+        frame_min = 65535;
+        frame_max = 0;
+        adaptive_black = 0;
+        adaptive_gain_q8 = kFisheyeAdaptiveGainIdentityQ8;
+        adaptive_valid = 0;
+        bram_addrb_out = 0;
+        bram_line_num_addr_out = 0;
+    } else {
 
     if (bram_line_cur_w_en && bram_line_cur_w.range(7, 0) >= kFisheyeHalfLineBufferDepth) {
         video_started = 1;
@@ -263,7 +310,7 @@ void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
         if (bram_line_cur_w_en && (video_started || bram_line_cur_w.range(7, 0) >= kFisheyeHalfLineBufferDepth)) {
             out_slot = calc_delayed_line_slot(bram_line_cur_w);
             line_num_addr_reg = calc_delayed_line_slot(bram_line_cur_w);
-            state = S_WAIT_LINE_NUM;
+            state_next = S_WAIT_LINE_NUM;
         }
         break;
 
@@ -275,17 +322,17 @@ void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
         pack_idx = 0;
         payload_word = 0;
         payload_last = 0;
-        state = S_WRITE_HEADER;
+        state_next = S_WRITE_HEADER;
         break;
 
     case S_WRITE_HEADER:
         if (!fifo_almost_full) {
             ap_uint<32> srio_addr = ((ap_uint<32>)out_line << 12) | ((ap_uint<32>)packet_idx << 8);
-            fifo_din = ((fifo_word_t)0 << 64) | ((fifo_word_t)0x00602000 << 32) | srio_addr;
-            fifo_wr_en = 1;
+            fifo_din_out = ((fifo_word_t)0 << 64) | ((fifo_word_t)0x00602000 << 32) | srio_addr;
+            fifo_wr_en_out = 1;
             pack_idx = 0;
             payload_word = 0;
-            state = S_ISSUE_ADDR;
+            state_next = S_ISSUE_ADDR;
         }
         break;
 
@@ -295,18 +342,18 @@ void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
         ap_uint<11> out_x = line_pixel_idx.range(10, 0);
         map_source_pixel(out_x, out_line, out_slot, algo_ctrl, src_slot, src_x);
         bram_addr_reg = ((bram_addr_t)src_slot << 11) | src_x;
-        state = S_WAIT_DATA;
+        state_next = S_WAIT_DATA;
         break;
     }
 
     case S_WAIT_DATA:
-        state = S_CAPTURE_PIXEL;
+        state_next = S_CAPTURE_PIXEL;
         break;
 
     case S_CAPTURE_PIXEL:
         // 新代码：Egor Izmaylov 先寄存 BRAM 读数据，避免 BRAM 输出同拍进入自适应预处理乘法器导致 250MHz 时序过长。
         source_pixel_reg = bram_doutb;
-        state = S_PREPROCESS_PIXEL;
+        state_next = S_PREPROCESS_PIXEL;
         break;
 
     case S_PREPROCESS_PIXEL: {
@@ -344,18 +391,18 @@ void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
 
         if (pack_idx == (kFisheyePixelsPerWord - 1)) {
             pack_idx = 0;
-            state = S_WRITE_PAYLOAD;
+            state_next = S_WRITE_PAYLOAD;
         } else {
             pack_idx = pack_idx + 1;
-            state = S_ISSUE_ADDR;
+            state_next = S_ISSUE_ADDR;
         }
         break;
     }
 
     case S_WRITE_PAYLOAD:
         if (!fifo_almost_full) {
-            fifo_din = ((fifo_word_t)payload_last << 64) | payload_word.range(63, 0);
-            fifo_wr_en = 1;
+            fifo_din_out = ((fifo_word_t)payload_last << 64) | payload_word.range(63, 0);
+            fifo_wr_en_out = 1;
             payload_word = 0;
 
             if (payload_last) {
@@ -367,8 +414,12 @@ void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
                         if (algo_ctrl[0] && !algo_ctrl[4] && frame_span >= kFisheyeAdaptiveMinSpan) {
                             ap_uint<16> target_gain_q8 = calc_adaptive_gain_q8(frame_span);
                             if (adaptive_valid) {
-                                adaptive_black = smooth_u16(adaptive_black, frame_min);
-                                adaptive_gain_q8 = smooth_u16(adaptive_gain_q8, target_gain_q8);
+                                // 新代码：Egor Izmaylov
+                                // 帧末路径不再做平滑加权，避免 old*3+new 的组合链路拖低 250MHz HLS 时序。
+                                // 旧代码保留：adaptive_black = smooth_u16(adaptive_black, frame_min);
+                                // 旧代码保留：adaptive_gain_q8 = smooth_u16(adaptive_gain_q8, target_gain_q8);
+                                adaptive_black = frame_min;
+                                adaptive_gain_q8 = target_gain_q8;
                             } else {
                                 adaptive_black = frame_min;
                                 adaptive_gain_q8 = target_gain_q8;
@@ -381,19 +432,26 @@ void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
                         frame_min = 65535;
                         frame_max = 0;
                     }
-                    state = S_IDLE;
+                    state_next = S_IDLE;
                 } else {
                     packet_idx = packet_idx + 1;
-                    state = S_WRITE_HEADER;
+                    state_next = S_WRITE_HEADER;
                 }
             } else {
-                state = S_ISSUE_ADDR;
+                state_next = S_ISSUE_ADDR;
             }
         }
         break;
 
     default:
-        state = S_IDLE;
+        state_next = S_IDLE;
         break;
     }
+    }
+
+    state = state_next;
+    fifo_wr_en = fifo_wr_en_out;
+    fifo_din = fifo_din_out;
+    bram_addrb = bram_addrb_out;
+    bram_line_num_addr = bram_line_num_addr_out;
 }

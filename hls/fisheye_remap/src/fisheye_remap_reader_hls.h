@@ -26,8 +26,12 @@ static const int kFisheyePacketsPerLine = 16;
 static const int kFisheyeAdaptiveGainIdentityQ8 = 256;
 static const int kFisheyeAdaptiveGainMaxQ8 = 8192;
 static const int kFisheyeAdaptiveMinSpan = 1024;
-// 新代码：Egor Izmaylov 上板调试阶段将畸变表径向修正强度放大 3 倍，使去畸变差异更容易观察。
-static const int kFisheyeRemapStrengthQ8 = 768;
+// 新代码：Egor Izmaylov
+// 稳定优先版本将去畸变强度拆成水平/垂直两组：水平有完整 2048 像素可读，允许更强；垂直受 200 行环形缓存限制。
+// 旧代码保留：static const int kFisheyeRemapStrengthQ8 = 768;
+static const int kFisheyeRemapStrengthXQ8 = 1024;
+static const int kFisheyeRemapStrengthYQ8 = 512;
+static const int kFisheyeMaxVerticalShift = 96;
 
 typedef ap_uint<19> bram_addr_t;
 typedef ap_uint<9> line_slot_addr_t;

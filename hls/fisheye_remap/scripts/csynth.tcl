@@ -33,7 +33,22 @@ export_design -rtl verilog -format ip_catalog
 
 file mkdir [file join $root_dir rtl]
 foreach rtl_file [glob -nocomplain [file join $build_root tcl_run fisheye_remap_reader_hls solution1 syn verilog *.v]] {
-    file copy -force $rtl_file [file join $root_dir rtl [file tail $rtl_file]]
+    # 新代码：Egor Izmaylov 只同步现有 wrapper include 覆盖的 RTL 文件，避免 HLS 临时 helper 名污染仓库。
+    set rtl_tail [file tail $rtl_file]
+    set rtl_allowlist {
+        fisheye_remap_reader_hls.v
+        fisheye_remap_reader_hls_kInfraredScaleQ16_ROM_AUTO_1R.v
+        fisheye_remap_reader_hls_kLaserScaleQ16_ROM_AUTO_1R.v
+        fisheye_remap_reader_hls_mac_muladd_11ns_7ns_10ns_17_4_1.v
+        fisheye_remap_reader_hls_mul_16ns_12ns_28_2_1.v
+        fisheye_remap_reader_hls_mul_17ns_11s_28_2_1.v
+        fisheye_remap_reader_hls_mul_17ns_13s_30_2_1.v
+        fisheye_remap_reader_hls_partset_65ns_65ns_16ns_6ns_65_1_1.v
+        fisheye_remap_reader_hls_sparsemux_9_3_12_1_1.v
+    }
+    if {[lsearch -exact $rtl_allowlist $rtl_tail] >= 0} {
+        file copy -force $rtl_file [file join $root_dir rtl $rtl_tail]
+    }
 }
 
 # 新代码：Egor Izmaylov HLS 生成的 ROM Verilog 使用 $readmemh 读取 .dat，RTL 仿真必须同步复制。
@@ -51,6 +66,7 @@ if {[file exists $top_rtl]} {
     set fifo_din_idle_replacement "// \u65b0\u4ee3\u7801\uff1aEgor Izmaylov \u7a7a\u95f2\u5468\u671f\u56fa\u5b9a\u4e3a 0\uff0c\u907f\u514d X \u6c61\u67d3 FIFO\u3002\n        // \u65e7\u4ee3\u7801\u4fdd\u7559\uff1afifo_din = 'bx;\n        fifo_din = 65'd0;"
     set fifo_wr_idle_replacement "// \u65b0\u4ee3\u7801\uff1aEgor Izmaylov \u975e\u5199\u5468\u671f\u56fa\u5b9a wr_en=0\u3002\n        // \u65e7\u4ee3\u7801\u4fdd\u7559\uff1afifo_wr_en = 'bx;\n        fifo_wr_en = 1'd0;"
     set rtl_text [string map [list \
+        "fisheye_remap_reader_hls_mul_17ns_12s_29_2_1" "fisheye_remap_reader_hls_mul_17ns_11s_28_2_1" \
         "fifo_din = 'bx;" $fifo_din_idle_replacement \
         "fifo_wr_en = 'bx;" $fifo_wr_idle_replacement \
     ] $rtl_text]

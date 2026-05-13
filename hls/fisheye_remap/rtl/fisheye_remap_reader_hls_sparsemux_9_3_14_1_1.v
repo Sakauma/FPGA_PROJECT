@@ -52,15 +52,15 @@ reg [dout_WIDTH-1:0] dout_tmp;
 
 always @ (*) begin
 (* parallel_case *) case (sel)
-    
+
     CASE0 : dout_tmp = din0;
-    
+
     CASE1 : dout_tmp = din1;
-    
+
     CASE2 : dout_tmp = din2;
-    
+
     CASE3 : dout_tmp = din3;
-    
+
     default : dout_tmp = def;
 endcase
 end

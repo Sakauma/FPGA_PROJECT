@@ -13,9 +13,16 @@
 
 static const int kFisheyeImageWidth = 2048;
 static const int kFisheyeImageHeight = 2048;
-static const int kFisheyeCenterX = 1024;
-static const int kFisheyeCenterY = 1024;
-static const int kFisheyeMaxRadius = 1024;
+// 新代码：Egor Izmaylov 使用 raw16 软件拟合得到的真实鱼眼圆参数，替代理想图像中心假设。
+// 旧代码保留：static const int kFisheyeCenterX = 1024;
+// 旧代码保留：static const int kFisheyeCenterY = 1024;
+// 旧代码保留：static const int kFisheyeMaxRadius = 1024;
+static const int kFisheyeCenterX = 959;
+static const int kFisheyeCenterY = 987;
+static const int kFisheyeMaxRadius = 947;
+// 新代码：Egor Izmaylov 使用 27/256 近似 100/947，避免 HLS 生成 wrapper 未包含的新乘法 helper。
+// 旧代码保留：static const int kFisheyeRadiusRecipQ20 = 1107;
+static const int kFisheyeRadiusIndexMul = 27;
 // 新代码：Egor Izmaylov 与工程 RTL 参数 P_LINE_DEPTH=200 对齐，避免 remap 读到不存在的 BRAM 行槽。
 static const int kFisheyeLineBufferDepth = 200;
 static const int kFisheyeHalfLineBufferDepth = 100;
@@ -29,8 +36,11 @@ static const int kFisheyeAdaptiveMinSpan = 1024;
 // 新代码：Egor Izmaylov
 // 稳定优先版本将去畸变强度拆成水平/垂直两组：水平有完整 2048 像素可读，允许更强；垂直受 200 行环形缓存限制。
 // 旧代码保留：static const int kFisheyeRemapStrengthQ8 = 768;
-static const int kFisheyeRemapStrengthXQ8 = 1024;
-static const int kFisheyeRemapStrengthYQ8 = 512;
+// 新代码：Egor Izmaylov 参数校准后恢复为畸变表 1x，不再用盲目强度放大替代真实标定。
+// 旧代码保留：static const int kFisheyeRemapStrengthXQ8 = 1024;
+// 旧代码保留：static const int kFisheyeRemapStrengthYQ8 = 512;
+static const int kFisheyeRemapStrengthXQ8 = 256;
+static const int kFisheyeRemapStrengthYQ8 = 256;
 static const int kFisheyeMaxVerticalShift = 96;
 
 typedef ap_uint<19> bram_addr_t;

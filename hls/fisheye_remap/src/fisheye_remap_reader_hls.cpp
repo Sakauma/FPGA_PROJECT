@@ -66,8 +66,13 @@ static ap_uint<13> approx_radius(ap_uint<13> abs_x, ap_uint<13> abs_y) {
 
 static ap_uint<7> radius_to_lut_index(ap_uint<13> radius) {
 #pragma HLS INLINE
-    ap_uint<20> scaled = (ap_uint<20>)radius * 100 + (kFisheyeMaxRadius >> 1);
-    ap_uint<10> idx = scaled >> 10;
+    // 新代码：Egor Izmaylov 拟合半径不再是 1024，使用 27/256 的移位加减近似映射到 0..100。
+    // 旧代码保留：ap_uint<20> scaled = (ap_uint<20>)radius * 100 + (kFisheyeMaxRadius >> 1);
+    // 旧代码保留：ap_uint<10> idx = scaled >> 10;
+    // 旧代码保留：ap_uint<27> scaled = ((ap_uint<27>)radius * 100 * kFisheyeRadiusRecipQ20) + (1 << 19);
+    // 旧代码保留：ap_uint<10> idx = scaled >> 20;
+    ap_uint<18> scaled = (((ap_uint<18>)radius << 5) - ((ap_uint<18>)radius << 2) - (ap_uint<18>)radius) + 128;
+    ap_uint<10> idx = scaled >> 8;
     return (idx > 100) ? (ap_uint<7>)100 : (ap_uint<7>)idx;
 }
 
@@ -80,7 +85,7 @@ static ap_int<16> scale_delta(ap_int<13> delta, ap_uint<18> scale_q16) {
 static ap_uint<18> amplify_scale_x_q16(ap_uint<18> scale_q16) {
 #pragma HLS INLINE
     // 新代码：Egor Izmaylov
-    // 水平方向具有完整行内随机访问能力，允许把畸变表相对 1.0 的偏移放大到 4x。
+    // 水平方向按拟合后的畸变表 1x 执行，不再用强度放大掩盖中心/半径误差。
     // 旧代码保留：static ap_uint<18> amplify_scale_q16(ap_uint<18> scale_q16)
     ap_int<20> delta_from_identity = (ap_int<20>)scale_q16 - (ap_int<20>)65536;
     ap_int<30> amplified = (ap_int<30>)65536 + (((ap_int<30>)delta_from_identity * kFisheyeRemapStrengthXQ8) >> 8);
@@ -96,7 +101,7 @@ static ap_uint<18> amplify_scale_x_q16(ap_uint<18> scale_q16) {
 static ap_uint<18> amplify_scale_y_q16(ap_uint<18> scale_q16) {
 #pragma HLS INLINE
     // 新代码：Egor Izmaylov
-    // 垂直方向受 200 行 BRAM 环形缓存约束，仅做 2x 温和放大，后续再限制最大行偏移。
+    // 垂直方向按拟合后的畸变表 1x 执行；参考拟合显示自然位移小于 96 行安全窗。
     ap_int<20> delta_from_identity = (ap_int<20>)scale_q16 - (ap_int<20>)65536;
     ap_int<30> amplified = (ap_int<30>)65536 + (((ap_int<30>)delta_from_identity * kFisheyeRemapStrengthYQ8) >> 8);
     if (amplified < 0) {

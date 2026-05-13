@@ -13,8 +13,8 @@ input clk;
 input ce;
 input reset;
 
-input [din0_WIDTH - 1 : 0] din0; 
-input [din1_WIDTH - 1 : 0] din1; 
+input [din0_WIDTH - 1 : 0] din0;
+input [din1_WIDTH - 1 : 0] din1;
 output [dout_WIDTH - 1 : 0] dout;
 
 wire signed [dout_WIDTH - 1 : 0] tmp_product;

@@ -23,7 +23,7 @@ wire [DATAWIDTH-1:0] dout_tmp;
 
 
 
-always @ (*) 
+always @ (*)
 begin
     din_tmp = { 16'b0000000000000000 , din };
     din_tmp[sel+DATA1WIDTH-1 -: DATA1WIDTH] = value;

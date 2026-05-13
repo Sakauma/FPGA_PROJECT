@@ -5,13 +5,13 @@
 // ==============================================================
 `timescale 1 ns / 1 ps
 (* DowngradeIPIdentifiedWarnings="yes" *) module fisheye_remap_reader_hls_kInfraredScaleQ16_ROM_AUTO_1R (
-    address0, ce0, q0, 
+    address0, ce0, q0,
     reset, clk);
 
-parameter DataWidth = 13;
+parameter DataWidth = 17;
 parameter AddressWidth = 7;
 parameter AddressRange = 101;
- 
+
 input[AddressWidth-1:0] address0;
 input ce0;
 output reg[DataWidth-1:0] q0;
@@ -19,19 +19,19 @@ output reg[DataWidth-1:0] q0;
 input reset;
 input clk;
 
- 
+
 reg [DataWidth-1:0] rom0[0:AddressRange-1];
 
 
 initial begin
-     
+
     $readmemh("./fisheye_remap_reader_hls_kInfraredScaleQ16_ROM_AUTO_1R.dat", rom0);
 end
 
-  
-always @(posedge clk) 
-begin 
-    if (ce0) 
+
+always @(posedge clk)
+begin
+    if (ce0)
     begin
         q0 <= rom0[address0];
     end

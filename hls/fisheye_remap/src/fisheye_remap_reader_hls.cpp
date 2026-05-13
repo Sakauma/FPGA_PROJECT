@@ -280,6 +280,9 @@ static ap_uint<16> preprocess_pixel(ap_uint<16> pixel,
     return clamp_pixel_u16(scaled >> 8);
 }
 
+#if 0
+// 旧代码保留：Egor Izmaylov
+// 该版本每个像素需要“发地址/等待/采集/预处理”多状态推进，板上容易因为吞吐不足导致算法链路断流。
 void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
                               ap_uint<1> bram_line_cur_w_en,
                               ap_uint<12> bram_line_num,
@@ -289,7 +292,8 @@ void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
                               line_slot_addr_t& bram_line_num_addr,
                               bram_addr_t& bram_addrb,
                               ap_uint<1>& fifo_wr_en,
-                              fifo_word_t& fifo_din) {
+                              fifo_word_t& fifo_din,
+                              ap_uint<1>& fifo_word_toggle) {
 #pragma HLS INTERFACE ap_ctrl_none port=return
 #pragma HLS INTERFACE ap_none port=bram_line_cur_w
 #pragma HLS INTERFACE ap_none port=bram_line_cur_w_en
@@ -301,10 +305,14 @@ void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
 #pragma HLS INTERFACE ap_none port=bram_addrb
 #pragma HLS INTERFACE ap_none port=fifo_wr_en
 #pragma HLS INTERFACE ap_none port=fifo_din
+#pragma HLS INTERFACE ap_none port=fifo_word_toggle
     // 新代码：Egor Izmaylov
     // 顶层为逐拍推进的协议状态机，必须保持 II=1；否则 HLS 会把乘法/查表调度成长延迟事务，
     // 板上表现为 fifo_wr_en 稀疏脉冲，无法复刻旧 readbram_to_axis64_top 的连续 packet 节奏。
-#pragma HLS PIPELINE II=1
+// 旧代码保留：#pragma HLS PIPELINE II=1
+// 新代码：Egor Izmaylov
+// 顶层强制 pipeline 会把完整 remap 计算压进单拍组合路径，HLS 估算 Fmax 降到约 60MHz；
+// 这里改回逐拍寄存器状态机，让地址/像素/打包状态按时钟推进。
     // 新代码：Egor Izmaylov 本函数是逐拍推进的状态机，不强制顶层 PIPELINE，避免 HLS 报出误导性 II 警告。
     // 旧代码保留：#pragma HLS PIPELINE II=1
 
@@ -354,6 +362,7 @@ void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
     bram_addr_t bram_addrb_out = bram_addr_reg;
     line_slot_addr_t bram_line_num_addr_out = line_num_addr_reg;
     ap_uint<3> state_next = state;
+    ap_uint<1> fifo_word_toggle_out = word_toggle;
 
     if (algo_ctrl[31]) {
         // 新代码：Egor Izmaylov
@@ -376,6 +385,7 @@ void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
         adaptive_black = 0;
         adaptive_gain_q8 = kFisheyeAdaptiveGainIdentityQ8;
         adaptive_valid = 0;
+        word_toggle = 0;
         bram_addrb_out = 0;
         bram_line_num_addr_out = 0;
     } else {
@@ -528,9 +538,306 @@ void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
     }
     }
 
+    if (fifo_wr_en_out) {
+        ap_uint<1> next_word_toggle = ~word_toggle;
+        word_toggle = next_word_toggle;
+        fifo_word_toggle_out = next_word_toggle;
+    }
+
     state = state_next;
     fifo_wr_en = fifo_wr_en_out;
     fifo_din = fifo_din_out;
+    fifo_word_toggle = fifo_word_toggle_out;
+    bram_addrb = bram_addrb_out;
+    bram_line_num_addr = bram_line_num_addr_out;
+}
+#endif
+
+// 新代码：Egor Izmaylov
+// 连续 BRAM reader：保持最新 remap/预处理参数不变，只把传输节奏改为接近旧 readbram_to_axis64_top。
+void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
+                              ap_uint<1> bram_line_cur_w_en,
+                              ap_uint<12> bram_line_num,
+                              ap_uint<16> bram_doutb,
+                              ap_uint<1> fifo_almost_full,
+                              ap_uint<32> algo_ctrl,
+                              line_slot_addr_t& bram_line_num_addr,
+                              bram_addr_t& bram_addrb,
+                              ap_uint<1>& fifo_wr_en,
+                              fifo_word_t& fifo_din,
+                              ap_uint<1>& fifo_word_toggle) {
+#pragma HLS INTERFACE ap_ctrl_none port=return
+#pragma HLS INTERFACE ap_none port=bram_line_cur_w
+#pragma HLS INTERFACE ap_none port=bram_line_cur_w_en
+#pragma HLS INTERFACE ap_none port=bram_line_num
+#pragma HLS INTERFACE ap_none port=bram_doutb
+#pragma HLS INTERFACE ap_none port=fifo_almost_full
+#pragma HLS INTERFACE ap_none port=algo_ctrl
+#pragma HLS INTERFACE ap_none port=bram_line_num_addr
+#pragma HLS INTERFACE ap_none port=bram_addrb
+#pragma HLS INTERFACE ap_none port=fifo_wr_en
+#pragma HLS INTERFACE ap_none port=fifo_din
+#pragma HLS INTERFACE ap_none port=fifo_word_toggle
+// 旧代码保留：#pragma HLS PIPELINE II=1
+// 新代码：Egor Izmaylov
+// 顶层强制 pipeline 会把完整 remap 计算压进单拍组合路径；本实现依靠寄存器状态机逐拍推进。
+// 旧代码保留：#pragma HLS PIPELINE II=1
+
+    static ap_uint<3> state = S_IDLE;
+    static ap_uint<1> video_started = 0;
+    static ap_uint<8> out_slot = 0;
+    static ap_uint<12> out_line = 0;
+    static ap_uint<4> packet_idx = 0;
+    static ap_uint<12> issue_pixel_idx = 0;
+    static ap_uint<7> read_packet_pixel_idx = 0;
+    static ap_uint<1> read_valid = 0;
+    static ap_uint<2> pack_idx = 0;
+    static fifo_word_t payload_word = 0;
+    static ap_uint<1> pending_payload_valid = 0;
+    static fifo_word_t pending_payload_word = 0;
+    static ap_uint<1> word_toggle = 0;
+    static bram_addr_t bram_addr_reg = 0;
+    static line_slot_addr_t line_num_addr_reg = 0;
+    static ap_uint<16> frame_min = 65535;
+    static ap_uint<16> frame_max = 0;
+    static ap_uint<16> adaptive_black = 0;
+    static ap_uint<16> adaptive_gain_q8 = kFisheyeAdaptiveGainIdentityQ8;
+    static ap_uint<1> adaptive_valid = 0;
+
+#pragma HLS RESET variable=state
+#pragma HLS RESET variable=video_started
+#pragma HLS RESET variable=out_slot
+#pragma HLS RESET variable=out_line
+#pragma HLS RESET variable=packet_idx
+#pragma HLS RESET variable=issue_pixel_idx
+#pragma HLS RESET variable=read_packet_pixel_idx
+#pragma HLS RESET variable=read_valid
+#pragma HLS RESET variable=pack_idx
+#pragma HLS RESET variable=payload_word
+#pragma HLS RESET variable=pending_payload_valid
+#pragma HLS RESET variable=pending_payload_word
+#pragma HLS RESET variable=word_toggle
+#pragma HLS RESET variable=bram_addr_reg
+#pragma HLS RESET variable=line_num_addr_reg
+#pragma HLS RESET variable=frame_min
+#pragma HLS RESET variable=frame_max
+#pragma HLS RESET variable=adaptive_black
+#pragma HLS RESET variable=adaptive_gain_q8
+#pragma HLS RESET variable=adaptive_valid
+
+    ap_uint<1> fifo_wr_en_out = 0;
+    fifo_word_t fifo_din_out = 0;
+    bram_addr_t bram_addrb_out = bram_addr_reg;
+    line_slot_addr_t bram_line_num_addr_out = line_num_addr_reg;
+    ap_uint<3> state_next = state;
+    // 新代码：Egor Izmaylov
+    // HLS RTL 对 ap_none 输出会保持上一拍值；该翻转位只在有效写字产生时改变，
+    // wrapper 据此过滤保持态重复写入，不改变 payload 内容和现有 SRIO 协议。
+    ap_uint<1> fifo_word_toggle_out = word_toggle;
+
+    if (algo_ctrl[31]) {
+        state_next = S_IDLE;
+        video_started = 0;
+        out_slot = 0;
+        out_line = 0;
+        packet_idx = 0;
+        issue_pixel_idx = 0;
+        read_packet_pixel_idx = 0;
+        read_valid = 0;
+        pack_idx = 0;
+        payload_word = 0;
+        pending_payload_valid = 0;
+        pending_payload_word = 0;
+        word_toggle = 0;
+        bram_addr_reg = 0;
+        line_num_addr_reg = 0;
+        frame_min = 65535;
+        frame_max = 0;
+        adaptive_black = 0;
+        adaptive_gain_q8 = kFisheyeAdaptiveGainIdentityQ8;
+        adaptive_valid = 0;
+        bram_addrb_out = 0;
+        bram_line_num_addr_out = 0;
+        fifo_word_toggle_out = 0;
+    } else {
+        if (bram_line_cur_w_en && bram_line_cur_w.range(7, 0) >= kFisheyeHalfLineBufferDepth) {
+            video_started = 1;
+        }
+
+        switch (state) {
+        case S_IDLE:
+            read_valid = 0;
+            pending_payload_valid = 0;
+            if (bram_line_cur_w_en && (video_started || bram_line_cur_w.range(7, 0) >= kFisheyeHalfLineBufferDepth)) {
+                ap_uint<8> delayed_slot = calc_delayed_line_slot(bram_line_cur_w);
+                out_slot = delayed_slot;
+                line_num_addr_reg = delayed_slot;
+                bram_line_num_addr_out = delayed_slot;
+                state_next = S_WAIT_LINE_NUM;
+            }
+            break;
+
+        case S_WAIT_LINE_NUM:
+            out_line = bram_line_num;
+            packet_idx = 0;
+            issue_pixel_idx = 0;
+            read_packet_pixel_idx = 0;
+            read_valid = 0;
+            pack_idx = 0;
+            payload_word = 0;
+            pending_payload_valid = 0;
+            pending_payload_word = 0;
+            state_next = S_WRITE_HEADER;
+            break;
+
+        case S_WRITE_HEADER:
+            if (!fifo_almost_full) {
+                ap_uint<32> srio_addr = ((ap_uint<32>)out_line << 12) | ((ap_uint<32>)packet_idx << 8);
+                fifo_din_out = ((fifo_word_t)0 << 64) | ((fifo_word_t)0x00602000 << 32) | srio_addr;
+                fifo_wr_en_out = 1;
+                pack_idx = 0;
+                payload_word = 0;
+                read_valid = 0;
+                state_next = S_ISSUE_ADDR;
+            }
+            break;
+
+        case S_ISSUE_ADDR: {
+            ap_uint<1> block_issue = 0;
+
+            if (pending_payload_valid) {
+                if (!fifo_almost_full) {
+                    fifo_din_out = pending_payload_word;
+                    fifo_wr_en_out = 1;
+                    pending_payload_valid = 0;
+                    if (pending_payload_word[64]) {
+                        if (packet_idx == (kFisheyePacketsPerLine - 1)) {
+                            if (out_line == (kFisheyeImageHeight - 1) && !algo_ctrl[5]) {
+                                ap_uint<16> frame_span = frame_max - frame_min;
+                                if (algo_ctrl[0] && !algo_ctrl[4] && frame_span >= kFisheyeAdaptiveMinSpan) {
+                                    ap_uint<16> target_gain_q8 = calc_adaptive_gain_q8(frame_span);
+                                    adaptive_black = frame_min;
+                                    adaptive_gain_q8 = target_gain_q8;
+                                    adaptive_valid = 1;
+                                } else if (!adaptive_valid) {
+                                    adaptive_black = 0;
+                                    adaptive_gain_q8 = kFisheyeAdaptiveGainIdentityQ8;
+                                }
+                                frame_min = 65535;
+                                frame_max = 0;
+                            }
+                            state_next = S_IDLE;
+                        } else {
+                            packet_idx = packet_idx + 1;
+                            state_next = S_WRITE_HEADER;
+                        }
+                    }
+                }
+                block_issue = 1;
+            } else if (read_valid) {
+                ap_uint<16> source_pixel = bram_doutb;
+                if (algo_ctrl[0] && !algo_ctrl[4]) {
+                    if (source_pixel < frame_min) {
+                        frame_min = source_pixel;
+                    }
+                    if (source_pixel > frame_max) {
+                        frame_max = source_pixel;
+                    }
+                }
+
+                ap_uint<16> output_pixel = preprocess_pixel(source_pixel, algo_ctrl, adaptive_black, adaptive_gain_q8);
+                fifo_word_t new_payload_word = payload_word;
+                switch (pack_idx) {
+                case 0:
+                    new_payload_word.range(15, 0) = output_pixel;
+                    break;
+                case 1:
+                    new_payload_word.range(31, 16) = output_pixel;
+                    break;
+                case 2:
+                    new_payload_word.range(47, 32) = output_pixel;
+                    break;
+                default:
+                    new_payload_word.range(63, 48) = output_pixel;
+                    break;
+                }
+
+                read_valid = 0;
+                if (pack_idx == (kFisheyePixelsPerWord - 1)) {
+                    fifo_word_t completed_word =
+                        ((fifo_word_t)(read_packet_pixel_idx == (kFisheyePacketPixels - 1)) << 64) |
+                        new_payload_word.range(63, 0);
+                    payload_word = 0;
+                    pack_idx = 0;
+                    if (!fifo_almost_full) {
+                        fifo_din_out = completed_word;
+                        fifo_wr_en_out = 1;
+                        if (completed_word[64]) {
+                            block_issue = 1;
+                            if (packet_idx == (kFisheyePacketsPerLine - 1)) {
+                                if (out_line == (kFisheyeImageHeight - 1) && !algo_ctrl[5]) {
+                                    ap_uint<16> frame_span = frame_max - frame_min;
+                                    if (algo_ctrl[0] && !algo_ctrl[4] && frame_span >= kFisheyeAdaptiveMinSpan) {
+                                        ap_uint<16> target_gain_q8 = calc_adaptive_gain_q8(frame_span);
+                                        adaptive_black = frame_min;
+                                        adaptive_gain_q8 = target_gain_q8;
+                                        adaptive_valid = 1;
+                                    } else if (!adaptive_valid) {
+                                        adaptive_black = 0;
+                                        adaptive_gain_q8 = kFisheyeAdaptiveGainIdentityQ8;
+                                    }
+                                    frame_min = 65535;
+                                    frame_max = 0;
+                                }
+                                state_next = S_IDLE;
+                            } else {
+                                packet_idx = packet_idx + 1;
+                                state_next = S_WRITE_HEADER;
+                            }
+                        }
+                    } else {
+                        pending_payload_valid = 1;
+                        pending_payload_word = completed_word;
+                        block_issue = 1;
+                    }
+                } else {
+                    payload_word = new_payload_word;
+                    pack_idx = pack_idx + 1;
+                }
+            }
+
+            ap_uint<12> packet_pixel_limit = (((ap_uint<12>)packet_idx + 1) << 7);
+            if (!block_issue && state_next == S_ISSUE_ADDR && issue_pixel_idx < packet_pixel_limit) {
+                ap_uint<8> src_slot;
+                ap_uint<11> src_x;
+                ap_uint<11> out_x = issue_pixel_idx.range(10, 0);
+                map_source_pixel(out_x, out_line, out_slot, algo_ctrl, src_slot, src_x);
+                bram_addr_t next_addr = ((bram_addr_t)src_slot << 11) | src_x;
+                bram_addr_reg = next_addr;
+                bram_addrb_out = next_addr;
+                read_packet_pixel_idx = issue_pixel_idx.range(6, 0);
+                read_valid = 1;
+                issue_pixel_idx = issue_pixel_idx + 1;
+            }
+            break;
+        }
+
+        default:
+            state_next = S_IDLE;
+            break;
+        }
+    }
+
+    if (fifo_wr_en_out) {
+        ap_uint<1> next_word_toggle = ~word_toggle;
+        word_toggle = next_word_toggle;
+        fifo_word_toggle_out = next_word_toggle;
+    }
+
+    state = state_next;
+    fifo_wr_en = fifo_wr_en_out;
+    fifo_din = fifo_din_out;
+    fifo_word_toggle = fifo_word_toggle_out;
     bram_addrb = bram_addrb_out;
     bram_line_num_addr = bram_line_num_addr_out;
 }

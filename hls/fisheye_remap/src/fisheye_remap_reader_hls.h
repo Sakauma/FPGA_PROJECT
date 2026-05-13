@@ -66,6 +66,7 @@ void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
                               line_slot_addr_t& bram_line_num_addr,
                               bram_addr_t& bram_addrb,
                               ap_uint<1>& fifo_wr_en,
-                              fifo_word_t& fifo_din);
+                              fifo_word_t& fifo_din,
+                              ap_uint<1>& fifo_word_toggle);
 
 #endif

@@ -32,7 +32,6 @@ copy /Y "%REPO_ROOT%\hls\fisheye_remap\rtl\*.dat" "%BUILD_DIR%\" >nul
 call xvlog -sv ^
     -log xvlog_tb_vbram_hls_integration.log ^
     -d ENABLE_FISHEYE_REMAP_READER ^
-    -d FISHEYE_SIM_X_SAFE ^
     -i "%REPO_ROOT%\20_HDL\22_User\SRIO_2_BRAM" ^
     -i "%REPO_ROOT%\hls\fisheye_remap\rtl" ^
     "%REPO_ROOT%\80_TB\tb_vbram_hls_integration.v" ^

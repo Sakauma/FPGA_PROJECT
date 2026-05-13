@@ -70,7 +70,9 @@ dfx_runtime.txt
 # HLS build outputs
 hls/**/build/
 hls/**/dfx_runtime.txt
+hls/fisheye_remap/rtl/*map_source_pixel*.dat
 hls_work/
+hls_work*/
 
 # XSim artifacts for standalone phase tests
 xsim.dir/

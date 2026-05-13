@@ -124,6 +124,7 @@ static void reset_reader() {
     bram_addr_t bram_addrb = 0;
     ap_uint<1> fifo_wr_en = 0;
     fifo_word_t fifo_din = 0;
+    ap_uint<1> fifo_word_toggle = 0;
 
     for (int i = 0; i < 8; ++i) {
         fisheye_remap_reader_hls(bram_line_cur_w,
@@ -135,7 +136,8 @@ static void reset_reader() {
                                  bram_line_num_addr,
                                  bram_addrb,
                                  fifo_wr_en,
-                                 fifo_din);
+                                 fifo_din,
+                                 fifo_word_toggle);
     }
 }
 
@@ -197,6 +199,7 @@ static captured_frame_t simulate_mode(const std::vector<std::vector<uint16_t> >&
     captured_frame_t result;
 
     bram_addr_t delayed_addr = 0;
+    ap_uint<1> fifo_word_toggle = 0;
     line_slot_addr_t bram_line_num_addr = 0;
     bram_addr_t bram_addrb = 0;
     int active_line = -1;
@@ -238,7 +241,8 @@ static captured_frame_t simulate_mode(const std::vector<std::vector<uint16_t> >&
                                      bram_line_num_addr,
                                      bram_addrb,
                                      fifo_wr_en,
-                                     fifo_din);
+                                     fifo_din,
+                                     fifo_word_toggle);
 
             delayed_addr = bram_addrb;
             if (fifo_wr_en) {

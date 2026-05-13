@@ -48,6 +48,7 @@ foreach rtl_file [glob -nocomplain [file join $build_root tcl_run fisheye_remap_
         fisheye_remap_reader_hls_partset_65ns_65ns_16ns_6ns_65_1_1.v
         fisheye_remap_reader_hls_sparsemux_7_2_13_1_1.v
         fisheye_remap_reader_hls_sparsemux_9_3_12_1_1.v
+        fisheye_remap_reader_hls_sparsemux_9_3_65_1_1.v
     }
     if {[lsearch -exact $rtl_allowlist $rtl_tail] >= 0} {
         file copy -force $rtl_file [file join $root_dir rtl $rtl_tail]

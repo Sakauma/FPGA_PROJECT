@@ -145,6 +145,7 @@ static void run_reader(uint32_t ctrl,
     fifo_word_t fifo_din = 0;
 
     bram_addr_t delayed_addr = 0;
+    ap_uint<1> fifo_word_toggle = 0;
     words.clear();
 
     const int expected_line_words = kFisheyePacketsPerLine * (1 + kFisheyePayloadWordsPerPacket);
@@ -162,7 +163,8 @@ static void run_reader(uint32_t ctrl,
                                  bram_line_num_addr,
                                  bram_addrb,
                                  fifo_wr_en,
-                                 fifo_din);
+                                 fifo_din,
+                                 fifo_word_toggle);
 
         delayed_addr = bram_addrb;
 
@@ -208,6 +210,9 @@ int main() {
 
     run_reader(0x00000000, words);
     check_line_protocol(words, 0);
+    if (payload_at(words, 0, 0) != 0x0003000200010000ULL) {
+        std::cerr << "bypass first payload mismatch: 0x" << std::hex << payload_at(words, 0, 0) << std::dec << std::endl;
+    }
     assert(payload_at(words, 0, 0) == 0x0003000200010000ULL);
 
     run_reader(0x00000001, words);

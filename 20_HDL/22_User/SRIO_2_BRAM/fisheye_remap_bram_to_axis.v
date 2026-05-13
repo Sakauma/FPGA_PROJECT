@@ -26,6 +26,9 @@
 // 最新 HLS RTL 将 LUT 地址 mux 缩为 12bit 输出，保持 wrapper 与生成 RTL 一致。
 `include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_sparsemux_7_2_13_1_1.v"
 `include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_sparsemux_9_3_12_1_1.v"
+// 新代码：Egor Izmaylov
+// 最新 HLS 状态机为 65bit payload 旁路选择生成该 helper，必须与 fisheye_remap_reader_hls.v 同步 include。
+`include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_sparsemux_9_3_65_1_1.v"
 // 旧代码保留：`include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_sparsemux_9_3_14_1_1.v"
 `include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls.v"
 
@@ -60,23 +63,50 @@ module fisheye_remap_bram_to_axis #(
     endfunction
 
     wire                                        fifo_wr_en;
+    wire                                        fifo_word_toggle;
     wire        [P_D_WIDTH-1:0]                 fifo_din;
     wire                                        fifo_almost_full;
+    wire                                        fifo_almost_full_to_hls;
     wire                                        fifo_ren;
     wire        [P_D_WIDTH-1:0]                 fifo_rdata;
     wire                                        fifo_empty;
     wire        [P_D_WIDTH-1:0]                 axis_word;
     wire                                        fifo_wr_en_to_fifo;
     wire        [P_D_WIDTH-1:0]                 fifo_din_to_fifo;
+    // 新代码：Egor Izmaylov
+    // HLS ap_none 输出会保持上一拍值；翻转位只在有效 FIFO word 产生时改变，
+    // 因此这里用它过滤 HLS RTL 的保持态，避免重复写入同一个 header/payload。
+    reg                                         fifo_word_toggle_d;
+    reg                                         fifo_wr_en_d;
+    wire                                        fifo_wr_en_qualified;
+
+    assign fifo_wr_en_qualified = (fifo_word_toggle != fifo_word_toggle_d) || (fifo_wr_en && !fifo_wr_en_d);
+
+    always @(posedge bram_clk or negedge bram_rstn) begin
+        if (!bram_rstn) begin
+            fifo_word_toggle_d <= 1'b0;
+            fifo_wr_en_d        <= 1'b0;
+        end else begin
+`ifdef FISHEYE_SIM_X_SAFE
+            fifo_word_toggle_d <= (fifo_word_toggle === 1'b1);
+            fifo_wr_en_d        <= (fifo_wr_en === 1'b1);
+`else
+            fifo_word_toggle_d <= fifo_word_toggle;
+            fifo_wr_en_d        <= fifo_wr_en;
+`endif
+        end
+    end
 
 `ifdef FISHEYE_SIM_X_SAFE
     // 新代码：Egor Izmaylov
     // 仅 RTL 仿真启用，防止 HLS pipeline 复位释放初期的 X 写使能污染异步 FIFO。
-    assign fifo_wr_en_to_fifo = (fifo_wr_en === 1'b1);
-    assign fifo_din_to_fifo   = (fifo_wr_en === 1'b1) ? fifo_din : {P_D_WIDTH{1'b0}};
+    assign fifo_wr_en_to_fifo = (fifo_wr_en_qualified === 1'b1);
+    assign fifo_din_to_fifo   = (fifo_wr_en_qualified === 1'b1) ? fifo_din : {P_D_WIDTH{1'b0}};
+    assign fifo_almost_full_to_hls = (fifo_almost_full === 1'b1);
 `else
-    assign fifo_wr_en_to_fifo = fifo_wr_en;
+    assign fifo_wr_en_to_fifo = fifo_wr_en_qualified;
     assign fifo_din_to_fifo   = fifo_din;
+    assign fifo_almost_full_to_hls = fifo_almost_full;
 `endif
 
     // 新代码：Egor Izmaylov 将 AXI-Lite 控制寄存器同步到 BRAM 读出时钟域。
@@ -99,20 +129,42 @@ module fisheye_remap_bram_to_axis #(
 
     assign video_algo_ctrl_bram = video_algo_ctrl_bram_r1;
 
+    // 新代码：Egor Izmaylov
+    // HLS 顶层是多拍 ap_ctrl_none 状态机，1 拍 bram_line_cur_w_en 可能被 RTL 调度采样窗口错过。
+    // 这里仅在算法 wrapper 内把新行事件拉宽 16 拍，并锁存对应写槽位；整行处理时间远大于 16 拍，不会重复启动同一行。
+    reg         [18:0]                          bram_line_cur_w_hls;
+    reg         [4:0]                           hls_start_stretch_cnt;
+    wire                                        bram_line_cur_w_en_hls;
+
+    always @(posedge bram_clk or negedge bram_rstn) begin
+        if (!bram_rstn) begin
+            bram_line_cur_w_hls   <= 19'd0;
+            hls_start_stretch_cnt <= 5'd0;
+        end else if (bram_line_cur_w_en) begin
+            bram_line_cur_w_hls   <= bram_line_cur_w[18:0];
+            hls_start_stretch_cnt <= 5'd16;
+        end else if (hls_start_stretch_cnt != 5'd0) begin
+            hls_start_stretch_cnt <= hls_start_stretch_cnt - 5'd1;
+        end
+    end
+
+    assign bram_line_cur_w_en_hls = (hls_start_stretch_cnt != 5'd0);
+
     // 新代码：Egor Izmaylov 使用 HLS 核生成去畸变源像素 BRAM 地址和 SRIO payload。
     fisheye_remap_reader_hls u_fisheye_remap_reader_hls (
         .ap_clk                                 ( bram_clk              ),
         .ap_rst                                 ( ~bram_rstn            ),
-        .bram_line_cur_w                        ( bram_line_cur_w[18:0] ),
-        .bram_line_cur_w_en                     ( bram_line_cur_w_en    ),
+        .bram_line_cur_w                        ( bram_line_cur_w_hls   ),
+        .bram_line_cur_w_en                     ( bram_line_cur_w_en_hls),
         .bram_line_num                          ( bram_line_num         ),
         .bram_doutb                             ( bram_doutb            ),
-        .fifo_almost_full                       ( fifo_almost_full      ),
+        .fifo_almost_full                       ( fifo_almost_full_to_hls),
         .algo_ctrl                              ( video_algo_ctrl_bram  ),
         .bram_line_num_addr                     ( bram_line_num_addr    ),
         .bram_addrb                             ( bram_addrb            ),
         .fifo_wr_en                             ( fifo_wr_en            ),
-        .fifo_din                               ( fifo_din              )
+        .fifo_din                               ( fifo_din              ),
+        .fifo_word_toggle                       ( fifo_word_toggle      )
     );
 
     async_fifo #(

@@ -91,14 +91,24 @@ module tb_vbram_hls_integration;
         if (rstn && (bram_line_cur_w_en ||
                      dut.u_fisheye_remap_bram_to_axis.fifo_wr_en ||
                      (dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.state != 3'd0))) begin
-            $display("DBG t=%0t rstn=%0b en=%0b hls_state=%0d hls_fsm=%h fifo_af=%0b wr=%0b fifo_empty=%0b wr_sync=%0b rd_sync=%0b wr_cnt=%0d rd_cnt=%0d valid=%0b data=%016h addr=%05h",
+            $display("DBG t=%0t rstn=%0b en=%0b hls_state=%0d hls_fsm=%h issue=%0d read_valid=%0b read_pix=%0d pack=%0d pending=%0b fifo_af=%0b fifo_af_hls=%0b wr=%0b wrq=%0b wr_d=%0b tog=%0b tog_d=%0b fifo_empty=%0b wr_sync=%0b rd_sync=%0b wr_cnt=%0d rd_cnt=%0d valid=%0b data=%016h addr=%05h",
                      $time,
                      rstn,
                      bram_line_cur_w_en,
                      dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.state,
                      dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.ap_CS_fsm,
+                     dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.issue_pixel_idx,
+                     dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.read_valid,
+                     dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.read_packet_pixel_idx,
+                     dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.pack_idx,
+                     dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.pending_payload_valid,
                      dut.u_fisheye_remap_bram_to_axis.fifo_almost_full,
+                     dut.u_fisheye_remap_bram_to_axis.fifo_almost_full_to_hls,
                      dut.u_fisheye_remap_bram_to_axis.fifo_wr_en,
+                     dut.u_fisheye_remap_bram_to_axis.fifo_wr_en_qualified,
+                     dut.u_fisheye_remap_bram_to_axis.fifo_wr_en_d,
+                     dut.u_fisheye_remap_bram_to_axis.fifo_word_toggle,
+                     dut.u_fisheye_remap_bram_to_axis.fifo_word_toggle_d,
                      dut.u_fisheye_remap_bram_to_axis.fifo_empty,
                      dut.u_fisheye_remap_bram_to_axis.u_fisheye_axis_async_fifo.wr_sync_rstn,
                      dut.u_fisheye_remap_bram_to_axis.u_fisheye_axis_async_fifo.rd_sync_rstn,
@@ -192,6 +202,14 @@ module tb_vbram_hls_integration;
                 end
             end else begin
                 stream_payload_count <= stream_payload_count + 1;
+                // 新代码：Egor Izmaylov
+                // HLS reader 的 0x0 内部旁路必须与旧 readbram_to_axis64_top 首个 payload 完全一致。
+                if (video_algo_ctrl == 32'h0000_0000 && stream_packet == 0 && stream_phase == 1 &&
+                    m_srio_axis_tdata !== EXPECTED_BYPASS_PAYLOAD) begin
+                    $display("ERROR: HLS bypass first payload mismatch exp=%016h got=%016h",
+                             EXPECTED_BYPASS_PAYLOAD, m_srio_axis_tdata);
+                    stream_error_count <= stream_error_count + 1;
+                end
                 if (stream_phase == 32) begin
                     stream_tlast_count <= stream_tlast_count + 1;
                     if (m_srio_axis_tlast !== 1'b1) begin
@@ -322,7 +340,7 @@ module tb_vbram_hls_integration;
             end
 
             pulse_line_ready();
-            wait_for_full_line(20000);
+            wait_for_full_line(80000);
             repeat (8) @(posedge clk);
             full_line_check_en = 1'b0;
 
@@ -353,7 +371,7 @@ module tb_vbram_hls_integration;
                 error_count = error_count + 1;
             end
 
-            if (expect_bypass && !DEFAULT_REMAP_ENABLED) begin
+            if (expect_bypass) begin
                 if (captured_data[1] !== EXPECTED_BYPASS_PAYLOAD) begin
                     $display("ERROR: bypass payload mismatch exp=%016h got=%016h",
                              EXPECTED_BYPASS_PAYLOAD, captured_data[1]);

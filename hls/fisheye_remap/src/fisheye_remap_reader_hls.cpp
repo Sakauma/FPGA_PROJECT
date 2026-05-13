@@ -126,6 +126,42 @@ static ap_int<13> clamp_vertical_shift(ap_int<16> shift) {
     return (ap_int<13>)shift;
 }
 
+static ap_int<13> calc_curve_flatten_delta_y(ap_uint<11> out_x,
+                                             ap_uint<12> out_y) {
+#pragma HLS INLINE
+    // 新代码：Egor Izmaylov
+    // 局部圆环拉平补偿：只在下半图像、目标水平线附近生效，且最终仍受 ±96 行安全窗口限制。
+    // 旧代码保留：此前仅依赖畸变表径向比例，raw16 参考图证明其位移不足以拉直可见圆环。
+    if (out_y < kFisheyeCurveFlattenCenterY) {
+        return 0;
+    }
+
+    ap_int<13> dx = (ap_int<13>)out_x - (ap_int<13>)kFisheyeCurveFlattenCenterX;
+    ap_uint<13> abs_dx = abs_s13(dx);
+    if (abs_dx > kFisheyeCurveFlattenRadius) {
+        return 0;
+    }
+
+    ap_int<13> line_delta = (ap_int<13>)out_y - (ap_int<13>)kFisheyeCurveFlattenTargetY;
+    ap_uint<13> dist_to_line = abs_s13(line_delta);
+    if (dist_to_line >= kFisheyeCurveFlattenBand) {
+        return 0;
+    }
+
+    // 新代码：Egor Izmaylov
+    // 下半圆弧 y ~= cy + r - dx^2/(2r)，第一版检测目标线低于切线约 135 行。
+    // 使用 dx^2>>11 做保守近似，保留弧线方向拉动，同时换取 250MHz 目标下更短组合路径。
+    ap_uint<26> dx_square = (ap_uint<26>)abs_dx * (ap_uint<26>)abs_dx;
+    ap_uint<14> sagitta = (ap_uint<14>)(dx_square >> 11);
+    // 旧代码保留：ap_int<16> raw_delta = -(ap_int<16>)sagitta;
+    ap_int<16> raw_delta = (ap_int<16>)kFisheyeCurveFlattenArcBase - (ap_int<16>)sagitta;
+    ap_uint<9> weight = (ap_uint<9>)(kFisheyeCurveFlattenBand - dist_to_line);
+    // 带宽固定为 256 行，权重归一化可直接用 >>8，避免额外常数乘法拖慢 HLS 时序。
+    ap_int<27> weighted = (ap_int<27>)raw_delta * (ap_int<27>)weight;
+    ap_int<16> delta = (ap_int<16>)(weighted >> 8);
+    return clamp_vertical_shift(delta);
+}
+
 static ap_uint<8> wrap_source_slot(ap_uint<8> out_slot, ap_int<13> delta_line) {
 #pragma HLS INLINE
     ap_int<14> slot = (ap_int<14>)out_slot + (ap_int<14>)delta_line;
@@ -172,7 +208,12 @@ static void map_source_pixel(ap_uint<11> out_x,
     ap_int<16> src_x_s = (ap_int<16>)kFisheyeCenterX + scale_delta(dx, amplified_scale_x_q16);
     ap_int<16> src_y_s_unclamped = (ap_int<16>)kFisheyeCenterY + scale_delta(dy, amplified_scale_y_q16);
     ap_uint<12> src_y = clamp_line(src_y_s_unclamped);
-    ap_int<13> safe_delta_line = clamp_vertical_shift((ap_int<16>)src_y - (ap_int<16>)out_y);
+    ap_int<16> base_delta_line = (ap_int<16>)src_y - (ap_int<16>)out_y;
+    // 新代码：Egor Izmaylov
+    // 在畸变表基础上叠加局部圆环拉平补偿，增强“内圈下半部分应接近水平线”的可见效果。
+    // 旧代码保留：ap_int<13> safe_delta_line = clamp_vertical_shift((ap_int<16>)src_y - (ap_int<16>)out_y);
+    ap_int<13> curve_delta_line = calc_curve_flatten_delta_y(out_x, out_y);
+    ap_int<13> safe_delta_line = clamp_vertical_shift(base_delta_line + (ap_int<16>)curve_delta_line);
     // 旧代码保留：src_slot = wrap_source_slot(out_slot, (ap_int<13>)src_y - (ap_int<13>)out_y);
     src_x = clamp_coord(src_x_s);
     src_slot = wrap_source_slot(out_slot, safe_delta_line);

@@ -42,6 +42,15 @@ static const int kFisheyeAdaptiveMinSpan = 1024;
 static const int kFisheyeRemapStrengthXQ8 = 256;
 static const int kFisheyeRemapStrengthYQ8 = 256;
 static const int kFisheyeMaxVerticalShift = 96;
+// 新代码：Egor Izmaylov
+// 基于 raw16 参考图观察到的可见圆环补偿参数：在不改底层 200 行缓存的前提下，
+// 回到第一版“弧线方向拉动明显”的内圈下沿参数，并用局部窄带限制影响范围。
+static const int kFisheyeCurveFlattenCenterX = 964;
+static const int kFisheyeCurveFlattenCenterY = 981;
+static const int kFisheyeCurveFlattenRadius = 760;
+static const int kFisheyeCurveFlattenTargetY = 1606;
+static const int kFisheyeCurveFlattenArcBase = 135;
+static const int kFisheyeCurveFlattenBand = 256;
 
 typedef ap_uint<19> bram_addr_t;
 typedef ap_uint<9> line_slot_addr_t;

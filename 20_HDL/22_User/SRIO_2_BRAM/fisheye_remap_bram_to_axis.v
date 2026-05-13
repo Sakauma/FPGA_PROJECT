@@ -12,6 +12,10 @@
 `include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_kLaserScaleQ16_ROM_AUTO_1R.v"
 `include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_mac_muladd_11ns_7ns_10ns_17_4_1.v"
 // 新代码：Egor Izmaylov
+// 局部圆环拉平补偿引入两个 HLS 生成乘法 helper，wrapper 只同步 include，不改变底层 SRIO/BRAM 接口。
+`include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_mul_13ns_13ns_25_2_1.v"
+`include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_mul_15s_9ns_24_2_1.v"
+// 新代码：Egor Izmaylov
 // HLS 重新综合后预处理乘法位宽收敛为 16x12->28，RTL wrapper 必须同步 include 最新生成模块。
 `include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_mul_16ns_12ns_28_2_1.v"
 // 旧代码保留：`include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_mul_16ns_16ns_32_2_1.v"
@@ -20,6 +24,7 @@
 `include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_partset_65ns_65ns_16ns_6ns_65_1_1.v"
 // 新代码：Egor Izmaylov
 // 最新 HLS RTL 将 LUT 地址 mux 缩为 12bit 输出，保持 wrapper 与生成 RTL 一致。
+`include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_sparsemux_7_2_13_1_1.v"
 `include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_sparsemux_9_3_12_1_1.v"
 // 旧代码保留：`include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls_sparsemux_9_3_14_1_1.v"
 `include "../../../hls/fisheye_remap/rtl/fisheye_remap_reader_hls.v"

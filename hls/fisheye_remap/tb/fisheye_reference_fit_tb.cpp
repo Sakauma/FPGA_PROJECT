@@ -66,6 +66,28 @@ struct variant_report_t {
     image_stats_t stats;
 };
 
+struct curve_fit_t {
+    double cx;
+    double cy;
+    double radius;
+    double target_y;
+    double max_delta;
+    int initial_points;
+    int kept_points;
+};
+
+struct curve_flatten_report_t {
+    std::string name;
+    bool constrained;
+    double inner_radius;
+    double target_y;
+    double max_dy;
+    double mean_abs_diff;
+    double clamp_ratio;
+    uint64_t diff_pixels;
+    image_stats_t stats;
+};
+
 static void make_dir(const std::string& path) {
 #ifdef _WIN32
     _mkdir(path.c_str());
@@ -412,6 +434,152 @@ static std::vector<uint16_t> remap_reference(const std::vector<uint16_t>& input,
     return output;
 }
 
+static double median_of(std::vector<double> values, double fallback) {
+    if (values.empty()) {
+        return fallback;
+    }
+    std::sort(values.begin(), values.end());
+    return values[values.size() / 2];
+}
+
+static curve_fit_t detect_lower_inner_curve(const std::vector<uint16_t>& input,
+                                            const fit_result_t& fit) {
+    // 新代码：Egor Izmaylov
+    // 利用用户指出的“内圈下半部分应为水平线”作为工程约束，先在软件侧自动提取下半圆边界。
+    std::vector<point_t> raw_points;
+    std::vector<double> radii;
+    const double pi = std::acos(-1.0);
+    const int r_min = 480;
+    const int r_max = std::min(930, static_cast<int>(fit.radius) - 12);
+    for (int angle_deg = 15; angle_deg <= 165; ++angle_deg) {
+        const double theta = (pi * angle_deg) / 180.0;
+        const double ux = std::cos(theta);
+        const double uy = std::sin(theta);
+        double best_score = -1.0;
+        int best_r = 0;
+        for (int r = r_min; r <= r_max; r += 2) {
+            const double x0 = fit.cx + ux * (r - 8);
+            const double y0 = fit.cy + uy * (r - 8);
+            const double x1 = fit.cx + ux * (r + 8);
+            const double y1 = fit.cy + uy * (r + 8);
+            if (x0 < 1.0 || y0 < 1.0 ||
+                x1 < 1.0 || y1 < 1.0 ||
+                x0 >= (kFisheyeImageWidth - 1) ||
+                x1 >= (kFisheyeImageWidth - 1) ||
+                y0 >= (kFisheyeImageHeight - 1) ||
+                y1 >= (kFisheyeImageHeight - 1)) {
+                continue;
+            }
+            const double score = std::fabs(static_cast<double>(sample_nearest(input, x1, y1)) -
+                                           static_cast<double>(sample_nearest(input, x0, y0)));
+            if (score > best_score) {
+                best_score = score;
+                best_r = r;
+            }
+        }
+        if (best_score > 3500.0 && best_r > 0) {
+            point_t p;
+            p.x = fit.cx + ux * best_r;
+            p.y = fit.cy + uy * best_r;
+            raw_points.push_back(p);
+            radii.push_back(best_r);
+        }
+    }
+
+    const double median_radius = median_of(radii, fit.radius * 0.83);
+    std::vector<point_t> kept;
+    std::vector<double> kept_y;
+    double max_delta = 0.0;
+    for (size_t i = 0; i < raw_points.size(); ++i) {
+        const double r = std::hypot(raw_points[i].x - fit.cx, raw_points[i].y - fit.cy);
+        if (std::fabs(r - median_radius) <= 120.0) {
+            kept.push_back(raw_points[i]);
+            kept_y.push_back(raw_points[i].y);
+            max_delta = std::max(max_delta, std::fabs(raw_points[i].y - fit.cy));
+        }
+    }
+
+    curve_fit_t curve;
+    curve.cx = fit.cx;
+    curve.cy = fit.cy;
+    curve.radius = median_radius;
+    curve.target_y = median_of(kept_y, fit.cy + median_radius * 0.78);
+    curve.max_delta = max_delta;
+    curve.initial_points = static_cast<int>(raw_points.size());
+    curve.kept_points = static_cast<int>(kept.size());
+    return curve;
+}
+
+static curve_fit_t make_tangent_curve(const fit_result_t& fit, double radius) {
+    // 新代码：Egor Izmaylov
+    // 针对用户指出的“两个圈”问题，直接构造圆环下切线拉平模型，避免场景内部物体边缘误导自动检测。
+    curve_fit_t curve;
+    curve.cx = fit.cx;
+    curve.cy = fit.cy;
+    curve.radius = radius;
+    curve.target_y = fit.cy + radius;
+    curve.max_delta = radius;
+    curve.initial_points = 0;
+    curve.kept_points = 0;
+    return curve;
+}
+
+static double lower_arc_y_parabolic(const curve_fit_t& curve, double x) {
+    const double dx = x - curve.cx;
+    if (std::fabs(dx) > curve.radius) {
+        return curve.target_y;
+    }
+    // 新代码：Egor Izmaylov 使用抛物线近似下半圆，后续可直接转换为 HLS 整数二次项。
+    return curve.cy + curve.radius - (dx * dx) / (2.0 * std::max(1.0, curve.radius));
+}
+
+static std::vector<uint16_t> curve_flatten_reference(const std::vector<uint16_t>& input,
+                                                     const curve_fit_t& curve,
+                                                     bool constrained,
+                                                     curve_flatten_report_t& report) {
+    std::vector<uint16_t> output(kRawFramePixels, 0);
+    // 新代码：Egor Izmaylov 只在目标水平线附近做窄带拉平，避免把整片下半图像拉成伪影。
+    // 与 HLS 核保持 256 行带宽一致，回到第一版方向拉动更明显的局部拉平参数。
+    const double band = 256.0;
+    uint64_t diff_pixels = 0;
+    uint64_t clamp_pixels = 0;
+    double sad = 0.0;
+    double max_dy = 0.0;
+
+    for (int y = 0; y < kFisheyeImageHeight; ++y) {
+        for (int x = 0; x < kFisheyeImageWidth; ++x) {
+            const double arc_y = lower_arc_y_parabolic(curve, x);
+            const double dist_to_line = std::fabs(static_cast<double>(y) - curve.target_y);
+            double weight = 0.0;
+            if (y >= curve.cy && dist_to_line < band && std::fabs(x - curve.cx) <= curve.radius) {
+                weight = 1.0 - dist_to_line / band;
+            }
+            double delta_y = (arc_y - curve.target_y) * weight;
+            if (constrained && std::fabs(delta_y) > kFisheyeMaxVerticalShift) {
+                delta_y = (delta_y > 0.0) ? kFisheyeMaxVerticalShift : -kFisheyeMaxVerticalShift;
+                clamp_pixels++;
+            }
+            const double sy = y + delta_y;
+            const uint16_t pixel = sample_bilinear(input, x, sy);
+            output[y * kFisheyeImageWidth + x] = pixel;
+            if (pixel != input[y * kFisheyeImageWidth + x]) {
+                diff_pixels++;
+            }
+            max_dy = std::max(max_dy, std::fabs(delta_y));
+            sad += std::fabs(static_cast<double>(pixel) - input[y * kFisheyeImageWidth + x]);
+        }
+    }
+
+    report.inner_radius = curve.radius;
+    report.target_y = curve.target_y;
+    report.max_dy = max_dy;
+    report.mean_abs_diff = sad / kRawFramePixels;
+    report.clamp_ratio = static_cast<double>(clamp_pixels) / kRawFramePixels;
+    report.diff_pixels = diff_pixels;
+    report.stats = calc_stats(output);
+    return output;
+}
+
 static void write_absdiff_pgm16(const std::string& path,
                                 const std::vector<uint16_t>& a,
                                 const std::vector<uint16_t>& b) {
@@ -457,7 +625,7 @@ static void blit_tile(std::vector<unsigned char>& canvas,
 static void write_preview_ppm(const std::string& path,
                               const std::vector<std::vector<uint16_t> >& images) {
     const int cols = 3;
-    const int rows = 3;
+    const int rows = std::max(1, static_cast<int>((images.size() + cols - 1) / cols));
     const int width = cols * kPreviewTileSize;
     const int height = rows * kPreviewTileSize;
     std::vector<unsigned char> canvas(width * height * 3, 0);
@@ -487,7 +655,9 @@ static void write_reports(const std::string& out_dir,
                           bool big_endian,
                           const fit_result_t& fit,
                           const image_stats_t& input_stats,
-                          const std::vector<variant_report_t>& reports) {
+                          const curve_fit_t& curve,
+                          const std::vector<variant_report_t>& reports,
+                          const std::vector<curve_flatten_report_t>& curve_reports) {
     const std::string json_path = out_dir + "/fit_report.json";
     std::ofstream json(json_path.c_str());
     json << std::fixed << std::setprecision(6);
@@ -509,6 +679,14 @@ static void write_reports(const std::string& out_dir,
     json << "    \"initial_points\": " << fit.initial_points << ",\n";
     json << "    \"kept_points\": " << fit.kept_points << "\n";
     json << "  },\n";
+    json << "  \"lower_inner_curve\": {\n";
+    json << "    \"cx\": " << curve.cx << ",\n";
+    json << "    \"cy\": " << curve.cy << ",\n";
+    json << "    \"inner_radius_px\": " << curve.radius << ",\n";
+    json << "    \"target_y\": " << curve.target_y << ",\n";
+    json << "    \"initial_points\": " << curve.initial_points << ",\n";
+    json << "    \"kept_points\": " << curve.kept_points << "\n";
+    json << "  },\n";
     json << "  \"input_stats\": {\"min\": " << input_stats.min_v
          << ", \"max\": " << input_stats.max_v
          << ", \"mean\": " << (static_cast<double>(input_stats.sum) / kRawFramePixels)
@@ -529,6 +707,24 @@ static void write_reports(const std::string& out_dir,
              << ", \"saturated\": " << r.stats.saturated << "}";
         json << (i + 1 == reports.size() ? "\n" : ",\n");
     }
+    json << "  ],\n";
+    json << "  \"curve_flatten_variants\": [\n";
+    for (size_t i = 0; i < curve_reports.size(); ++i) {
+        const curve_flatten_report_t& r = curve_reports[i];
+        json << "    {\"name\": \"" << r.name
+             << "\", \"constrained\": " << (r.constrained ? "true" : "false")
+             << ", \"inner_radius\": " << r.inner_radius
+             << ", \"target_y\": " << r.target_y
+             << ", \"max_dy\": " << r.max_dy
+             << ", \"mean_abs_diff\": " << r.mean_abs_diff
+             << ", \"diff_pixels\": " << r.diff_pixels
+             << ", \"clamp_ratio\": " << r.clamp_ratio
+             << ", \"min\": " << r.stats.min_v
+             << ", \"max\": " << r.stats.max_v
+             << ", \"mean\": " << (static_cast<double>(r.stats.sum) / kRawFramePixels)
+             << ", \"saturated\": " << r.stats.saturated << "}";
+        json << (i + 1 == curve_reports.size() ? "\n" : ",\n");
+    }
     json << "  ]\n";
     json << "}\n";
 
@@ -548,6 +744,10 @@ static void write_reports(const std::string& out_dir,
     md << "- radius_px: `" << fit.radius << "`\n";
     md << "- rms_error_px: `" << fit.rms_error << "`\n";
     md << "- points: `" << fit.kept_points << "/" << fit.initial_points << "`\n\n";
+    md << "## 内圈下半边界拟合\n";
+    md << "- inner_radius_px: `" << curve.radius << "`\n";
+    md << "- target_y: `" << curve.target_y << "`\n";
+    md << "- points: `" << curve.kept_points << "/" << curve.initial_points << "`\n\n";
     md << "## 参考图指标\n";
     md << "| variant | constrained | max_dx | max_dy | clamp_ratio | mean_abs_diff | diff_pixels | min | max | mean |\n";
     md << "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n";
@@ -565,9 +765,28 @@ static void write_reports(const std::string& out_dir,
            << " | " << (static_cast<double>(r.stats.sum) / kRawFramePixels)
            << " |\n";
     }
+    md << "\n## 内圈拉平参考图指标\n";
+    md << "| variant | constrained | inner_radius | target_y | max_dy | clamp_ratio | mean_abs_diff | diff_pixels | min | max | mean |\n";
+    md << "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n";
+    for (size_t i = 0; i < curve_reports.size(); ++i) {
+        const curve_flatten_report_t& r = curve_reports[i];
+        md << "| " << r.name
+           << " | " << (r.constrained ? "yes" : "no")
+           << " | " << r.inner_radius
+           << " | " << r.target_y
+           << " | " << r.max_dy
+           << " | " << r.clamp_ratio
+           << " | " << r.mean_abs_diff
+           << " | " << r.diff_pixels
+           << " | " << r.stats.min_v
+           << " | " << r.stats.max_v
+           << " | " << (static_cast<double>(r.stats.sum) / kRawFramePixels)
+           << " |\n";
+    }
     md << "\n## 结论提示\n";
     md << "- 若 full-frame 参考图效果仍弱，优先怀疑畸变表不是完整去畸变模型，或缺少真实 `fx/fy/cx/cy`。\n";
     md << "- 若 full-frame 明显优于 constrained，则当前 200 行缓存是主要限制。\n";
+    md << "- `curve_flatten_full` 用于判断内圈下半边界能否被拉平；`curve_flatten_constrained` 用于判断 96 行窗口内的可上板效果。\n";
     md << "- `preview_contact.ppm` 的排列顺序为：input、infrared_forward_full、infrared_inverse_full、laser_forward_full、laser_inverse_full、infrared_forward_constrained、infrared_inverse_constrained、laser_forward_constrained、laser_inverse_constrained。\n";
 }
 
@@ -602,7 +821,9 @@ int main(int argc, char** argv) {
 
     const fit_result_t fit = robust_fit_circle(mean_frame);
     const std::vector<uint16_t>& reference_input = frames.back();
+    const curve_fit_t curve = detect_lower_inner_curve(reference_input, fit);
     std::vector<variant_report_t> reports;
+    std::vector<curve_flatten_report_t> curve_reports;
     std::vector<std::vector<uint16_t> > preview_images;
     preview_images.push_back(reference_input);
 
@@ -648,17 +869,56 @@ int main(int argc, char** argv) {
                   << " mean_abs_diff=" << report.mean_abs_diff << std::endl;
     }
 
+    struct curve_variant_def_t {
+        const char* name;
+        curve_fit_t curve;
+        bool constrained;
+    };
+    std::vector<curve_variant_def_t> curve_variants;
+    curve_variants.push_back({"curve_flatten_detected_full", curve, false});
+    curve_variants.push_back({"curve_flatten_detected_constrained", curve, true});
+    curve_variants.push_back({"curve_flatten_r820_tangent_full", make_tangent_curve(fit, 820.0), false});
+    curve_variants.push_back({"curve_flatten_r820_tangent_constrained", make_tangent_curve(fit, 820.0), true});
+    curve_variants.push_back({"curve_flatten_r880_tangent_full", make_tangent_curve(fit, 880.0), false});
+    curve_variants.push_back({"curve_flatten_r880_tangent_constrained", make_tangent_curve(fit, 880.0), true});
+    curve_variants.push_back({"curve_flatten_r939_tangent_full", make_tangent_curve(fit, 939.0), false});
+    curve_variants.push_back({"curve_flatten_r939_tangent_constrained", make_tangent_curve(fit, 939.0), true});
+    for (size_t i = 0; i < curve_variants.size(); ++i) {
+        curve_flatten_report_t report;
+        report.name = curve_variants[i].name;
+        report.constrained = curve_variants[i].constrained;
+        const std::vector<uint16_t> output = curve_flatten_reference(reference_input,
+                                                                     curve_variants[i].curve,
+                                                                     curve_variants[i].constrained,
+                                                                     report);
+        curve_reports.push_back(report);
+        preview_images.push_back(output);
+        write_pgm16(out_dir + "/" + report.name + ".pgm", output);
+        write_raw16_le(out_dir + "/" + report.name + ".raw", output);
+        write_absdiff_pgm16(out_dir + "/diff_" + report.name + ".pgm", reference_input, output);
+        std::cout << "INFO: wrote " << report.name
+                  << " inner_radius=" << report.inner_radius
+                  << " target_y=" << report.target_y
+                  << " max_dy=" << report.max_dy
+                  << " clamp_ratio=" << report.clamp_ratio
+                  << " mean_abs_diff=" << report.mean_abs_diff << std::endl;
+    }
+
     write_preview_ppm(out_dir + "/preview_contact.ppm", preview_images);
-    write_reports(out_dir, input_files, big_endian, fit, calc_stats(reference_input), reports);
+    write_reports(out_dir, input_files, big_endian, fit, calc_stats(reference_input), curve, reports, curve_reports);
 
     std::cout << "INFO: fit cx=" << fit.cx
               << " cy=" << fit.cy
               << " radius=" << fit.radius
               << " rms=" << fit.rms_error
               << " points=" << fit.kept_points << "/" << fit.initial_points << std::endl;
+    std::cout << "INFO: lower inner curve radius=" << curve.radius
+              << " target_y=" << curve.target_y
+              << " points=" << curve.kept_points << "/" << curve.initial_points << std::endl;
     std::cout << "INFO: reference fit outputs written to " << out_dir << std::endl;
 
     assert(fit.kept_points >= 32);
     assert(fit.radius >= kFitRadiusMin && fit.radius <= kFitRadiusMax);
+    assert(curve.kept_points >= 32);
     return 0;
 }

@@ -41,8 +41,8 @@ set selected_raw_files [lrange $raw_files 0 [expr {$max_frames - 1}]]
 puts "INFO: reference fit raw16 files: $selected_raw_files"
 puts "INFO: reference fit output dir: $::env(FISHEYE_REF_OUT_DIR)"
 
-open_project [file join $build_root csim_reference_fit_run fisheye_remap_reader_hls]
-set_top fisheye_remap_reader_hls
+open_project [file join $build_root csim_reference_fit_run fisheye_remap_addr_hls]
+set_top fisheye_remap_addr_hls
 
 add_files [file join $root_dir src fisheye_remap_reader_hls.cpp]
 add_files [file join $root_dir src fisheye_remap_reader_hls.h]

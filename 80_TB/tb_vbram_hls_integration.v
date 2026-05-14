@@ -72,6 +72,11 @@ module tb_vbram_hls_integration;
     reg             full_line_check_en      = 1'b0;
     reg     [63:0]  expected_stream_header  = 64'd0;
     reg     [63:0]  expected_stream_payload = 64'd0;
+    integer         line_cycle_count        = 0;
+    integer         fifo_wr_gap             = 0;
+    integer         fifo_wr_gap_errors      = 0;
+    reg             fifo_wr_seen            = 1'b0;
+    localparam integer FISHEYE_MAX_WR_GAP_CYCLES = 32;
 
     always #5 clk = ~clk;
 
@@ -112,23 +117,20 @@ module tb_vbram_hls_integration;
     always @(posedge clk) begin
         if (rstn && (bram_line_cur_w_en ||
                      dut.u_fisheye_remap_bram_to_axis.fifo_wr_en ||
-                     (dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.state != 3'd0))) begin
-            $display("DBG t=%0t rstn=%0b en=%0b hls_state=%0d hls_fsm=%h issue=%0d read_valid=%0b read_pix=%0d pack=%0d pending=%0b fifo_af=%0b fifo_af_hls=%0b wr=%0b wrq=%0b wr_d=%0b tog=%0b tog_d=%0b fifo_empty=%0b wr_sync=%0b rd_sync=%0b wr_cnt=%0d rd_cnt=%0d valid=%0b data=%016h addr=%05h",
+                     (dut.u_fisheye_remap_bram_to_axis.state != 3'd0))) begin
+            $display("DBG t=%0t rstn=%0b en=%0b state=%0d packet=%0d issue=%0d bram_valid=%0b read_pix=%0d pending=%0b fifo_af=%0b wr=%0b wrq=%0b tog=%0b tog_d=%0b fifo_empty=%0b wr_sync=%0b rd_sync=%0b wr_cnt=%0d rd_cnt=%0d valid=%0b data=%016h addr=%05h",
                      $time,
                      rstn,
                      bram_line_cur_w_en,
-                     dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.state,
-                     dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.ap_CS_fsm,
-                     dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.issue_pixel_idx,
-                     dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.read_valid,
-                     dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.read_packet_pixel_idx,
-                     dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.pack_idx,
-                     dut.u_fisheye_remap_bram_to_axis.u_fisheye_remap_reader_hls.pending_payload_valid,
+                     dut.u_fisheye_remap_bram_to_axis.state,
+                     dut.u_fisheye_remap_bram_to_axis.packet_idx,
+                     dut.u_fisheye_remap_bram_to_axis.issue_pixel_idx,
+                     dut.u_fisheye_remap_bram_to_axis.bram_data_valid,
+                     dut.u_fisheye_remap_bram_to_axis.bram_packet_pixel_idx,
+                     dut.u_fisheye_remap_bram_to_axis.pending_payload_valid,
                      dut.u_fisheye_remap_bram_to_axis.fifo_almost_full,
-                     dut.u_fisheye_remap_bram_to_axis.fifo_almost_full_to_hls,
                      dut.u_fisheye_remap_bram_to_axis.fifo_wr_en,
                      dut.u_fisheye_remap_bram_to_axis.fifo_wr_en_qualified,
-                     dut.u_fisheye_remap_bram_to_axis.fifo_wr_en_d,
                      dut.u_fisheye_remap_bram_to_axis.fifo_word_toggle,
                      dut.u_fisheye_remap_bram_to_axis.fifo_word_toggle_d,
                      dut.u_fisheye_remap_bram_to_axis.fifo_empty,
@@ -248,6 +250,32 @@ module tb_vbram_hls_integration;
             stream_word_count <= stream_word_count + 1;
         end
     end
+
+`ifdef ENABLE_FISHEYE_REMAP_READER
+    always @(posedge clk) begin
+        if (!rstn || !full_line_check_en) begin
+            line_cycle_count   <= 0;
+            fifo_wr_gap        <= 0;
+            fifo_wr_seen       <= 1'b0;
+            fifo_wr_gap_errors <= 0;
+        end else begin
+            line_cycle_count <= line_cycle_count + 1;
+            if (dut.u_fisheye_remap_bram_to_axis.fifo_wr_en_to_fifo) begin
+                // 新代码：Egor Izmaylov
+                // 地址核为 20 级流水，header 后首个 payload 会有固定启动间隔；这里拦截异常断流，
+                // 不再用 8 拍阈值误伤正常 HLS pipeline warm-up。
+                if (fifo_wr_seen && fifo_wr_gap > FISHEYE_MAX_WR_GAP_CYCLES) begin
+                    $display("ERROR: fifo_wr_en_to_fifo gap too large: %0d cycles", fifo_wr_gap);
+                    fifo_wr_gap_errors <= fifo_wr_gap_errors + 1;
+                end
+                fifo_wr_gap  <= 0;
+                fifo_wr_seen <= 1'b1;
+            end else if (fifo_wr_seen) begin
+                fifo_wr_gap <= fifo_wr_gap + 1;
+            end
+        end
+    end
+`endif
 
     task automatic apply_reset;
         begin
@@ -374,6 +402,16 @@ module tb_vbram_hls_integration;
                          stream_header_count, stream_payload_count, stream_tlast_count, stream_error_count);
                 error_count = error_count + 1;
             end
+`ifdef ENABLE_FISHEYE_REMAP_READER
+            if (line_cycle_count > 4096) begin
+                $display("ERROR: full-line emission too slow: %0d cycles", line_cycle_count);
+                error_count = error_count + 1;
+            end
+            if (fifo_wr_gap_errors != 0) begin
+                $display("ERROR: fifo write cadence violations: %0d", fifo_wr_gap_errors);
+                error_count = error_count + 1;
+            end
+`endif
         end
     endtask
 

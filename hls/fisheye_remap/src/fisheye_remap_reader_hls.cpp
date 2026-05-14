@@ -219,6 +219,42 @@ static void map_source_pixel(ap_uint<11> out_x,
     src_slot = wrap_source_slot(out_slot, safe_delta_line);
 }
 
+void fisheye_remap_addr_hls(ap_uint<1> in_valid,
+                            ap_uint<11> out_x,
+                            ap_uint<12> out_line,
+                            line_slot_addr_t out_slot,
+                            ap_uint<7> packet_pixel_idx,
+                            ap_uint<32> algo_ctrl,
+                            ap_uint<1>& out_valid,
+                            line_slot_addr_t& src_slot,
+                            ap_uint<11>& src_x,
+                            ap_uint<7>& packet_pixel_idx_out) {
+#pragma HLS INTERFACE ap_ctrl_none port=return
+#pragma HLS INTERFACE ap_none port=in_valid
+#pragma HLS INTERFACE ap_none port=out_x
+#pragma HLS INTERFACE ap_none port=out_line
+#pragma HLS INTERFACE ap_none port=out_slot
+#pragma HLS INTERFACE ap_none port=packet_pixel_idx
+#pragma HLS INTERFACE ap_none port=algo_ctrl
+#pragma HLS INTERFACE ap_none port=out_valid
+#pragma HLS INTERFACE ap_none port=src_slot
+#pragma HLS INTERFACE ap_none port=src_x
+#pragma HLS INTERFACE ap_none port=packet_pixel_idx_out
+#pragma HLS PIPELINE II=1
+    // 新代码：Egor Izmaylov
+    // HLS 只承担去畸变地址计算，并回传对齐后的 packet 内像素序号；发包节奏由 RTL packetizer 固定。
+    ap_uint<8> mapped_slot = 0;
+    ap_uint<11> mapped_x = 0;
+    if (in_valid) {
+        map_source_pixel(out_x, out_line, out_slot.range(7, 0), algo_ctrl, mapped_slot, mapped_x);
+    }
+
+    out_valid = in_valid;
+    src_slot = mapped_slot;
+    src_x = mapped_x;
+    packet_pixel_idx_out = packet_pixel_idx;
+}
+
 static ap_uint<16> clamp_pixel_u16(ap_uint<32> value) {
 #pragma HLS INLINE
     return (value > 65535) ? (ap_uint<16>)65535 : (ap_uint<16>)value;

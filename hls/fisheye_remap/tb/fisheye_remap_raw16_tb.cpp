@@ -114,31 +114,14 @@ static void write_pgm16(const std::string& path, const std::vector<uint16_t>& pi
 }
 
 static void reset_reader() {
-    bram_addr_t bram_line_cur_w = 0;
-    ap_uint<1> bram_line_cur_w_en = 0;
-    ap_uint<12> bram_line_num = 0;
-    ap_uint<16> bram_doutb = 0;
-    ap_uint<1> fifo_almost_full = 0;
-    ap_uint<32> algo_ctrl = 0x80000000U;
-    line_slot_addr_t bram_line_num_addr = 0;
-    bram_addr_t bram_addrb = 0;
-    ap_uint<1> fifo_wr_en = 0;
-    fifo_word_t fifo_din = 0;
-    ap_uint<1> fifo_word_toggle = 0;
-
-    for (int i = 0; i < 8; ++i) {
-        fisheye_remap_reader_hls(bram_line_cur_w,
-                                 bram_line_cur_w_en,
-                                 bram_line_num,
-                                 bram_doutb,
-                                 fifo_almost_full,
-                                 algo_ctrl,
-                                 bram_line_num_addr,
-                                 bram_addrb,
-                                 fifo_wr_en,
-                                 fifo_din,
-                                 fifo_word_toggle);
-    }
+    // 新代码：Egor Izmaylov
+    // 稳定上板版本中 HLS 只负责地址计算，发包节奏由 RTL 固定生成；这里用空拍清一次组合输出。
+    ap_uint<1> out_valid = 0;
+    line_slot_addr_t src_slot = 0;
+    ap_uint<11> src_x = 0;
+    ap_uint<7> packet_pixel_idx_out = 0;
+    fisheye_remap_addr_hls(0, 0, 0, 0, 0, 0x80000000U,
+                           out_valid, src_slot, src_x, packet_pixel_idx_out);
 }
 
 static uint16_t ring_read(const std::vector<uint16_t>& ring, bram_addr_t addr) {
@@ -198,10 +181,6 @@ static captured_frame_t simulate_mode(const std::vector<std::vector<uint16_t> >&
     std::vector<uint16_t> line_table(kFisheyeLineBufferDepth, 0);
     captured_frame_t result;
 
-    bram_addr_t delayed_addr = 0;
-    ap_uint<1> fifo_word_toggle = 0;
-    line_slot_addr_t bram_line_num_addr = 0;
-    bram_addr_t bram_addrb = 0;
     int active_line = -1;
     int active_packet = -1;
     int payload_index = 0;
@@ -222,52 +201,54 @@ static captured_frame_t simulate_mode(const std::vector<std::vector<uint16_t> >&
         line_table[slot] = static_cast<uint16_t>(line);
 
         const bool should_emit_line = (global_line >= kFisheyeHalfLineBufferDepth);
-        const int target_lines = emitted_lines + (should_emit_line ? 1 : 0);
-        for (int cycle = 0; cycle < 40000; ++cycle) {
-            ap_uint<1> bram_line_cur_w_en = (cycle == 0) ? 1 : 0;
-            ap_uint<12> bram_line_num = line_table[bram_line_num_addr.to_uint() % kFisheyeLineBufferDepth];
-            ap_uint<16> bram_doutb = ring_read(ring, delayed_addr);
-            ap_uint<1> fifo_almost_full = 0;
-            ap_uint<32> algo_ctrl = ctrl;
-            ap_uint<1> fifo_wr_en = 0;
-            fifo_word_t fifo_din = 0;
+        if (!should_emit_line) {
+            continue;
+        }
 
-            fisheye_remap_reader_hls(static_cast<bram_addr_t>(slot),
-                                     bram_line_cur_w_en,
-                                     bram_line_num,
-                                     bram_doutb,
-                                     fifo_almost_full,
-                                     algo_ctrl,
-                                     bram_line_num_addr,
-                                     bram_addrb,
-                                     fifo_wr_en,
-                                     fifo_din,
-                                     fifo_word_toggle);
+        const int delayed_slot = (slot + kFisheyeHalfLineBufferDepth) % kFisheyeLineBufferDepth;
+        const uint16_t out_line = line_table[delayed_slot];
 
-            delayed_addr = bram_addrb;
-            if (fifo_wr_en) {
-                const uint64_t data = static_cast<uint64_t>(fifo_din.range(63, 0));
-                const bool last = fifo_din[64].to_bool();
-                const int before_tlasts = static_cast<int>(result.tlasts);
-                accept_word(result, data, last, active_line, active_packet, payload_index);
-                if (last && result.tlasts != static_cast<uint64_t>(before_tlasts)) {
-                    if (active_packet == (kFisheyePacketsPerLine - 1)) {
-                        emitted_lines++;
+        // 新代码：Egor Izmaylov
+        // 软件侧复刻新的 RTL packetizer：每行 16 包，每包 1 header + 32 payload，HLS 只给出源行槽和源 x。
+        for (int packet = 0; packet < kFisheyePacketsPerLine; ++packet) {
+            const uint64_t header = (0x00602000ULL << 32)
+                                  | (static_cast<uint64_t>(out_line) << 12)
+                                  | (static_cast<uint64_t>(packet) << 8);
+            accept_word(result, header, false, active_line, active_packet, payload_index);
+
+            for (int payload = 0; payload < kFisheyePayloadWordsPerPacket; ++payload) {
+                uint64_t data = 0;
+                for (int lane = 0; lane < kFisheyePixelsPerWord; ++lane) {
+                    const int out_x = packet * kFisheyePacketPixels +
+                                      payload * kFisheyePixelsPerWord +
+                                      lane;
+                    ap_uint<1> out_valid = 0;
+                    line_slot_addr_t src_slot = 0;
+                    ap_uint<11> src_x = 0;
+                    ap_uint<7> packet_pixel_idx_out = 0;
+                    fisheye_remap_addr_hls(1,
+                                           static_cast<ap_uint<11> >(out_x),
+                                           static_cast<ap_uint<12> >(out_line),
+                                           static_cast<line_slot_addr_t>(delayed_slot),
+                                           static_cast<ap_uint<7> >(out_x & 0x7f),
+                                           static_cast<ap_uint<32> >(ctrl),
+                                           out_valid,
+                                           src_slot,
+                                           src_x,
+                                           packet_pixel_idx_out);
+                    if (!out_valid) {
+                        result.protocol_errors++;
                     }
+                    const uint32_t src_index = (src_slot.to_uint() % kFisheyeLineBufferDepth) *
+                                               kFisheyeImageWidth + src_x.to_uint();
+                    const uint16_t pixel = ring[src_index];
+                    data |= static_cast<uint64_t>(pixel) << (lane * 16);
                 }
-            }
-
-            if (!should_emit_line && cycle >= 8) {
-                break;
-            }
-            if (should_emit_line && emitted_lines >= target_lines) {
-                break;
-            }
-            if (cycle == 39999) {
-                result.protocol_errors++;
-                std::cerr << "ERROR: timeout while simulating line " << global_line << std::endl;
+                const bool last = (payload == (kFisheyePayloadWordsPerPacket - 1));
+                accept_word(result, data, last, active_line, active_packet, payload_index);
             }
         }
+        emitted_lines++;
     }
 
     result.completed_frames = emitted_lines / kFisheyeImageHeight;

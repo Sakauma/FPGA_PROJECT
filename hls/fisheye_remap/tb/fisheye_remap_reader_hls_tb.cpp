@@ -203,10 +203,38 @@ static void check_line_protocol(const std::vector<captured_word_t>& words, uint1
     }
 }
 
+static void run_addr_kernel_checks() {
+    // 新代码：Egor Izmaylov
+    // 稳定版默认综合 fisheye_remap_addr_hls，协议由 RTL TB 覆盖；这里验证地址核控制位语义。
+    ap_uint<1> out_valid = 0;
+    line_slot_addr_t src_slot = 0;
+    ap_uint<11> src_x = 0;
+    ap_uint<7> pixel_idx_out = 0;
+
+    fisheye_remap_addr_hls(1, 10, 0, 100, 10, 0x00000000, out_valid, src_slot, src_x, pixel_idx_out);
+    assert(out_valid == 1);
+    assert(src_slot == 100);
+    assert(src_x == 10);
+    assert(pixel_idx_out == 10);
+
+    fisheye_remap_addr_hls(1, 1400, 1606, 100, 37, 0x00000001, out_valid, src_slot, src_x, pixel_idx_out);
+    assert(out_valid == 1);
+    assert(pixel_idx_out == 37);
+    const line_slot_addr_t remap_slot = src_slot;
+    const ap_uint<11> remap_x = src_x;
+
+    fisheye_remap_addr_hls(1, 1400, 1606, 100, 37, 0x00000007, out_valid, src_slot, src_x, pixel_idx_out);
+    assert(out_valid == 1);
+    assert(src_slot == remap_slot);
+    assert(src_x == remap_x);
+}
+
 int main() {
     std::vector<captured_word_t> words;
     std::vector<captured_word_t> disabled_preprocess_words;
     std::vector<captured_word_t> adaptive_words;
+
+    run_addr_kernel_checks();
 
     run_reader(0x00000000, words);
     check_line_protocol(words, 0);

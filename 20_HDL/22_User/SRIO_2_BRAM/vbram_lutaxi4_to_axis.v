@@ -1,5 +1,6 @@
 `timescale 1ns/1ns
 `include "fisheye_remap_bram_to_axis.v"
+`include "fisheye_remap_packetizer_to_axis.v"
 // ============================================================================
 // 新增维护说明
 // 作者          : Egor Izmaylov
@@ -131,7 +132,10 @@ module vbram_lutaxi4_to_axis#(
 `ifdef ENABLE_FISHEYE_REMAP_READER
 	// 新代码：Egor Izmaylov 将算法前移到 BRAM 读出阶段，实现真实源像素重采样去畸变。
 	// 维护边界：SRIO、MIG、BD/IP、XDC 和板级接口保持不变；旧 AXIS 后处理路径保留在下方宏分支。
-	fisheye_remap_bram_to_axis #(
+	// 新代码：Egor Izmaylov
+	// 稳定版链路把 SRIO packet/header/payload/tlast 节奏固定在 RTL 中，HLS 只提供源像素地址。
+	// 旧代码保留：原 fisheye_remap_bram_to_axis 仍保留在独立文件中，不再作为默认 ENABLE_FISHEYE_REMAP_READER 路径。
+	fisheye_remap_packetizer_to_axis #(
 		.B_RAM_WIDTH							( B_RAM_WIDTH								),
 		.B_RAM_DEPTH							( B_RAM_DEPTH								),
 		.P_LINE_DEPTH							( P_LINE_DEPTH								)

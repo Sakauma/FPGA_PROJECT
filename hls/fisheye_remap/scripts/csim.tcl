@@ -16,8 +16,8 @@ if {[info exists ::env(HLS_BUILD_ROOT)]} {
 }
 file mkdir $build_root
 
-open_project [file join $build_root csim_run fisheye_remap_reader_hls]
-set_top fisheye_remap_reader_hls
+open_project [file join $build_root csim_run fisheye_remap_addr_hls]
+set_top fisheye_remap_addr_hls
 
 add_files [file join $root_dir src fisheye_remap_reader_hls.cpp]
 add_files [file join $root_dir src fisheye_remap_reader_hls.h]

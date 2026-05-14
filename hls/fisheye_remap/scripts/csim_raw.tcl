@@ -34,8 +34,8 @@ if {[llength $raw_files] == 0} {
 set selected_raw_files [lrange $raw_files 0 [expr {$max_frames - 1}]]
 puts "INFO: raw16 csim files: $selected_raw_files"
 
-open_project [file join $build_root csim_raw_run fisheye_remap_reader_hls]
-set_top fisheye_remap_reader_hls
+open_project [file join $build_root csim_raw_run fisheye_remap_addr_hls]
+set_top fisheye_remap_addr_hls
 
 add_files [file join $root_dir src fisheye_remap_reader_hls.cpp]
 add_files [file join $root_dir src fisheye_remap_reader_hls.h]

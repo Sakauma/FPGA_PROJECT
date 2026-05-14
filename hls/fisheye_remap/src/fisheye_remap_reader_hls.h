@@ -56,6 +56,19 @@ typedef ap_uint<19> bram_addr_t;
 typedef ap_uint<9> line_slot_addr_t;
 typedef ap_uint<65> fifo_word_t;
 
+// 新代码：Egor Izmaylov
+// 稳定上板版本只让 HLS 计算去畸变源像素地址，SRIO header/payload/tlast 节奏由 RTL 固定生成。
+void fisheye_remap_addr_hls(ap_uint<1> in_valid,
+                            ap_uint<11> out_x,
+                            ap_uint<12> out_line,
+                            line_slot_addr_t out_slot,
+                            ap_uint<7> packet_pixel_idx,
+                            ap_uint<32> algo_ctrl,
+                            ap_uint<1>& out_valid,
+                            line_slot_addr_t& src_slot,
+                            ap_uint<11>& src_x,
+                            ap_uint<7>& packet_pixel_idx_out);
+
 // 新代码：Egor Izmaylov 使用 HLS 直接生成 BRAM 读地址和 SRIO payload FIFO 数据。
 void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
                               ap_uint<1> bram_line_cur_w_en,

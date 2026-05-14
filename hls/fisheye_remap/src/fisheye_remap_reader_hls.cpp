@@ -772,8 +772,12 @@ void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
                     if (!fifo_almost_full) {
                         fifo_din_out = completed_word;
                         fifo_wr_en_out = 1;
+                        // 新代码：Egor Izmaylov
+                        // 复刻旧 readbram_to_fifo 的 4 像素采集 + 1 拍 payload 写入节奏。
+                        // 旧实现不会在写 payload 的同一拍推进下一个 BRAM 地址；保持该节奏可降低
+                        // BRAM 读出到 SRIO 异步 FIFO 的瞬时写入压力，避免板上出现压缩/重复包现象。
+                        block_issue = 1;
                         if (completed_word[64]) {
-                            block_issue = 1;
                             if (packet_idx == (kFisheyePacketsPerLine - 1)) {
                                 if (out_line == (kFisheyeImageHeight - 1) && !algo_ctrl[5]) {
                                     ap_uint<16> frame_span = frame_max - frame_min;

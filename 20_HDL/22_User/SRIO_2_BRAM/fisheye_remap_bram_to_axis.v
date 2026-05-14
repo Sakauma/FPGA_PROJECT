@@ -217,12 +217,18 @@ module fisheye_remap_bram_to_axis #(
     (* mark_debug = "true", keep = "true" *) wire        dbg_fisheye_axis_clk           = m_axis_aclk;
     (* mark_debug = "true", keep = "true" *) wire [18:0] dbg_fisheye_bram_line_cur_w    = bram_line_cur_w[18:0];
     (* mark_debug = "true", keep = "true" *) wire        dbg_fisheye_bram_line_cur_w_en = bram_line_cur_w_en;
+    (* mark_debug = "true", keep = "true" *) wire [18:0] dbg_fisheye_bram_line_cur_w_hls = bram_line_cur_w_hls;
+    (* mark_debug = "true", keep = "true" *) wire        dbg_fisheye_bram_line_cur_w_en_hls = bram_line_cur_w_en_hls;
     (* mark_debug = "true", keep = "true" *) wire [8:0]  dbg_fisheye_bram_line_num_addr = bram_line_num_addr[8:0];
     (* mark_debug = "true", keep = "true" *) wire [11:0] dbg_fisheye_bram_line_num      = bram_line_num;
     (* mark_debug = "true", keep = "true" *) wire [18:0] dbg_fisheye_bram_addrb         = bram_addrb[18:0];
     (* mark_debug = "true", keep = "true" *) wire [15:0] dbg_fisheye_bram_doutb         = bram_doutb;
     (* mark_debug = "true", keep = "true" *) wire [31:0] dbg_fisheye_video_algo_ctrl    = video_algo_ctrl_bram;
     (* mark_debug = "true", keep = "true" *) wire        dbg_fisheye_fifo_wr_en         = fifo_wr_en;
+    (* mark_debug = "true", keep = "true" *) wire        dbg_fisheye_fifo_wr_en_qualified = fifo_wr_en_qualified;
+    (* mark_debug = "true", keep = "true" *) wire        dbg_fisheye_fifo_wr_en_to_fifo = fifo_wr_en_to_fifo;
+    (* mark_debug = "true", keep = "true" *) wire        dbg_fisheye_fifo_word_toggle   = fifo_word_toggle;
+    (* mark_debug = "true", keep = "true" *) wire        dbg_fisheye_fifo_word_toggle_d = fifo_word_toggle_d;
     (* mark_debug = "true", keep = "true" *) wire        dbg_fisheye_fifo_almost_full   = fifo_almost_full;
     (* mark_debug = "true", keep = "true" *) wire [64:0] dbg_fisheye_fifo_din           = fifo_din;
     (* mark_debug = "true", keep = "true" *) wire        dbg_fisheye_fifo_empty         = fifo_empty;

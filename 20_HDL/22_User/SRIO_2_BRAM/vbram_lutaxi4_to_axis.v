@@ -232,6 +232,15 @@ module vbram_lutaxi4_to_axis#(
 //        .m_axis_tvalid	         				( m_srio_axis_tvalid	      				));
 		
 
+`ifdef ENABLE_FISHEYE_DEBUG_TAPS
+	// 新代码：Egor Izmaylov
+	// 顶层最终 SRIO AXIS 调试探针。wrapper 内部 m_axis 已经可见，但这里再抓一次真正
+	// 输出到 SRIO_2_Video 后级的端口，用于排除顶层宏选择或接线导致的最终输出差异。
+	(* mark_debug = "true", keep = "true" *) wire [63:0] dbg_vbram_m_srio_axis_tdata  = m_srio_axis_tdata;
+	(* mark_debug = "true", keep = "true" *) wire        dbg_vbram_m_srio_axis_tvalid = m_srio_axis_tvalid;
+	(* mark_debug = "true", keep = "true" *) wire        dbg_vbram_m_srio_axis_tready = m_srio_axis_tready;
+	(* mark_debug = "true", keep = "true" *) wire        dbg_vbram_m_srio_axis_tlast  = m_srio_axis_tlast;
+`endif
 
 
 endmodule

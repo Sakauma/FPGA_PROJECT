@@ -281,12 +281,18 @@ proc insert_fisheye_debug_cores {} {
     set bram_ila [recreate_ila u_ila_fisheye_bram $bram_clk_net 2048]
     add_ila_probe $bram_ila bram_line_cur_w      [debug_bus_nets dbg_fisheye_bram_line_cur_w 19]
     add_ila_probe $bram_ila bram_line_cur_w_en   [list [debug_scalar_net dbg_fisheye_bram_line_cur_w_en]]
+    add_ila_probe $bram_ila bram_line_cur_w_hls  [debug_bus_nets dbg_fisheye_bram_line_cur_w_hls 19]
+    add_ila_probe $bram_ila bram_line_cur_w_en_hls [list [debug_scalar_net dbg_fisheye_bram_line_cur_w_en_hls]]
     add_ila_probe $bram_ila bram_line_num_addr   [debug_bus_nets dbg_fisheye_bram_line_num_addr 9]
     add_ila_probe $bram_ila bram_line_num        [debug_bus_nets dbg_fisheye_bram_line_num 12]
     add_ila_probe $bram_ila bram_addrb           [debug_bus_nets dbg_fisheye_bram_addrb 19]
     add_ila_probe $bram_ila bram_doutb           [debug_bus_nets dbg_fisheye_bram_doutb 16]
     add_ila_probe $bram_ila video_algo_ctrl      [debug_bus_nets dbg_fisheye_video_algo_ctrl 32]
     add_ila_probe $bram_ila fifo_wr_en           [list [debug_scalar_net dbg_fisheye_fifo_wr_en]]
+    add_ila_probe $bram_ila fifo_wr_en_qualified [list [debug_scalar_net dbg_fisheye_fifo_wr_en_qualified]]
+    add_ila_probe $bram_ila fifo_wr_en_to_fifo   [list [debug_scalar_net dbg_fisheye_fifo_wr_en_to_fifo]]
+    add_ila_probe $bram_ila fifo_word_toggle     [list [debug_scalar_net dbg_fisheye_fifo_word_toggle]]
+    add_ila_probe $bram_ila fifo_word_toggle_d   [list [debug_scalar_net dbg_fisheye_fifo_word_toggle_d]]
     add_ila_probe $bram_ila fifo_almost_full     [list [debug_scalar_net dbg_fisheye_fifo_almost_full]]
     add_ila_probe $bram_ila fifo_din             [debug_bus_nets dbg_fisheye_fifo_din 65]
 
@@ -298,6 +304,10 @@ proc insert_fisheye_debug_cores {} {
     add_ila_probe $axis_ila m_axis_tvalid        [list [debug_scalar_net dbg_fisheye_m_axis_tvalid]]
     add_ila_probe $axis_ila m_axis_tready        [list [debug_scalar_net dbg_fisheye_m_axis_tready]]
     add_ila_probe $axis_ila m_axis_tlast         [list [debug_scalar_net dbg_fisheye_m_axis_tlast]]
+    add_ila_probe $axis_ila top_m_srio_axis_tdata [debug_bus_nets dbg_vbram_m_srio_axis_tdata 64]
+    add_ila_probe $axis_ila top_m_srio_axis_tvalid [list [debug_scalar_net dbg_vbram_m_srio_axis_tvalid]]
+    add_ila_probe $axis_ila top_m_srio_axis_tready [list [debug_scalar_net dbg_vbram_m_srio_axis_tready]]
+    add_ila_probe $axis_ila top_m_srio_axis_tlast [list [debug_scalar_net dbg_vbram_m_srio_axis_tlast]]
 }
 
 set opened_here 0

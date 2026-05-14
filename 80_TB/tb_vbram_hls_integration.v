@@ -71,6 +71,7 @@ module tb_vbram_hls_integration;
     integer         stream_packet           = 0;
     reg             full_line_check_en      = 1'b0;
     reg     [63:0]  expected_stream_header  = 64'd0;
+    reg     [63:0]  expected_stream_payload = 64'd0;
 
     always #5 clk = ~clk;
 
@@ -78,6 +79,27 @@ module tb_vbram_hls_integration;
         input [18:0] addr;
         begin
             mock_bram_pixel = {addr[18:11], addr[7:0]};
+        end
+    endfunction
+
+    function [63:0] expected_bypass_payload_word;
+        input integer packet;
+        input integer payload;
+        integer base_x;
+        reg [15:0] p0;
+        reg [15:0] p1;
+        reg [15:0] p2;
+        reg [15:0] p3;
+        begin
+            // 新代码：Egor Izmaylov
+            // 0x0 旁路模式必须逐字复刻旧 readbram_to_axis64_top：
+            // 第 packet 包第 payload 个 64bit word 对应连续 4 个 16bit 像素。
+            base_x = (packet * 128) + (payload * 4);
+            p0 = mock_bram_pixel({8'd0, (base_x + 0) & 11'h7ff});
+            p1 = mock_bram_pixel({8'd0, (base_x + 1) & 11'h7ff});
+            p2 = mock_bram_pixel({8'd0, (base_x + 2) & 11'h7ff});
+            p3 = mock_bram_pixel({8'd0, (base_x + 3) & 11'h7ff});
+            expected_bypass_payload_word = {p3, p2, p1, p0};
         end
     endfunction
 
@@ -203,11 +225,11 @@ module tb_vbram_hls_integration;
             end else begin
                 stream_payload_count <= stream_payload_count + 1;
                 // 新代码：Egor Izmaylov
-                // HLS reader 的 0x0 内部旁路必须与旧 readbram_to_axis64_top 首个 payload 完全一致。
-                if (video_algo_ctrl == 32'h0000_0000 && stream_packet == 0 && stream_phase == 1 &&
-                    m_srio_axis_tdata !== EXPECTED_BYPASS_PAYLOAD) begin
-                    $display("ERROR: HLS bypass first payload mismatch exp=%016h got=%016h",
-                             EXPECTED_BYPASS_PAYLOAD, m_srio_axis_tdata);
+                // HLS reader 的 0x0 内部旁路必须与旧 readbram_to_axis64_top 整行逐字一致。
+                expected_stream_payload = expected_bypass_payload_word(stream_packet, stream_phase - 1);
+                if (video_algo_ctrl == 32'h0000_0000 && m_srio_axis_tdata !== expected_stream_payload) begin
+                    $display("ERROR: HLS bypass payload mismatch packet=%0d payload=%0d exp=%016h got=%016h",
+                             stream_packet, stream_phase - 1, expected_stream_payload, m_srio_axis_tdata);
                     stream_error_count <= stream_error_count + 1;
                 end
                 if (stream_phase == 32) begin

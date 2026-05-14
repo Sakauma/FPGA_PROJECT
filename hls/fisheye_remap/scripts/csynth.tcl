@@ -79,4 +79,18 @@ if {[file exists $top_rtl]} {
     puts -nonewline $fp $rtl_text
     close $fp
 }
+
+# 新代码：Egor Izmaylov
+# Vitis HLS 生成 Verilog 时会保留尾随空白；提交前统一清理，避免 git diff/check 噪声。
+foreach clean_file [glob -nocomplain [file join $root_dir rtl *.v]] {
+    set fp [open $clean_file r]
+    fconfigure $fp -encoding utf-8
+    set clean_text [read $fp]
+    close $fp
+    regsub -all {[ \t]+\n} $clean_text "\n" clean_text
+    set fp [open $clean_file w]
+    fconfigure $fp -encoding utf-8
+    puts -nonewline $fp $clean_text
+    close $fp
+}
 exit

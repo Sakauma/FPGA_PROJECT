@@ -316,6 +316,11 @@ void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
     // 新代码：Egor Izmaylov 本函数是逐拍推进的状态机，不强制顶层 PIPELINE，避免 HLS 报出误导性 II 警告。
     // 旧代码保留：#pragma HLS PIPELINE II=1
 
+// 新代码：Egor Izmaylov
+// 板上 ILA 证明未 pipeline 时 HLS 内部调度约 118 拍才输出 1 个 FIFO word，导致画面压缩并重复。
+// 因此顶层必须保持 II=1；若时序不足，应拆分 remap 计算流水线，而不是牺牲输出协议节奏。
+#pragma HLS PIPELINE II=1
+
     static ap_uint<3> state = S_IDLE;
     static ap_uint<1> video_started = 0;
     static ap_uint<8> out_slot = 0;

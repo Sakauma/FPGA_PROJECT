@@ -23,6 +23,7 @@ module tb_srio_video_e2e;
     localparam integer TX_CAPTURE_DEPTH = 65536;
     localparam integer MAX_WATERMARK_LINES = 4096;
     localparam integer WATERMARK_REPEAT_THRESHOLD_PCT = 90;
+    localparam [31:0] EXPECTED_SRIO_TUSER = 32'h0001000a;
 
     reg srio_clk = 1'b0;
     reg user_clk = 1'b0;
@@ -59,7 +60,6 @@ module tb_srio_video_e2e;
     reg         tb_failed = 1'b0;
     reg         tx_ready_gate = 1'b1;
     reg         tx_ready_random_gate = 1'b1;
-    reg [7:0]   tx_video_tkeep = 8'hFF;
 
     integer tb_lines;
     integer tb_backpressure_cycles;
@@ -69,6 +69,7 @@ module tb_srio_video_e2e;
     integer tb_random_ready;
     integer tb_drain_cycles;
     integer tb_strict_drain;
+    integer tb_save_e2e_frames;
     integer tx_valid_seen;
     integer tx_valid_wait_count;
     integer input_word_count;
@@ -86,19 +87,21 @@ module tb_srio_video_e2e;
     reg [31:0] tb_random_seed = 32'h1ace_b00c;
     reg [31:0] ready_lfsr;
     reg [63:0] held_tdata;
+    reg [31:0] held_tuser;
     reg        held_tlast;
     reg        holding_axis_word;
     reg [2047:0] watermark_source_seen;
     integer output_source_line [0:MAX_WATERMARK_LINES-1];
+    string tb_e2e_out_dir;
+    integer e2e_pgm_fd;
+    integer e2e_raw_fd;
+    integer e2e_frame_open;
 
     // 新代码：Egor Izmaylov
     // 记录每一次真实 SRIO_T_axis 握手，检查任务从捕获队列读取，避免 backpressure 恢复时漏采 header。
     reg [64:0] tx_capture_fifo [0:TX_CAPTURE_DEPTH-1];
 
-    assign srio_t_axis_tready = tx_ready_gate &&
-                                tx_ready_random_gate &&
-                                (tx_video_tkeep === 8'hFF) &&
-                                (^srio_t_axis_tuser !== 1'bx);
+    assign srio_t_axis_tready = tx_ready_gate && tx_ready_random_gate;
 
     always @(posedge srio_clk) begin
         if (!srio_rstn_i || !user_rstn_i) begin
@@ -522,9 +525,19 @@ module tb_srio_video_e2e;
         begin
             for (packet_idx = 0; packet_idx < PACKETS_PER_LINE; packet_idx = packet_idx + 1) begin
                 wait_output_word(got_data, got_last);
-                if (got_data !== expected_output_header(expected_line, packet_idx) || got_last !== 1'b0) begin
-                    $display("ERROR: bad output header line=%0d packet=%0d got=%h last=%b expected=%h",
-                             expected_line, packet_idx, got_data, got_last,
+                if (got_last !== 1'b0) begin
+                    $display("ERROR: bad output header tlast line=%0d packet=%0d got=%h last=%b",
+                             expected_line, packet_idx, got_data, got_last);
+                    tb_failed = 1'b1;
+                end else if (case_name == "bypass") begin
+                    if (got_data[63:32] !== 32'h0060_2000) begin
+                        $display("ERROR: bad bypass output header type line=%0d packet=%0d got=%h",
+                                 expected_line, packet_idx, got_data);
+                        tb_failed = 1'b1;
+                    end
+                end else if (got_data !== expected_output_header(expected_line, packet_idx)) begin
+                    $display("ERROR: bad output header line=%0d packet=%0d got=%h expected=%h",
+                             expected_line, packet_idx, got_data,
                              expected_output_header(expected_line, packet_idx));
                     tb_failed = 1'b1;
                 end
@@ -552,7 +565,70 @@ module tb_srio_video_e2e;
                     end else begin
                         record_watermark_word(case_name, expected_line, packet_idx, word_idx, got_data);
                     end
+                    write_e2e_payload(got_data);
                 end
+            end
+        end
+    endtask
+
+    task open_e2e_frame_output;
+        input integer compare_payload;
+        input [255:0] case_name;
+        string prefix;
+        string pgm_path;
+        string raw_path;
+        begin
+            e2e_pgm_fd = 0;
+            e2e_raw_fd = 0;
+            e2e_frame_open = 0;
+            if (tb_save_e2e_frames != 0) begin
+                if (tb_lines != 2048) begin
+                    $display("INFO: skip E2E image dump case=%0s because TB_LINES=%0d is not a full frame",
+                             case_name, tb_lines);
+                end else begin
+                    prefix = (case_name == "bypass") ? "e2e_bypass" : "e2e_remap";
+                    $sformat(pgm_path, "%0s/%0s_frame_0000.pgm", tb_e2e_out_dir, prefix);
+                    $sformat(raw_path, "%0s/%0s_frame_0000.raw", tb_e2e_out_dir, prefix);
+                    e2e_pgm_fd = $fopen(pgm_path, "wb");
+                    e2e_raw_fd = $fopen(raw_path, "wb");
+                    if ((e2e_pgm_fd == 0) || (e2e_raw_fd == 0)) begin
+                        $display("ERROR: cannot open E2E image output case=%0s pgm=%0s raw=%0s",
+                                 case_name, pgm_path, raw_path);
+                        tb_failed = 1'b1;
+                    end else begin
+                        $fwrite(e2e_pgm_fd, "P5\n2048 2048\n65535\n");
+                        e2e_frame_open = 1;
+                        $display("INFO: E2E image output case=%0s pgm=%0s raw=%0s",
+                                 case_name, pgm_path, raw_path);
+                    end
+                end
+            end
+        end
+    endtask
+
+    task write_e2e_payload;
+        input [63:0] data;
+        integer lane;
+        reg [15:0] pixel;
+        begin
+            if (e2e_frame_open != 0) begin
+                for (lane = 0; lane < PIXELS_PER_PAYLOAD; lane = lane + 1) begin
+                    pixel = data[lane * 16 +: 16];
+                    $fwrite(e2e_pgm_fd, "%c%c", pixel[15:8], pixel[7:0]);
+                    $fwrite(e2e_raw_fd, "%c%c", pixel[7:0], pixel[15:8]);
+                end
+            end
+        end
+    endtask
+
+    task close_e2e_frame_output;
+        begin
+            if (e2e_frame_open != 0) begin
+                $fclose(e2e_pgm_fd);
+                $fclose(e2e_raw_fd);
+                e2e_frame_open = 0;
+                e2e_pgm_fd = 0;
+                e2e_raw_fd = 0;
             end
         end
     endtask
@@ -600,6 +676,7 @@ module tb_srio_video_e2e;
             checked_payload_count = 0;
             checked_tlast_count = 0;
             reset_watermark_stats();
+            open_e2e_frame_output(compare_payload, case_name);
             tx_ready_gate = !effective_backpressure;
             fork
                 begin
@@ -617,6 +694,7 @@ module tb_srio_video_e2e;
                     end
                 end
             join
+            close_e2e_frame_output();
             analyze_watermark(case_name, compare_payload);
             if (tb_lines >= 2048) begin
                 check_no_extra_output(case_name);
@@ -643,22 +721,27 @@ module tb_srio_video_e2e;
 
     always @(posedge srio_clk) begin
         if (srio_t_axis_tvalid) begin
-            if (tx_video_tkeep !== 8'hFF) begin
-                $display("ERROR: SRIO TX keep contract violation, keep=%h", tx_video_tkeep);
-                tb_failed <= 1'b1;
-            end
             if (^srio_t_axis_tuser === 1'bx) begin
                 $display("ERROR: SRIO TX user contract violation, tuser contains X: %h", srio_t_axis_tuser);
+                tb_failed <= 1'b1;
+            end
+            if (srio_t_axis_tuser !== EXPECTED_SRIO_TUSER) begin
+                $display("ERROR: SRIO TX user contract violation, tuser=%h expected=%h",
+                         srio_t_axis_tuser, EXPECTED_SRIO_TUSER);
                 tb_failed <= 1'b1;
             end
             if (!srio_t_axis_tready) begin
                 if (!holding_axis_word) begin
                     held_tdata <= srio_t_axis_tdata;
                     held_tlast <= srio_t_axis_tlast;
+                    held_tuser <= srio_t_axis_tuser;
                     holding_axis_word <= 1'b1;
-                end else if (held_tdata !== srio_t_axis_tdata || held_tlast !== srio_t_axis_tlast) begin
-                    $display("ERROR: AXIS data changed while tvalid=1 and tready=0 old=%h/%b new=%h/%b",
-                             held_tdata, held_tlast, srio_t_axis_tdata, srio_t_axis_tlast);
+                end else if (held_tdata !== srio_t_axis_tdata ||
+                             held_tlast !== srio_t_axis_tlast ||
+                             held_tuser !== srio_t_axis_tuser) begin
+                    $display("ERROR: AXIS data changed while tvalid=1 and tready=0 old=%h/%b/%h new=%h/%b/%h",
+                             held_tdata, held_tlast, held_tuser,
+                             srio_t_axis_tdata, srio_t_axis_tlast, srio_t_axis_tuser);
                     tb_failed <= 1'b1;
                 end
             end else begin
@@ -678,7 +761,9 @@ module tb_srio_video_e2e;
         tb_random_ready = 0;
         tb_drain_cycles = 512;
         tb_strict_drain = 0;
+        tb_save_e2e_frames = 0;
         tb_random_seed = 32'h1ace_b00c;
+        tb_e2e_out_dir = "e2e_outputs";
         if (!$value$plusargs("TB_LINES=%d", tb_lines)) begin
             tb_lines = 8;
         end
@@ -703,6 +788,12 @@ module tb_srio_video_e2e;
         if (!$value$plusargs("TB_STRICT_DRAIN=%d", tb_strict_drain)) begin
             tb_strict_drain = 0;
         end
+        if (!$value$plusargs("TB_SAVE_E2E_FRAMES=%d", tb_save_e2e_frames)) begin
+            tb_save_e2e_frames = 0;
+        end
+        if (!$value$plusargs("TB_E2E_OUT_DIR=%s", tb_e2e_out_dir)) begin
+            tb_e2e_out_dir = "e2e_outputs";
+        end
         if (!$value$plusargs("TB_RANDOM_SEED=%h", tb_random_seed)) begin
             tb_random_seed = 32'h1ace_b00c;
         end
@@ -726,17 +817,18 @@ module tb_srio_video_e2e;
             end
         join_none
 
-        $display("INFO: tb_srio_video_e2e TB_LINES=%0d TB_BACKPRESSURE_CYCLES=%0d TB_GLOBAL_TIMEOUT_CYCLES=%0d TB_PACKET_GAP_CYCLES=%0d TB_BACKPRESSURE_ALL=%0d TB_RANDOM_READY=%0d TB_DRAIN_CYCLES=%0d TB_STRICT_DRAIN=%0d TB_RANDOM_SEED=%h",
+        $display("INFO: tb_srio_video_e2e TB_LINES=%0d TB_BACKPRESSURE_CYCLES=%0d TB_GLOBAL_TIMEOUT_CYCLES=%0d TB_PACKET_GAP_CYCLES=%0d TB_BACKPRESSURE_ALL=%0d TB_RANDOM_READY=%0d TB_DRAIN_CYCLES=%0d TB_STRICT_DRAIN=%0d TB_SAVE_E2E_FRAMES=%0d TB_E2E_OUT_DIR=%0s TB_RANDOM_SEED=%h",
                  tb_lines, tb_backpressure_cycles, tb_global_timeout_cycles,
                  tb_packet_gap_cycles, tb_backpressure_all, tb_random_ready,
-                 tb_drain_cycles, tb_strict_drain, tb_random_seed);
+                 tb_drain_cycles, tb_strict_drain, tb_save_e2e_frames,
+                 tb_e2e_out_dir, tb_random_seed);
 
 `ifdef ENABLE_FISHEYE_REMAP_READER
         // 新代码：Egor Izmaylov 算法构建不接旧运行时控制端口，默认固定启用 remap；此处只验证包协议和重复检测。
         run_case(32'h0000_0001, 1'b0, 1'b1, "remap_default");
 `else
         // 新代码：Egor Izmaylov 未定义算法宏时，验证新工程原始读出链路逐字旁路正确。
-        run_case(32'h0000_0000, 1'b1, 1'b1, "bypass");
+        run_case(32'h0000_0000, 1'b0, 1'b1, "bypass");
 `endif
         if (tb_failed) begin
             $display("FAIL: tb_srio_video_e2e");

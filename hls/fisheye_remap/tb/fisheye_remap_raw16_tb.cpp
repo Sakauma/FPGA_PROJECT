@@ -63,6 +63,26 @@ static int env_int_or_default(const char* name, int fallback) {
     return (value && value[0]) ? std::atoi(value) : fallback;
 }
 
+static bool env_bool_or_default(const char* name, bool fallback) {
+    const char* value = std::getenv(name);
+    if (!value || !value[0]) {
+        return fallback;
+    }
+    return std::atoi(value) != 0;
+}
+
+static std::string frame_path(const std::string& out_dir,
+                              const std::string& prefix,
+                              int frame_idx,
+                              const std::string& ext) {
+    std::ostringstream oss;
+    oss << out_dir << "/" << prefix << "_frame_";
+    oss.width(4);
+    oss.fill('0');
+    oss << frame_idx << ext;
+    return oss.str();
+}
+
 static std::vector<uint16_t> read_raw16(const std::string& path, bool big_endian) {
     std::ifstream in(path.c_str(), std::ios::binary);
     if (!in) {
@@ -111,6 +131,14 @@ static void write_pgm16(const std::string& path, const std::vector<uint16_t>& pi
         out.put(static_cast<char>(hi));
         out.put(static_cast<char>(lo));
     }
+}
+
+static void write_frame_pair(const std::string& out_dir,
+                             const std::string& prefix,
+                             int frame_idx,
+                             const std::vector<uint16_t>& pixels) {
+    write_pgm16(frame_path(out_dir, prefix, frame_idx, ".pgm"), pixels);
+    write_raw16_le(frame_path(out_dir, prefix, frame_idx, ".raw"), pixels);
 }
 
 static void reset_reader() {
@@ -174,7 +202,11 @@ static void accept_word(captured_frame_t& result,
     payload_index++;
 }
 
-static captured_frame_t simulate_mode(const std::vector<std::vector<uint16_t> >& frames, uint32_t ctrl) {
+static captured_frame_t simulate_mode(const std::vector<std::vector<uint16_t> >& frames,
+                                      uint32_t ctrl,
+                                      const std::string& out_dir,
+                                      const std::string& mode_name,
+                                      bool save_each_frame) {
     reset_reader();
 
     std::vector<uint16_t> ring(kFisheyeLineBufferDepth * kFisheyeImageWidth, 0);
@@ -248,10 +280,20 @@ static captured_frame_t simulate_mode(const std::vector<std::vector<uint16_t> >&
                 accept_word(result, data, last, active_line, active_packet, payload_index);
             }
         }
+        if (out_line == (kFisheyeImageHeight - 1)) {
+            result.completed_frames++;
+            if (save_each_frame) {
+                const int frame_idx = result.completed_frames - 1;
+                const std::vector<uint16_t> frame_snapshot(result.pixels);
+                write_frame_pair(out_dir, mode_name, frame_idx, frame_snapshot);
+            }
+        }
         emitted_lines++;
     }
 
-    result.completed_frames = emitted_lines / kFisheyeImageHeight;
+    if (!save_each_frame) {
+        result.completed_frames = emitted_lines / kFisheyeImageHeight;
+    }
     return result;
 }
 
@@ -293,6 +335,7 @@ int main(int argc, char** argv) {
     const bool big_endian = (env_or_default("FISHEYE_RAW_ENDIAN", "little") == "big");
     const int max_frames = std::max(1, env_int_or_default("FISHEYE_RAW_MAX_FRAMES", 3));
     const std::string out_dir = env_or_default("FISHEYE_RAW_OUT_DIR", "fisheye_raw_outputs");
+    const bool save_each_frame = env_bool_or_default("FISHEYE_RAW_SAVE_EACH_FRAME", false);
     make_dir(out_dir);
 
     std::vector<std::string> paths;
@@ -308,11 +351,14 @@ int main(int argc, char** argv) {
     for (size_t i = 0; i < paths.size(); ++i) {
         frames.push_back(read_raw16(paths[i], big_endian));
         std::cout << "INFO: loaded raw frame " << paths[i] << std::endl;
+        if (save_each_frame) {
+            write_frame_pair(out_dir, "input", static_cast<int>(i), frames.back());
+        }
     }
 
-    captured_frame_t bypass = simulate_mode(frames, 0x00000000U);
-    captured_frame_t remap_no_adaptive = simulate_mode(frames, 0x00000011U);
-    captured_frame_t remap_infrared = simulate_mode(frames, 0x00000001U);
+    captured_frame_t bypass = simulate_mode(frames, 0x00000000U, out_dir, "bypass", save_each_frame);
+    captured_frame_t remap_no_adaptive = simulate_mode(frames, 0x00000011U, out_dir, "remap_no_adaptive", save_each_frame);
+    captured_frame_t remap_infrared = simulate_mode(frames, 0x00000001U, out_dir, "remap_infrared", save_each_frame);
 
     write_pgm16(out_dir + "/input.pgm", frames.back());
     write_pgm16(out_dir + "/bypass.pgm", bypass.pixels);
@@ -325,6 +371,8 @@ int main(int argc, char** argv) {
     std::ofstream summary((out_dir + "/summary.txt").c_str());
     summary << "raw_endian=" << (big_endian ? "big" : "little") << "\n";
     summary << "frames=" << frames.size() << "\n";
+    summary << "save_each_frame=" << (save_each_frame ? 1 : 0) << "\n";
+    summary << "per_frame_output_count=" << (save_each_frame ? bypass.completed_frames : 0) << "\n";
     append_stats(summary, "bypass", bypass);
     append_stats(summary, "remap_no_adaptive", remap_no_adaptive);
     append_stats(summary, "remap_infrared", remap_infrared);
@@ -340,6 +388,9 @@ int main(int argc, char** argv) {
     assert(bypass.protocol_errors == 0);
     assert(remap_no_adaptive.protocol_errors == 0);
     assert(remap_infrared.protocol_errors == 0);
+    assert(bypass.completed_frames == static_cast<int>(frames.size()));
+    assert(remap_no_adaptive.completed_frames == static_cast<int>(frames.size()));
+    assert(remap_infrared.completed_frames == static_cast<int>(frames.size()));
     assert(count_diff(bypass.pixels, remap_no_adaptive.pixels) > 0);
     assert(count_diff(bypass.pixels, remap_infrared.pixels) > 0);
     return 0;

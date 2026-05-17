@@ -14,6 +14,9 @@ if "%TB_BACKPRESSURE_ALL%"=="" set TB_BACKPRESSURE_ALL=0
 if "%TB_RANDOM_READY%"=="" set TB_RANDOM_READY=0
 if "%TB_DRAIN_CYCLES%"=="" set TB_DRAIN_CYCLES=512
 if "%TB_STRICT_DRAIN%"=="" set TB_STRICT_DRAIN=1
+if "%TB_SAVE_E2E_FRAMES%"=="" set TB_SAVE_E2E_FRAMES=0
+if "%TB_E2E_OUT_DIR%"=="" set TB_E2E_OUT_DIR=%BUILD_DIR%\e2e_outputs
+if "%TB_ENABLE_FISHEYE_REMAP_READER%"=="" set TB_ENABLE_FISHEYE_REMAP_READER=1
 if "%TB_STRESS_FULL%"=="" set TB_STRESS_FULL=0
 if "%TB_STRESS_RANDOM%"=="" set TB_STRESS_RANDOM=0
 if "%TB_RANDOM_SEED%"=="" (
@@ -47,13 +50,17 @@ call "%VIVADO_SETTINGS%"
 if errorlevel 1 exit /b 1
 
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
+if not exist "%TB_E2E_OUT_DIR%" mkdir "%TB_E2E_OUT_DIR%"
+set "TB_E2E_OUT_DIR_PLUS=%TB_E2E_OUT_DIR:\=/%"
+set "FISHEYE_DEFINE="
+if "%TB_ENABLE_FISHEYE_REMAP_READER%"=="1" set "FISHEYE_DEFINE=-d ENABLE_FISHEYE_REMAP_READER"
 cd /d "%BUILD_DIR%"
 
 copy /Y "%REPO_ROOT%\hls\fisheye_remap\rtl\*.dat" "%BUILD_DIR%\" >nul
 
 call xvlog -sv ^
     -log xvlog_tb_srio_video_e2e.log ^
-    -d ENABLE_FISHEYE_REMAP_READER ^
+    %FISHEYE_DEFINE% ^
     -i "%REPO_ROOT%\20_HDL\22_User\SRIO_2_BRAM" ^
     -i "%REPO_ROOT%\hls\fisheye_remap\rtl" ^
     "%REPO_ROOT%\80_TB\tb_srio_video_e2e.v" ^
@@ -119,6 +126,8 @@ call xsim tb_srio_video_e2e_snap ^
     -testplusarg "TB_RANDOM_READY=%TB_RANDOM_READY%" ^
     -testplusarg "TB_DRAIN_CYCLES=%TB_DRAIN_CYCLES%" ^
     -testplusarg "TB_STRICT_DRAIN=%TB_STRICT_DRAIN%" ^
+    -testplusarg "TB_SAVE_E2E_FRAMES=%TB_SAVE_E2E_FRAMES%" ^
+    -testplusarg "TB_E2E_OUT_DIR=%TB_E2E_OUT_DIR_PLUS%" ^
     -testplusarg "TB_RANDOM_SEED=%RUN_SEED%" ^
     -log "%RUN_LOG%"
 if errorlevel 1 exit /b 1

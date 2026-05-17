@@ -764,7 +764,7 @@ endfunction
 		.srio_t_axis_tdata				( video_t_tdata	    							),	
 		.srio_t_axis_tvalid				( video_t_tvalid								),	
 		.srio_t_axis_tlast				( video_t_tlast	    						),	
-		//.srio_t_axis_tuser  			( video_t_tuser     						),	
+		.srio_t_axis_tuser  			( video_t_tuser     						),
 
 		.MLVDS_AXI_ARID							( MLVDS_AXI_ARID							),	
 		.MLVDS_AXI_ARADDR						( MLVDS_AXI_ARADDR							),	
@@ -1784,6 +1784,6 @@ STARTUPE2_inst
 //													video_t_tlast     
 //																							})
 //	);
-    assign          video_t_tuser       =   		srio_v_sid_did            ;
+    assign          video_t_tkeep       =       8'hFF                   ;
 	
 endmodule

@@ -1,11 +1,4 @@
 `timescale 1ns/1ns
-// ============================================================================
-// 新增维护说明
-// 作者          : Egor Izmaylov
-// 文件职责      : 当前文件为手工维护源码，具体职责见模块名、端口和上层实例化。
-// 维护边界      : 只追加说明性注释；Vivado/IP 生成物和第三方支撑代码不在此处手改。
-// 修改约束      : 功能改动需同步更新仿真、综合结果和相关文档。
-// ============================================================================
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Company			: ZHTY				
 // Engineer			: wangzhen			
@@ -36,7 +29,7 @@ module srio_video_frame_d_speed  #(
 	parameter		P_set_lite					= 0											
 ) (
 //==================================================================================================
-//--反向映射查找表（LUT）DDR读取接口
+//--����ӳ����ұ���LUT��DDR��ȡ�ӿ�
 	input	wire								V_LUT_AXI_clk							,
 	input	wire								V_LUT_AXI_rstn							,
 
@@ -62,8 +55,6 @@ module srio_video_frame_d_speed  #(
 
 	input										ps_video_en											,
 	input			[7:0]							ps_frame_ctr											,
-	// 新代码
-	input			[31:0]							video_algo_ctrl										,
 	
 	input										video_send_en									,	
 
@@ -132,8 +123,8 @@ module srio_video_frame_d_speed  #(
 	
 	
 );
-//	srio_r srio时钟数据、srio_r_f	srio时钟、经过缓	srio_i本地时钟数
-//	srio_o	本地时钟数据，srio_t_f srio时钟数据 ,srio_t srio时钟数据
+//	srio_r srioʱ�����ݡ�srio_r_f	srioʱ�ӡ�������	srio_i����ʱ����
+//	srio_o	����ʱ�����ݣ�srio_t_f srioʱ������ ,srio_t srioʱ������
 
 
 
@@ -199,8 +190,50 @@ module srio_video_frame_d_speed  #(
 //		.rx_dat									( srio_r_axis_tdata				),	
 //		.rx_en									( srio_r_axis_tvalid		&srio_r_axis_tready ),	
 //		.rx_last								( srio_r_axis_tlast    	));
+/*		
+ 	SRIO_2_Video	i_SRIO_2_Video(
+ 	
+		.V_LUT_AXI_clk			    					( V_LUT_AXI_clk							),		
+		.V_LUT_AXI_rstn		    					( V_LUT_AXI_rstn		    				), 	
+	
+ 	
+		.srio_clk								( clk_srio									),	
+		.srio_rstn_i							( rst_n										),
 		
-
+		.user_clk								( user_250m_clk									),	
+		.user_rstn_i							( rst_n										),	//	��������λ
+		
+		.SRIO_R_axis_tdata						( srio_r_axis_tdata							),	
+		.SRIO_R_axis_tuser						( srio_r_axis_tuser							),	
+		.SRIO_R_axis_tlast						( srio_r_axis_tlast							),	
+		.SRIO_R_axis_tvalid						( srio_r_axis_tvalid						),	
+		.SRIO_R_axis_tready      				( srio_r_axis_tready		   				),
+		
+		.SRIO_T_axis_tdata	    				( srio_r_f_axis_tdata	    					),	
+		.SRIO_T_axis_tuser	    				( srio_r_f_axis_tuser	    					),	
+		.SRIO_T_axis_tready	    				( srio_r_f_axis_tready						),	
+		.SRIO_T_axis_tvalid	    				( srio_r_f_axis_tvalid						),	
+		.SRIO_T_axis_tlast	         			( srio_r_f_axis_tlast	    	   				),	
+			
+		.V_LUT_AXI_ARID		    				( V_LUT_AXI_ARID							),	
+		.V_LUT_AXI_ARADDR	    				( V_LUT_AXI_ARADDR	    					),	
+		.V_LUT_AXI_ARLEN		     			( V_LUT_AXI_ARLEN			   				),		
+		.V_LUT_AXI_ARSIZE	    				( V_LUT_AXI_ARSIZE	    					),	
+		.V_LUT_AXI_ARBURST	    				( V_LUT_AXI_ARBURST	    					),	
+		.V_LUT_AXI_ARLOCK	    				( V_LUT_AXI_ARLOCK	    					),	
+		.V_LUT_AXI_ARCACHE	    				( V_LUT_AXI_ARCACHE	    					),	
+		.V_LUT_AXI_ARPROT	         			( V_LUT_AXI_ARPROT	    	   				),		
+		.V_LUT_AXI_ARQOS						( V_LUT_AXI_ARQOS							),	
+		.V_LUT_AXI_ARVALID	    				( V_LUT_AXI_ARVALID	    					),	
+		.V_LUT_AXI_ARREADY	    				( V_LUT_AXI_ARREADY	    					),	
+		.V_LUT_AXI_RID		    				( V_LUT_AXI_RID		    					),	
+		.V_LUT_AXI_RDATA		     			( V_LUT_AXI_RDATA			   				),
+		.V_LUT_AXI_RRESP						( V_LUT_AXI_RRESP							),	
+		.V_LUT_AXI_RLAST						( V_LUT_AXI_RLAST							),	
+		.V_LUT_AXI_RVALID	    				( V_LUT_AXI_RVALID	    					),	
+		.V_LUT_AXI_RREADY	    				( V_LUT_AXI_RREADY	    					)
+	);
+*/
 
 
 
@@ -286,10 +319,8 @@ module srio_video_frame_d_speed  #(
 		.srio_clk								( clk_srio									),	
 		.srio_rstn_i							( rst_n										),
 		
- 		.user_clk								( user_250m_clk									),	
-		.user_rstn_i							( rst_n										),	//	待处理复位
-		// 新代码
-		.video_algo_ctrl						( video_algo_ctrl							),
+		.user_clk								( user_250m_clk									),	
+		.user_rstn_i							( rst_n										),	//	��������λ
 		
 		.SRIO_R_axis_tdata						( srio_t_f_axis_tdata							),	
 		.SRIO_R_axis_tuser						( srio_t_f_axis_tuser							),	
@@ -324,7 +355,6 @@ module srio_video_frame_d_speed  #(
 
 
 
-
 	/*--------------------------------------------------------------------------------------
 	--P_SIMULATION_R
 	---------------------------------------------------------------------------------------*/
@@ -336,7 +366,7 @@ module srio_video_frame_d_speed  #(
 	--LVDS Cache Addr
 	--------------------------------------------------------------------------------------*/	
 	localparam		P_LVDS_DDR3_START_ADDR_R	= 32'h0000_0000 							;
-	localparam		P_LVDS_DDR3_END_ADDR_R		= P_VIDEO_FRAME_NUM*P_VIDEO_FRAME_SIZE+	P_LVDS_DDR3_START_ADDR_R;	// 32'80_1000h*5=32'h280_5000,（32'h80_1000，32'h100_2000,32'h180_3000,32'h200_4000,）
+	localparam		P_LVDS_DDR3_END_ADDR_R		= P_VIDEO_FRAME_NUM*P_VIDEO_FRAME_SIZE+	P_LVDS_DDR3_START_ADDR_R;	// 32'80_1000h*5=32'h280_5000,��32'h80_1000��32'h100_2000,32'h180_3000,32'h200_4000,��
 	localparam		P_LVDS_DDR3_BLOCK_SIZE_R	= 32'h100									;
 	
 	/*--------------------------------------------------------------------------------------

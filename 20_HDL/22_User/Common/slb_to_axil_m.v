@@ -1,21 +1,14 @@
-// ============================================================================
-// 新增维护说明
-// 作者          : Egor Izmaylov
-// 文件职责      : 当前文件为手工维护源码，具体职责见模块名、端口和上层实例化。
-// 维护边界      : 只追加说明性注释；Vivado/IP 生成物和第三方支撑代码不在此处手改。
-// 修改约束      : 功能改动需同步更新仿真、综合结果和相关文档。
-// ============================================================================
 module slb_to_axil_m #(
-    parameter           P_REQ_SEL_PLUS    = 1  ,  // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+    parameter           P_REQ_SEL_PLUS    = 1  ,  // ����һ�δ���һ��
 
-    parameter           C_S_AXI_ADDR_WIDTH    = 32    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+    parameter           C_S_AXI_ADDR_WIDTH    = 32    // AXI�ٷ���׼��������
 ) (
-    // 历史说明：原注释编码已损坏，已替换为中文维护说明。
+    // Global Clock & Reset (��׼����)
     input  wire                                s_axi_aclk          ,
     input  wire                                s_axi_aresetn       ,
 
     // ==============================================
-    // 历史说明：原注释编码已损坏，已替换为中文维护说明。
+    // Local Bus (LBE) Slave Interface ���ѱ�׼����
     // ==============================================
     input  wire                                lbe_width_sel       ,  // 0=16bit, 1=32bit
     input  wire [C_S_AXI_ADDR_WIDTH-1:0]       lbe_addr            ,
@@ -26,7 +19,7 @@ module slb_to_axil_m #(
     output reg [31:0]                         lbe_rdata           ,
 
     // ==============================================
-    // 历史说明：原注释编码已损坏，已替换为中文维护说明。
+    // AXI4-Lite Master Interface - �ٷ���׼����
     // ==============================================
     // Write Address Channel
     output reg [C_S_AXI_ADDR_WIDTH-1:0]        m_axi_awaddr        ,
@@ -59,7 +52,7 @@ module slb_to_axil_m #(
 );
 
 // ---------------------------
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+// FSM State Definition (��׼��ʽ)
 // ---------------------------
 localparam [2:0]    S_IDLE          = 3'b000 ;
 localparam [2:0]    S_WR_ADDR       = 3'b001 ;
@@ -69,7 +62,7 @@ localparam [2:0]    S_RD_ADDR       = 3'b100 ;
 localparam [2:0]    S_RD_WAIT       = 3'b101 ;
 
 // ---------------------------
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+// Internal Registers (�淶����)
 // ---------------------------
 reg [2:0]                           curr_state      ;
 reg [2:0]                           next_state      ;
@@ -80,7 +73,7 @@ reg                                 req_pending     ;
 reg                                 read_data_vld   ;
 reg [1:0]                           byte_offset     ;
 
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+// ����ԭlast_state�߼�����׼������
 reg [2:0]                           last_state      ;
 
 always @(posedge s_axi_aclk   ) begin

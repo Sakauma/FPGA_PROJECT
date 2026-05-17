@@ -47,19 +47,6 @@ foreach rtl_file [glob -nocomplain [file join $build_root tcl_run fisheye_remap_
         fisheye_remap_addr_hls_sparsemux_7_2_11_1_1.v
         fisheye_remap_addr_hls_sparsemux_7_2_13_1_1.v
         fisheye_remap_addr_hls_sparsemux_9_3_65_1_1.v
-        fisheye_remap_reader_hls.v
-        fisheye_remap_reader_hls_kInfraredScaleQ16_ROM_AUTO_1R.v
-        fisheye_remap_reader_hls_kLaserScaleQ16_ROM_AUTO_1R.v
-        fisheye_remap_reader_hls_mac_muladd_11ns_7ns_10ns_17_4_1.v
-        fisheye_remap_reader_hls_mul_13ns_13ns_25_2_1.v
-        fisheye_remap_reader_hls_mul_15s_9ns_24_2_1.v
-        fisheye_remap_reader_hls_mul_16ns_12ns_28_2_1.v
-        fisheye_remap_reader_hls_mul_17ns_11s_28_2_1.v
-        fisheye_remap_reader_hls_mul_17ns_13s_30_2_1.v
-        fisheye_remap_reader_hls_partset_65ns_65ns_16ns_6ns_65_1_1.v
-        fisheye_remap_reader_hls_sparsemux_7_2_13_1_1.v
-        fisheye_remap_reader_hls_sparsemux_9_3_12_1_1.v
-        fisheye_remap_reader_hls_sparsemux_9_3_65_1_1.v
     }
     if {[lsearch -exact $rtl_allowlist $rtl_tail] >= 0} {
         file copy -force $rtl_file [file join $root_dir rtl $rtl_tail]

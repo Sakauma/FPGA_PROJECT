@@ -1,11 +1,4 @@
 `timescale 1ns/1ns
-// ============================================================================
-// 新增维护说明
-// 作者          : Egor Izmaylov
-// 文件职责      : 当前文件为手工维护源码，具体职责见模块名、端口和上层实例化。
-// 维护边界      : 只追加说明性注释；Vivado/IP 生成物和第三方支撑代码不在此处手改。
-// 修改约束      : 功能改动需同步更新仿真、综合结果和相关文档。
-// ============================================================================
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Company			: ZHTY				
 // Engineer			: wangzhen			
@@ -33,26 +26,26 @@
 // Additional Comments:												
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
-* 历史说明：原块注释编码已损坏，按当前文件头和开发文档维护。
+�����Ҫ���ٿ��Ǹ���ͬ��fifo
 */
 module readbram_to_axis64_top  #(
     parameter		P_D_WIDTH     				= 65        								,
 
     parameter		B_RAM_WIDTH     			= 16        								,
-    parameter		B_RAM_DEPTH  				= 32'h64000	  								,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    parameter		P_LINE_DEPTH     			= 200											// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+    parameter		B_RAM_DEPTH  				= 32'h64000	  								,	// 32'h64000��200��
+    parameter		P_LINE_DEPTH     			= 200											// bram�п��Դ����Ƶ����	      	
 ) (
 	input										bram_clk										,
 	input										bram_rstn										,
 //==================================================================================================
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
-    input		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_cur_w   							,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    input      					 				bram_line_cur_w_en   						, 	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+//--��Ƶbram�ӿ�--------------------------	
+    input		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_cur_w   							,	// ��ǰbramд����λ�� 
+    input      					 				bram_line_cur_w_en   						, 	//	1 :��ʾ�ɹ�д���bram_line_cur_w��������bram��
     
-	output	wire	[clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    input      		[12-1:0] 					bram_line_num								,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+	output	wire	[clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							,	// ÿ��bram��ַ��Ӧ���кŵ�ַ
+    input      		[12-1:0] 					bram_line_num								,	// ÿ��bram��ַ��Ӧ���к� , bram_line_num_addr*32'h0~bram_line_num_addr*32'h800��Ӧ���к�,�����кŶ�Ӧ��ǰ�еĲ�ͬ��ַ
    
-        output		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_addrb   								,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+        output		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_addrb   								,	// 16bitλ����bram��ַ
     input		  	[B_RAM_WIDTH-1:0]           bram_doutb   								,     
 //==================================================================================================
 	/*******************axi_stream************/
@@ -69,9 +62,9 @@ module readbram_to_axis64_top  #(
         for (clogb2=0; depth>0; clogb2=clogb2+1)
             depth = depth >> 1;
     endfunction
-    wire 										fifo_wr_en									;   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    wire 			[P_D_WIDTH-1:0] 			fifo_din									; 	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    wire 										fifo_almost_full       						;   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+    wire 										fifo_wr_en									;   // FIFOдʹ��
+    wire 			[P_D_WIDTH-1:0] 			fifo_din									; 	// FIFO��������
+    wire 										fifo_almost_full       						;   // FIFO����־
 
 	wire 										fifo_ren									;
 	wire			[P_D_WIDTH-1:0] 			fifo_rdata									;
@@ -101,7 +94,7 @@ module readbram_to_axis64_top  #(
 
     async_fifo#(
         .AF                 					( 1                 						),
-        .DATA_BITS          					( P_D_WIDTH                 				),    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+        .DATA_BITS          					( P_D_WIDTH                 				),    //������ip��ʱע��ͬ������
         .DEPTH_BITS         					( 4                 						),
         .SHOW_AHEAD         					( 1                 						),
         .RAM_STYLE          					( "distributed"    						)
@@ -152,7 +145,7 @@ module readbram_to_axis64_top  #(
 
 
 		
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//    m_axis_tready   							,	// ��ǰbramд����λ�� 
 //    m_axis_tdata   					
 
 

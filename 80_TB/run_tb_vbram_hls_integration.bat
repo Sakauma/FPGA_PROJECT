@@ -39,7 +39,6 @@ call xvlog -sv ^
     "%REPO_ROOT%\20_HDL\22_User\axis\fifo_to_axis.v" ^
     "%REPO_ROOT%\20_HDL\22_User\SRIO_2_BRAM\readbram_to_axis64\readbram_to_fifo.v" ^
     "%REPO_ROOT%\20_HDL\22_User\SRIO_2_BRAM\readbram_to_axis64\readbram_to_axis64_top.v" ^
-    "%REPO_ROOT%\20_HDL\22_User\SRIO_2_BRAM\undistort_demo_hls_wrap.v" ^
     "%REPO_ROOT%\20_HDL\22_User\SRIO_2_BRAM\vbram_lutaxi4_to_axis.v"
 if errorlevel 1 exit /b 1
 

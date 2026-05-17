@@ -1,11 +1,4 @@
 `timescale 1ns/1ns
-// ============================================================================
-// 新增维护说明
-// 作者          : Egor Izmaylov
-// 文件职责      : 当前文件为手工维护源码，具体职责见模块名、端口和上层实例化。
-// 维护边界      : 只追加说明性注释；Vivado/IP 生成物和第三方支撑代码不在此处手改。
-// 修改约束      : 功能改动需同步更新仿真、综合结果和相关文档。
-// ============================================================================
 //////////////////////////////////////////////////////////////////////////////////
 // Company:			ZHTY
 // Engineer:		ZYL
@@ -16,7 +9,7 @@
 // Target Devices:	K7-V7
 // Tool Versions: 	Vivado 2016.1 HDL-EDIT UltraEdit TAB=4 Consolas
 // Description:
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//		ģ��ʵ����·LVDS�źŵ����ݵ���ȡ�����������DDR3������������ƹ���
 // Dependencies:
 //
 // Revision:
@@ -48,7 +41,7 @@ module srio_v_fifo_to_bram_top #(
 	output										srio_trn_fifo_ren_o							,
 	input										srio_trn_fifo_empty_i						,
 //==================================================================================================
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//--bramд�ӿ�
     output  wire                                bram_wea     								,   
     output  wire    [clogb2(A_RAM_DEPTH-1)-1:0] bram_addra   								,   
     output  wire    [A_RAM_WIDTH-1:0]           bram_dina    								,   
@@ -57,10 +50,10 @@ module srio_v_fifo_to_bram_top #(
     input  	wire                                bram_clkb_rstn     								,  
     
     output  wire    [clogb2(B_RAM_DEPTH-1)-1:0] bram_line_cur_w   							,   
-    output      					 			bram_line_cur_w_en   						, 	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+    output      					 			bram_line_cur_w_en   						, 	//	1 :��ʾ�ɹ�д���bram_line_cur_w��������bram��
 	
-	input	wire	[clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    output      	[12-1:0] 					bram_line_num									// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+	input	wire	[clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							,	// ÿ��bram��ַ��Ӧ���кŵ�ַ
+    output      	[12-1:0] 					bram_line_num									// ÿ��bram��ַ��Ӧ���к� , bram_line_num_addr*32'h0~bram_line_num_addr*32'h800��Ӧ���к�,�����кŶ�Ӧ��ǰ�еĲ�ͬ��ַ
 	
 	);
 	    //  The following function calculates the address width based on specified RAM depth
@@ -78,7 +71,7 @@ module srio_v_fifo_to_bram_top #(
 	wire										m_axiw_gnt									;
 	wire			[10:0]						m_axiw_len64								;
 	wire			[31:0]						m_axiw_addr									;
-	wire			[7:0]						m_axiw_wstrb								;	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+	wire			[7:0]						m_axiw_wstrb								;	//�������һ��64����������Ч������OnlyOneģʽ	
 	
 //			ila_test	ila_wfifo(
 //		.clk                        			( sys_clk_i								),

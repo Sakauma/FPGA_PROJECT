@@ -21,7 +21,7 @@ module fisheye_remap_packetizer_to_axis #(
     parameter       P_D_WIDTH                   = 65,
     parameter       B_RAM_WIDTH                 = 16,
     parameter       B_RAM_DEPTH                 = 32'h80000,
-    parameter       P_LINE_DEPTH                = 200
+    parameter       P_LINE_DEPTH                = 256
 )(
     input                                       bram_clk,
     input                                       bram_rstn,
@@ -50,6 +50,7 @@ module fisheye_remap_packetizer_to_axis #(
     localparam [2:0] S_WAIT_LINE    = 3'd1;
     localparam [2:0] S_WRITE_HEADER = 3'd2;
     localparam [2:0] S_PACKET       = 3'd3;
+    localparam [2:0] S_CAPTURE_LINE = 3'd4;
 
     localparam [7:0]  HALF_LINE_DEPTH = P_LINE_DEPTH / 2;
     localparam [11:0] IMAGE_WIDTH     = 12'd2048;
@@ -83,13 +84,18 @@ module fisheye_remap_packetizer_to_axis #(
         end
     endfunction
 
-    wire        [7:0]                           cur_slot = bram_line_cur_w[7:0];
+    // 新代码：Egor Izmaylov
+    // 使用 +: 固定从 bit0 取 8 位，避免端到端参数化仿真时 XSim 对区间方向产生误判。
+    wire        [7:0]                           cur_slot = bram_line_cur_w[0 +: 8];
     wire                                        line_ready = (cur_slot >= HALF_LINE_DEPTH);
 
     reg                                         video_started;
     reg         [2:0]                           state;
     reg         [7:0]                           out_slot;
+    reg         [7:0]                           out_slot_counter;
+    reg         [8:0]                           pending_line_count;
     reg         [11:0]                          out_line;
+    reg         [11:0]                          out_line_counter;
     reg         [3:0]                           packet_idx;
     reg         [11:0]                          issue_pixel_idx;
     reg         [8:0]                           bram_line_num_addr_r;
@@ -144,13 +150,17 @@ module fisheye_remap_packetizer_to_axis #(
 
     always @(posedge bram_clk or negedge bram_rstn) begin : p_packetizer
         reg         block_issue;
+        reg [8:0]   pending_line_count_next;
         reg [63:0]  next_payload_word;
         reg [64:0]  completed_payload_word;
         if (!bram_rstn) begin
             video_started          <= 1'b0;
             state                  <= S_IDLE;
             out_slot               <= 8'd0;
+            out_slot_counter       <= 8'd0;
+            pending_line_count     <= 9'd0;
             out_line               <= 12'd0;
+            out_line_counter       <= 12'd0;
             packet_idx             <= 4'd0;
             issue_pixel_idx        <= 12'd0;
             bram_line_num_addr_r   <= 9'd0;
@@ -174,9 +184,13 @@ module fisheye_remap_packetizer_to_axis #(
             fifo_din       <= {P_D_WIDTH{1'b0}};
             addr_in_valid  <= 1'b0;
             block_issue    = 1'b0;
+            pending_line_count_next = pending_line_count;
 
             if (bram_line_cur_w_en && line_ready) begin
                 video_started <= 1'b1;
+            end
+            if (bram_line_cur_w_en && (video_started || line_ready) && (pending_line_count_next != 9'h1ff)) begin
+                pending_line_count_next = pending_line_count_next + 9'd1;
             end
 
             fifo_word_toggle_d <= fifo_word_toggle;
@@ -190,15 +204,29 @@ module fisheye_remap_packetizer_to_axis #(
                     bram_data_valid       <= 1'b0;
                     bram_data_valid_d     <= 1'b0;
                     pending_payload_valid <= 1'b0;
-                    if (bram_line_cur_w_en && (video_started || line_ready)) begin
-                        out_slot             <= calc_delayed_slot(bram_line_cur_w);
-                        bram_line_num_addr_r <= {1'b0, calc_delayed_slot(bram_line_cur_w)};
+                    if (pending_line_count_next != 9'd0) begin
+                        pending_line_count_next = pending_line_count_next - 9'd1;
+                        out_slot             <= out_slot_counter;
+                        bram_line_num_addr_r <= {1'b0, out_slot_counter};
+                        if (out_slot_counter == (P_LINE_DEPTH - 1)) begin
+                            out_slot_counter <= 8'd0;
+                        end else begin
+                            out_slot_counter <= out_slot_counter + 8'd1;
+                        end
                         state                <= S_WAIT_LINE;
                     end
                 end
 
                 S_WAIT_LINE: begin
-                    out_line              <= bram_line_num;
+                    // 新代码：Egor Izmaylov
+                    // bram_line_num 来自行号 RAM，地址切换后额外等待一拍，避免 header 行号沿用上一行。
+                    state                 <= S_CAPTURE_LINE;
+                end
+
+                S_CAPTURE_LINE: begin
+                    // 新代码：Egor Izmaylov
+                    // 输出 SRIO header 必须保持固定逻辑行序；去畸变只改变源像素地址，不改变下游包地址。
+                    out_line              <= out_line_counter;
                     packet_idx            <= 4'd0;
                     issue_pixel_idx       <= 12'd0;
                     bram_data_valid       <= 1'b0;
@@ -231,6 +259,7 @@ module fisheye_remap_packetizer_to_axis #(
                             pending_payload_valid  <= 1'b0;
                             if (pending_payload_word[64]) begin
                                 if (packet_idx == PACKETS_PER_LINE_LAST) begin
+                                    out_line_counter <= out_line_counter + 12'd1;
                                     state <= S_IDLE;
                                 end else begin
                                     packet_idx <= packet_idx + 4'd1;
@@ -257,6 +286,7 @@ module fisheye_remap_packetizer_to_axis #(
                                 fifo_word_toggle <= ~fifo_word_toggle;
                                 if (completed_payload_word[64]) begin
                                     if (packet_idx == PACKETS_PER_LINE_LAST) begin
+                                        out_line_counter <= out_line_counter + 12'd1;
                                         state <= S_IDLE;
                                     end else begin
                                         packet_idx <= packet_idx + 4'd1;
@@ -279,7 +309,9 @@ module fisheye_remap_packetizer_to_axis #(
                     bram_data_valid         <= bram_data_valid_d;
                     bram_packet_pixel_idx   <= bram_packet_pixel_idx_d;
 
-                    if (!block_issue && (state == S_PACKET) &&
+                    // 新代码：Egor Izmaylov
+                    // FIFO 接近满时停止继续发起 HLS 地址请求，避免在途 BRAM 数据超过 skid 能力导致包边界错位。
+                    if (!block_issue && !fifo_almost_full && (state == S_PACKET) &&
                         (issue_pixel_idx < ({1'b0, packet_idx, 7'd0} + 12'd128))) begin
                         addr_in_valid         <= 1'b1;
                         addr_out_x            <= issue_pixel_idx[10:0];
@@ -292,15 +324,16 @@ module fisheye_remap_packetizer_to_axis #(
                     state <= S_IDLE;
                 end
             endcase
+            pending_line_count <= pending_line_count_next;
         end
     end
 
     async_fifo #(
-        .AF                                     ( 16                    ),
+        .AF                                     ( 1024                  ),
         .DATA_BITS                              ( P_D_WIDTH             ),
-        .DEPTH_BITS                             ( 6                     ),
+        .DEPTH_BITS                             ( 13                    ),
         .SHOW_AHEAD                             ( 1                     ),
-        .RAM_STYLE                              ( "distributed"         )
+        .RAM_STYLE                              ( "block"               )
     ) u_fisheye_axis_async_fifo (
         .wr_clk                                 ( bram_clk              ),
         .wr_rstn                                ( bram_rstn             ),

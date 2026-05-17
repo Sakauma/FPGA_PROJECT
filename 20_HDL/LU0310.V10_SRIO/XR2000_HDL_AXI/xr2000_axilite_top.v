@@ -1,11 +1,4 @@
  `timescale 1ns/1ns
-// ============================================================================
-// 新增维护说明
-// 作者          : Egor Izmaylov
-// 文件职责      : 当前文件为手工维护源码，具体职责见模块名、端口和上层实例化。
-// 维护边界      : 只追加说明性注释；Vivado/IP 生成物和第三方支撑代码不在此处手改。
-// 修改约束      : 功能改动需同步更新仿真、综合结果和相关文档。
-// ============================================================================
 //////////////////////////////////////////////////////////////////////////////////
 // Company:			HXZY
 // Engineer:		ZYL
@@ -16,9 +9,9 @@
 // Target Devices:	K7-V7
 // Tool Versions: 	Vivado 2016.1 HDL-EDIT UltraEdit TAB=4 Consolas
 // Description:
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//		ģ���������AXI Lite Cross Bar&axi_lite_clock_conventor,�ֱ��������ʱ���µļĴ�������
+//		1-->PCIe Clockģ���ʱ��
+//		2-->Srio_log_clkģ���ʱ��
 // Dependencies:
 //
 // Revision:
@@ -32,11 +25,11 @@ module xr2000_axilite_top #(
 	parameter		P_AXILITE_CH_NUM_R			= 3
 	)(
 //==================================================================================================
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//--��������˿ڶ���---------------------------
 	/*--------------------------------------------------------------------------------------
 	--Common Interface
-	* 历史说明：原块注释编码已损坏，按当前文件头和开发文档维护。
-	* 历史说明：原块注释编码已损坏，按当前文件头和开发文档维护。
+	--|clk-->��������master clk��Ҳ���������ⲿʱ�ӣ����п��ٲ�ѯ����
+	--|rst-->��λ�źţ��ߵ�ƽͬ����λ�ź�
 	--------------------------------------------------------------------------------------*/
 	input										rst											,
 	input										slave_clk									,
@@ -84,62 +77,62 @@ module xr2000_axilite_top #(
   	input										slave_axi_rready							,
 
 //==================================================================================================
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//--Master Clockͨ������
 	/*--------------------------------------------------------------------------------------
 	--Write Address Channel Signals
 	--------------------------------------------------------------------------------------*/
-	output			[P_AXILITE_CH_NUM_R*32-1:0] master_axi_awaddr							,    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	output			[P_AXILITE_CH_NUM_R* 3-1:0]	master_axi_awprot							,    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	output			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_awvalid							,    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	input			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_awready							,    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+	output			[P_AXILITE_CH_NUM_R*32-1:0] master_axi_awaddr							,    //���豸4��
+  	output			[P_AXILITE_CH_NUM_R* 3-1:0]	master_axi_awprot							,    //���豸4��
+  	output			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_awvalid							,    //���豸4��
+  	input			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_awready							,    //���豸4��
 
-	output			[P_AXILITE_CH_NUM_R*32-1:0]	master_axi_wdata							,    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	output			[P_AXILITE_CH_NUM_R* 4-1:0]	master_axi_wstrb							,    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	output			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_wvalid							,    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	input			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_wready							,    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+  	output			[P_AXILITE_CH_NUM_R*32-1:0]	master_axi_wdata							,    //���豸4��
+  	output			[P_AXILITE_CH_NUM_R* 4-1:0]	master_axi_wstrb							,    //���豸4��
+  	output			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_wvalid							,    //���豸4��
+  	input			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_wready							,    //���豸4��
 
-	input			[P_AXILITE_CH_NUM_R* 2-1:0]	master_axi_bresp							,    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	input			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_bvalid							,    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	output			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_bready							,    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+  	input			[P_AXILITE_CH_NUM_R* 2-1:0]	master_axi_bresp							,    //���豸4��
+  	input			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_bvalid							,    //���豸4��
+  	output			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_bready							,    //���豸4��
 
-	output			[P_AXILITE_CH_NUM_R*32-1:0]	master_axi_araddr							,    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	output			[P_AXILITE_CH_NUM_R* 3-1:0]	master_axi_arprot							,    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	output			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_arvalid							,    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	input			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_arready							,    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+  	output			[P_AXILITE_CH_NUM_R*32-1:0]	master_axi_araddr							,    //���豸4��
+  	output			[P_AXILITE_CH_NUM_R* 3-1:0]	master_axi_arprot							,    //���豸4��
+  	output			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_arvalid							,    //���豸4��
+  	input			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_arready							,    //���豸4��
 
-	input			[P_AXILITE_CH_NUM_R*32-1:0]	master_axi_rdata							,    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	input			[P_AXILITE_CH_NUM_R* 2-1:0]	master_axi_rresp							,    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	input			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_rvalid							,    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+  	input			[P_AXILITE_CH_NUM_R*32-1:0]	master_axi_rdata							,    //���豸4��
+  	input			[P_AXILITE_CH_NUM_R* 2-1:0]	master_axi_rresp							,    //���豸4��
+  	input			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_rvalid							,    //���豸4��
   	output			[P_AXILITE_CH_NUM_R* 1-1:0]	master_axi_rready
 	);
 //==================================================================================================
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//--axi_crossbar_0��Slave�źŶ���
  /**************** Write Address Channel Signals ****************/
-	wire			[P_AXILITE_CH_NUM_R*32-1:0] s_axi_awaddr								;     // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	wire			[P_AXILITE_CH_NUM_R* 3-1:0]	s_axi_awprot								;     // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_awvalid								;     // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_awready								;     // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+	wire			[P_AXILITE_CH_NUM_R*32-1:0] s_axi_awaddr								;     //���豸4��
+	wire			[P_AXILITE_CH_NUM_R* 3-1:0]	s_axi_awprot								;     //���豸4��
+	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_awvalid								;     //���豸4��
+	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_awready								;     //���豸4��
   /**************** Write Data Channel Signals ****************/                                 
-	wire			[P_AXILITE_CH_NUM_R*32-1:0]	s_axi_wdata									;     // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	wire			[P_AXILITE_CH_NUM_R* 4-1:0]	s_axi_wstrb									;     // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_wvalid								;     // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_wready								;     // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+	wire			[P_AXILITE_CH_NUM_R*32-1:0]	s_axi_wdata									;     //���豸4��
+	wire			[P_AXILITE_CH_NUM_R* 4-1:0]	s_axi_wstrb									;     //���豸4��
+	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_wvalid								;     //���豸4��
+	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_wready								;     //���豸4��
   /**************** Write Response Channel Signals ****************/                             
-	wire			[P_AXILITE_CH_NUM_R* 2-1:0]	s_axi_bresp									;     // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_bvalid								;     // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_bready								;     // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+	wire			[P_AXILITE_CH_NUM_R* 2-1:0]	s_axi_bresp									;     //���豸4��
+	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_bvalid								;     //���豸4��
+	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_bready								;     //���豸4��
   /**************** Read Address Channel Signals ****************/                                
-	wire			[P_AXILITE_CH_NUM_R*32-1:0]	s_axi_araddr								;     // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	wire			[P_AXILITE_CH_NUM_R* 3-1:0]	s_axi_arprot								;     // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_arvalid								;     // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_arready								;     // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+	wire			[P_AXILITE_CH_NUM_R*32-1:0]	s_axi_araddr								;     //���豸4��
+	wire			[P_AXILITE_CH_NUM_R* 3-1:0]	s_axi_arprot								;     //���豸4��
+	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_arvalid								;     //���豸4��
+	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_arready								;     //���豸4��
   /**************** Read Data Channel Signals ****************/                                   
-	wire			[P_AXILITE_CH_NUM_R*32-1:0]	s_axi_rdata									;     // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	wire			[P_AXILITE_CH_NUM_R* 2-1:0]	s_axi_rresp									;     // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_rvalid								;     // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_rready								;     // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+	wire			[P_AXILITE_CH_NUM_R*32-1:0]	s_axi_rdata									;     //���豸4��
+	wire			[P_AXILITE_CH_NUM_R* 2-1:0]	s_axi_rresp									;     //���豸4��
+	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_rvalid								;     //���豸4��
+	wire			[P_AXILITE_CH_NUM_R* 1-1:0]	s_axi_rready								;     //���豸4��
 //==================================================================================================
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//--PCIe Clock AXI-Lite����ʵ��
 	/*--------------------------------------------------------------------------------------
 	--Write Address Channel Signals Chanenl 0 direct output
 	--------------------------------------------------------------------------------------*/

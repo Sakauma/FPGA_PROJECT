@@ -1,11 +1,4 @@
 `timescale 1ns/1ps
-// ============================================================================
-// 新增维护说明
-// 作者          : Egor Izmaylov
-// 文件职责      : 当前文件为手工维护源码，具体职责见模块名、端口和上层实例化。
-// 维护边界      : 只追加说明性注释；Vivado/IP 生成物和第三方支撑代码不在此处手改。
-// 修改约束      : 功能改动需同步更新仿真、综合结果和相关文档。
-// ============================================================================
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Company			: ZHTY
 // Engineer			: wangzhen
@@ -48,25 +41,21 @@ restart
 run 220us
 */
 module srio_test_prj_top	#(
-    parameter 		P_SYS_CLK_FREQ   			= 32'd125000000        						,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+    parameter 		P_SYS_CLK_FREQ   			= 32'd125000000        						,	//ϵͳʱ��Ƶ��
 	parameter		P_Srio_PHY_LANE_R			= 4												//Physical lane number,board gtx for SRIO
 )(		
 	input										VP											,
 	input										VN											,
 `ifndef D_SEL_only_video
-
 	input										ps_sys_clk											,
-
-	input 	wire	[11:00]						device_temp        							,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+   	input 	wire	[11:00]						device_temp        							,	//DDR�¶Ƚӿ�
   	input			[31:0]						srio_v_sid_did								,
   	input										srio_v_sel_x1								,
 
 	input										ps_video_en									,
 	input			[7:0]						ps_frame_ctr								,			
-	// 新代码
-	input			[31:0]						video_algo_ctrl								,
 //==================================================================================================
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//--����ӳ����ұ���LUT��DDR��ȡ�ӿ�
 	output	wire								V_LUT_AXI_clk								,
 	output	wire								V_LUT_AXI_rstn								,
 
@@ -109,19 +98,19 @@ module srio_test_prj_top	#(
 	output			[P_Srio_PHY_LANE_R-1:0]		srio_txn0									,
 	output			[P_Srio_PHY_LANE_R-1:0]		srio_txp0									,
 
-    inout   [63:0]     ddr3_dq             ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    inout   [7:0]      ddr3_dqs_n          ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    inout   [7:0]      ddr3_dqs_p          ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    output  [14:0]     ddr3_addr           ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    output  [2:0]      ddr3_ba             ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    output             ddr3_ras_n          ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    output             ddr3_cas_n          ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    output             ddr3_we_n           ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    output             ddr3_reset_n        ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    output  [0:0]      ddr3_ck_p           ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    output  [0:0]      ddr3_ck_n           ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    output  [0:0]      ddr3_cke            ,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    output  [0:0]      ddr3_cs_n           ,   //ddr3 片选
+    inout   [63:0]     ddr3_dq             ,   //ddr3 ����
+    inout   [7:0]      ddr3_dqs_n          ,   //ddr3 dqs��
+    inout   [7:0]      ddr3_dqs_p          ,   //ddr3 dqs��  
+    output  [14:0]     ddr3_addr           ,   //ddr3 ��ַ   
+    output  [2:0]      ddr3_ba             ,   //ddr3 banck ѡ��
+    output             ddr3_ras_n          ,   //ddr3 ��ѡ��
+    output             ddr3_cas_n          ,   //ddr3 ��ѡ��
+    output             ddr3_we_n           ,   //ddr3 ��дѡ��
+    output             ddr3_reset_n        ,   //ddr3 ��λ
+    output  [0:0]      ddr3_ck_p           ,   //ddr3 ʱ����
+    output  [0:0]      ddr3_ck_n           ,   //ddr3 ʱ�Ӹ�
+    output  [0:0]      ddr3_cke            ,   //ddr3 ʱ��ʹ��
+    output  [0:0]      ddr3_cs_n           ,   //ddr3 Ƭѡ
     output  [7:0]      ddr3_dm             ,   //ddr3_dm
     output  [0:0]      ddr3_odt            //,    //ddr3_odt    
 
@@ -153,7 +142,7 @@ module srio_test_prj_top	#(
 
 
 	/*--------------------------------------------------------------------------------------
-	* 历史说明：原块注释编码已损坏，按当前文件头和开发文档维护。
+	--SRIOͨ������ AXI Stream�ӿ�
 	--------------------------------------------------------------------------------------*/
 
 	wire			[P_SRIO_DN_NUM_R*1-1	: 0]	srio_m_axis_aclk						;	
@@ -185,6 +174,7 @@ wire                  clk_125m            ;
 
     	.clk_in1								( ps_sys_clk									)//
     	//.clk_in1_n								( sys_clk_n									)
+
     ); 
     wire  		ddr_rst                 	= lock                                    ;
     
@@ -197,7 +187,7 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
     );	
     
 //==================================================================================================
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//ddr����ź�
 	wire										ddr_sys_clk_i								;
 	wire										ddr_clk_ref_i								;
 	wire										ddr_init_calib_complete						; 	
@@ -205,7 +195,7 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
     assign			    ddr_sys_clk_i			= clk_200m									;
     assign			    ddr_clk_ref_i			= clk_200m									;	
 //==================================================================================================
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//--Master AXI4д�ӿ�
 	wire		[3:0]							M_AXI_AWID									;
 	wire		[31:0]							M_AXI_AWADDR								;
 	wire		[7:0]							M_AXI_AWLEN									;
@@ -298,7 +288,7 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
 
 
 //	/*--------------------------------------------------------------------------------------
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//	--SRIOͨ������ AXI Stream�ӿ�
 //	--------------------------------------------------------------------------------------*/
 
 //	wire			[P_SRIO_DN_NUM_R*1-1	: 0]	srio_m_axis_aclk						;	
@@ -352,14 +342,10 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
 		.srio_v_sel_x1							( 0								),	 
 		.ps_video_en							( 1								),
 		.ps_frame_ctr							( 8'h04								),
-		// 新代码：Egor Izmaylov 默认 0x0000_0007 仅启用 bit0 的真实去畸变/自适应预处理；bit1/bit2 已废弃为演示位。
-		.video_algo_ctrl						( 32'h0000_0007							),
 	`else
 		.srio_v_sel_x1							( srio_v_sel_x1								),	 
 		.ps_video_en							( ps_video_en								),
 		.ps_frame_ctr							( ps_frame_ctr								),
-		// 新代码：Egor Izmaylov PS 写入 0x8600_0014 时，bit0=去畸变/预处理使能，bit3=表选择，bit4=关闭预处理，bit5=冻结参数。
-		.video_algo_ctrl						( video_algo_ctrl							),
 	`endif	
 
 		.user_250m_clk							( user_250m_clk								),
@@ -571,13 +557,13 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
       
 
 //     clk_calc_mul_chan #(
-//        .DETECT_CLK_FRE     ( P_SYS_CLK_FREQ                 ),// 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
-//        .CLK_CHAN           ( 16                           ) // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
+//        .DETECT_CLK_FRE     ( P_SYS_CLK_FREQ                 ),//���ʱ��
+//        .CLK_CHAN           ( 16                           ) //֧��ͨ����
 //        )
 //      u_freq_calc_top(
 //        .I_rst              ( 1'b0                         ),
-//        .I_clk_detect       ( s_axis_aclk                     ), // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
-//        .I_clk_in           ( {srio_top.gt_pcs_clk,srio_top.drpclk,srio_top.refclk,srio_top.phy_clk,srio_top.gt_clk,srio_top.log_clk,user_250m_clk}                  ), // 历史说明：原尾注编码已损坏，代码含义以保留代码为准。
+//        .I_clk_detect       ( s_axis_aclk                     ), //���ʱ��
+//        .I_clk_in           ( {srio_top.gt_pcs_clk,srio_top.drpclk,srio_top.refclk,srio_top.phy_clk,srio_top.gt_clk,srio_top.log_clk,user_250m_clk}                  ), //������ʱ��
 //        .I_fre_detect_chan  ( vio_ctrl_clk_calc[3:0]           ),//(vio_ctrl_clk_calc[3:0]       ),
 //        .O_clk_cnt          ( s_detect_fre                 )
 //    );
@@ -586,7 +572,7 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
 	MY_MEM u_mem	(
  		.device_temp_i								( device_temp									),
 //===============================================================================================
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//--DDR�ⲿ�ӿ�
  		.DDR3_addr								( ddr3_addr									),
 		.DDR3_ba								( ddr3_ba									),
 		.DDR3_cas_n								( ddr3_cas_n								),
@@ -604,7 +590,7 @@ assign  V_LUT_AXI_clk           = s_axis_aclk                         ;
 		.DDR3_we_n								( ddr3_we_n									),
     	.init_calib_complete					( ddr_init_calib_complete					),
 //===============================================================================================
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//--ddr�ź�
   		.ddr_sys_clk_i							( ddr_sys_clk_i								),
     	.ddr_clk_ref_i							( ddr_clk_ref_i								),
 

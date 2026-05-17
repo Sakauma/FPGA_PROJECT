@@ -1,11 +1,4 @@
 `timescale 1ns / 1ps
-// ============================================================================
-// 新增维护说明
-// 作者          : Egor Izmaylov
-// 文件职责      : 当前文件为手工维护源码，具体职责见模块名、端口和上层实例化。
-// 维护边界      : 只追加说明性注释；Vivado/IP 生成物和第三方支撑代码不在此处手改。
-// 修改约束      : 功能改动需同步更新仿真、综合结果和相关文档。
-// ============================================================================
 //////////////////////////////////////////////////////////////////////////////////
 // Company:		XJKJ
 // Engineer:	ZYL
@@ -26,18 +19,18 @@
 // Additional Comments:
 // Additional Cominit_ments:
 /*
-* 历史说明：原块注释编码已损坏，按当前文件头和开发文档维护。
-  * 历史说明：原块注释编码已损坏，按当前文件头和开发文档维护。
+����[Common 17-576] 'use_project_ipc' is deprecated. This option is deprecated and no longer used.
+  ȡ�����Ͼ��棬��������һ�е�tcl��������±���IP��Ҳ����ѡ����µ�VIVADO2020.2���ϰ汾
   set_msg_config -id {[Common 17-576]} -limit 0
 
  source C:/JFM_Kits/ip_patch/run.tcl
  add_hook_tcl_to_prj
  pre_synthesis_patch
  
- * 历史说明：原块注释编码已损坏，按当前文件头和开发文档维护。
+ ����
  Not OOC IPs: MY_MEM_mig_7series_0_0 zynq_processing_system7_0_0 zynq_xadc_wiz_1_0
 sourcing script D:/SRIO_ZL/EB4110_PRJ/EB4110_FPGA_20260410_2/10_PRJ/ip_patch/synthesis_pre.tcl failed
-* 历史说明：原块注释编码已损坏，按当前文件头和开发文档维护。
+��Ҫ��reset_project
    
 */
 //////////////////////////////////////////////////////////////////////////////////
@@ -93,9 +86,9 @@ module EB4110_10V10_TOP	#(
 	output	wire								rs422_tx_out_6								,	
     input	wire								rs422_rx_in_6								,   
 
-    input	wire								rs422_ten_5								,   
+    output	wire								rs422_ten_5								,   
 
-    input	wire								rs422_ten_6								,   
+    output	wire								rs422_ten_6								,   
 
 	inout [14:0]DDR_0_addr,
   inout [2:0]DDR_0_ba,
@@ -129,7 +122,7 @@ module EB4110_10V10_TOP	#(
 
 	input										VP											,
 	input										VN                                          ,
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//��Ƶsrio
 //	input										sys_clk_n									,
 //	input										sys_clk_p									,
 	
@@ -141,19 +134,19 @@ module EB4110_10V10_TOP	#(
 	output			[4-1:0]						video_srio_txn0								,
 	output			[4-1:0]						video_srio_txp0								,
 
-    inout   		[63:0]     					ddr3_dq             						,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    inout   		[7:0]      					ddr3_dqs_n          						,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    inout   		[7:0]      					ddr3_dqs_p          						,   // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	output			[14:0]						ddr3_addr									,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	output			[2:0]						ddr3_ba										,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	output										ddr3_ras_n									,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	output										ddr3_cas_n									,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	output										ddr3_we_n									,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	output										ddr3_reset_n								,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	output			[0:0]						ddr3_ck_p									,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	output			[0:0]						ddr3_ck_n									,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	output			[0:0]						ddr3_cke									,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	output			[0:0]						ddr3_cs_n									,	//ddr3 片选
+    inout   		[63:0]     					ddr3_dq             						,   //ddr3 ����
+    inout   		[7:0]      					ddr3_dqs_n          						,   //ddr3 dqs��
+    inout   		[7:0]      					ddr3_dqs_p          						,   //ddr3 dqs��  
+	output			[14:0]						ddr3_addr									,	//ddr3 ��ַ   
+	output			[2:0]						ddr3_ba										,	//ddr3 banck ѡ��
+	output										ddr3_ras_n									,	//ddr3 ��ѡ��
+	output										ddr3_cas_n									,	//ddr3 ��ѡ��
+	output										ddr3_we_n									,	//ddr3 ��дѡ��
+	output										ddr3_reset_n								,	//ddr3 ��λ
+	output			[0:0]						ddr3_ck_p									,	//ddr3 ʱ����
+	output			[0:0]						ddr3_ck_n									,	//ddr3 ʱ�Ӹ�
+	output			[0:0]						ddr3_cke									,	//ddr3 ʱ��ʹ��
+	output			[0:0]						ddr3_cs_n									,	//ddr3 Ƭѡ
 	output			[7:0]						ddr3_dm										,	//ddr3_dm
 	output			[0:0]						ddr3_odt										//,    //ddr3_odt    
 	);                                       
@@ -170,8 +163,6 @@ module EB4110_10V10_TOP	#(
     
 	wire										ps_video_en									;	
 	wire			[7:0]						ps_frame_ctr								;	
-	// 新代码
-	wire			[31:0]						video_algo_ctrl								;
 	
 	wire			[31:0]						S_AXI_1_araddr								;
 	wire			[1:0]						S_AXI_1_arburst								;
@@ -215,8 +206,6 @@ wire										V_LUT_AXI_clk								;
 wire										V_LUT_AXI_rstn								;
 	srio_test_prj_top	srio_video_loop(              
 	`ifndef    D_SEL_only_video
-	
-			.ps_sys_clk					( ps_sys_clk				),
 			.device_temp					( device_temp				),
 	
 		.V_LUT_AXI_rstn		    					( V_LUT_AXI_rstn    				),		
@@ -249,8 +238,6 @@ wire										V_LUT_AXI_rstn								;
 	
 		.ps_video_en							( ps_video_en								),	
 		.ps_frame_ctr							( ps_frame_ctr								),	
-		// 新代码
-		.video_algo_ctrl						( video_algo_ctrl							),
                                         
 		.srio_v_sid_did							( srio_v_sid_did								),	
 		.srio_v_sel_x1							( srio_v_sel_x1								),	                                        
@@ -259,8 +246,10 @@ wire										V_LUT_AXI_rstn								;
 		.VP										( VP										),	
 		.VN										( VN										),	
 
-		.sys_clk_n								( sys_clk_n									),	
-		.sys_clk_p								( sys_clk_p									),	
+//		.sys_clk_n								( sys_clk_n									),	
+//		.sys_clk_p								( sys_clk_p									),	
+
+		.ps_sys_clk							( ps_sys_clk							),	
 
 		.srio_sys_clk_p							( gtxrefclk109_p							),	
 		.srio_sys_clk_n							( gtxrefclk109_n							),	
@@ -309,7 +298,7 @@ wire										V_LUT_AXI_rstn								;
 
 
 	/*--------------------------------------------------------------------------------------
-	* 历史说明：原块注释编码已损坏，按当前文件头和开发文档维护。
+	--SRIOͨ������ AXI Stream�ӿ�
 	--------------------------------------------------------------------------------------*/
 
 	wire			[P_SRIO_DN_NUM_R*1-1	: 0]	srio_m_axis_aclk						;
@@ -328,7 +317,7 @@ wire										V_LUT_AXI_rstn								;
     assign			srio_m_axis_aclk					= {P_SRIO_DN_NUM_R{ps_sys_clk}}				;
 
 	/*--------------------------------------------------------------------------------------
-	* 历史说明：原块注释编码已损坏，按当前文件头和开发文档维护。
+	--SRIOͨ������ AXI Stream�ӿ�
 	--------------------------------------------------------------------------------------*/
 
 	wire			[1*64-1:0]					loop_m_axis_tdata							;
@@ -1361,8 +1350,6 @@ wire										V_LUT_AXI_rstn								;
 	
 		.ps_video_en							( ps_video_en								),	
 		.ps_frame_ctr							( ps_frame_ctr								),	
-		// 新代码
-		.video_algo_ctrl						( video_algo_ctrl							),
 		.device_temp							( device_temp								),
 		
 		.srio_v_sid_did	    					( srio_v_sid_did	    					),

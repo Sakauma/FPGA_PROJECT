@@ -1,12 +1,5 @@
 `timescale 1ns / 1ps
 `timescale 1ns/1ns
-// ============================================================================
-// 新增维护说明
-// 作者          : Egor Izmaylov
-// 文件职责      : 当前文件为手工维护源码，具体职责见模块名、端口和上层实例化。
-// 维护边界      : 只追加说明性注释；Vivado/IP 生成物和第三方支撑代码不在此处手改。
-// 修改约束      : 功能改动需同步更新仿真、综合结果和相关文档。
-// ============================================================================
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Company			: ZHTY				
 // Engineer			: wangzhen			
@@ -36,16 +29,12 @@
 
 
 module axil_reg_EB4110_top # (
-	// 新代码：Egor Izmaylov 扩展 AXI-Lite 可读写寄存器数量，为算法控制寄存器预留空间。
-	parameter 		P_words_w             		= 8          								,	//可写的words个数   
-	parameter 		P_words_r             		= 8          								,	//可读的words个数	
-	// 旧代码
-	// parameter 		P_words_w             		= 7          								,	//可写的words个数   
-	// parameter 		P_words_r             		= 7          								,	//可读的words个数	
+	parameter 		P_words_w             		= 7          								,	//��д��words����   
+	parameter 		P_words_r             		= 7          								,	//�ɶ���words����	
 	parameter		base_addr					= 32'h10060000								
 )(
 //=======================================================================
-//--输入输出端口定义---------------------------
+//--��������˿ڶ���---------------------------
 	/*-------------------------------------------------------------------
 	--Common Interface
 	-------------------------------------------------------------------*/
@@ -53,11 +42,11 @@ module axil_reg_EB4110_top # (
 	input										rst								,	
 	
 //==================================================================================================
-//--寄存器
+//--�Ĵ���
 	input			[P_words_r*32-1:0]			data_init								,
-	output	reg		[P_words_w*32-1:0]			data_w			= {P_words_w*32{1'b0}}	,	//	0*32+:32 地址0  1*32+:32 地址4，依次8，c\10\4……
+	output	reg		[P_words_w*32-1:0]			data_w			= {P_words_w*32{1'b0}}	,	//	0*32+:32 ��ַ0  1*32+:32 ��ַ4������8��c\10\4����
 //=======================================================================
-//--AXI Lite寄存器定义
+//--AXI Lite�Ĵ�������
 	/*-------------------------------------------------------------------
 	--Write Data Command Signals
 	-------------------------------------------------------------------*/
@@ -105,21 +94,17 @@ module axil_reg_EB4110_top # (
 	output	reg		[31:0]						srio_v_sid_did	= 'b0					,
 	output	reg									srio_v_sel_x1	= 'b0					,
 
-   	output 	reg	    [11:00]						device_temp        							,	//DDR温度接口
+   	output 	reg	    [11:00]						device_temp        							,	//DDR�¶Ƚӿ�
 
 	output	reg									ps_video_en									,
-	// 新代码：Egor Izmaylov 输出视频帧控制和算法控制字，供 SRIO 视频链路逐级传递。
-	output	reg		[7:0]						ps_frame_ctr								,
-	output	reg		[31:0]						video_algo_ctrl
-	// 旧代码
-	// output	reg		[7:0]						ps_frame_ctr								
+	output	reg		[7:0]						ps_frame_ctr								
   	
 	);
 
 //=======================================================================
 //--Parameter Define
 	/*-------------------------------------------------------------------
-	--AXI Lite寄存器配置偏移量
+	--AXI Lite�Ĵ�������ƫ����
 	-------------------------------------------------------------------*/
 	localparam		VERSION				= 32'h20221122					;
 	
@@ -132,14 +117,14 @@ module axil_reg_EB4110_top # (
     reg									lite_aw_valid		= 0			;
     reg             				   	lite_w_valid        = 0        	;
 	/*-------------------------------------------------------------------
-	--系统版本和复使
+	--ϵͳ�汾�͸�ʹ
 	-------------------------------------------------------------------*/
 	wire			waddr_hit					= lite_axi_awaddr_r[31:16]==base_addr[31:16]	;
 	
     	
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
-			data_w							    <= data_init					;	//初始化值
+			data_w							    <= data_init					;	//��ʼ��ֵ
 		end else if(lite_aw_valid && lite_w_valid &&waddr_hit) begin
 				data_w[lite_axi_awaddr_r[15:2]*32 +: 32]<= sys_axi_wdata[31:0] 			;
 		end else begin
@@ -153,7 +138,7 @@ module axil_reg_EB4110_top # (
 	assign			data_r [0*32+:32]			= srio_v_sid_did						;
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
-			srio_v_sid_did						<= 32'h0051_0061						;	//初始化值
+			srio_v_sid_did						<= 32'h0051_0061						;	//��ʼ��ֵ
 		end else if(lite_aw_valid && lite_w_valid &&waddr_hit&&lite_axi_awaddr_r[15:00]==0) begin
 			srio_v_sid_did						<= sys_axi_wdata[31:0] 					;
 		end else begin
@@ -164,7 +149,7 @@ module axil_reg_EB4110_top # (
 	assign			data_r [1*32+:32]			= srio_v_sel_x1							;
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
-			srio_v_sel_x1						<= 1'b0									;	//初始化值
+			srio_v_sel_x1						<= 1'b0									;	//��ʼ��ֵ
 		end else if(lite_aw_valid && lite_w_valid &&waddr_hit&&lite_axi_awaddr_r[15:00]==4) begin
 			srio_v_sel_x1						<= sys_axi_wdata[0] 					;
 		end else begin
@@ -176,7 +161,7 @@ module axil_reg_EB4110_top # (
 
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
-			ps_video_en						<= 1'b1									;	//初始化值
+			ps_video_en						<= 1'b1									;	//��ʼ��ֵ
 		end else if(lite_aw_valid && lite_w_valid &&waddr_hit&&lite_axi_awaddr_r[15:00]==8) begin
 			ps_video_en						<= sys_axi_wdata[0] 					;
 		end else begin
@@ -188,7 +173,7 @@ module axil_reg_EB4110_top # (
 	assign			data_r [3*32+:32]			= ps_frame_ctr						;
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
-			ps_frame_ctr						<= 32'h0000_0004						;	//初始化值
+			ps_frame_ctr						<= 32'h0000_0004						;	//��ʼ��ֵ
 		end else if(lite_aw_valid && lite_w_valid &&waddr_hit&&lite_axi_awaddr_r[15:00]==16'h000c) begin
 			ps_frame_ctr						<= sys_axi_wdata[31:0] 				;
 		end else begin
@@ -199,7 +184,7 @@ module axil_reg_EB4110_top # (
 	assign			data_r [4*32+:32]			= device_temp						;
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
-			device_temp						<= 32'h0000_0000						;	//初始化值
+			device_temp						<= 32'h0000_0000						;	//��ʼ��ֵ
 		end else if(lite_aw_valid && lite_w_valid &&waddr_hit&&lite_axi_awaddr_r[15:00]==16'h0010) begin
 			device_temp						<= sys_axi_wdata[31:0] 					;
 		end else begin
@@ -207,37 +192,10 @@ module axil_reg_EB4110_top # (
 		end
 	end			
 	
-	// 新代码：Egor Izmaylov 增加视频算法控制寄存器。
-	// 地址说明：base_addr + 16'h0014，当前系统映射为 0x8600_0014。
-	// 位定义：bit0=去畸变基础补偿使能，bit1=棋盘/黑白演示使能，bit2=按帧翻转演示相位。
-	assign			data_r [5*32+:32]			= video_algo_ctrl						;
-	// 新代码：Egor Izmaylov 将上位机固定保活写 0x00010001 视为默认软件写，不覆盖板上调试值。
-	// 说明：VIO 和上位机最终进入同一个 AXI-Lite 从口，寄存器侧无法区分主机来源；因此按特征值屏蔽软件默认写。
-	wire			video_algo_ctrl_write_hit	= lite_aw_valid && lite_w_valid && waddr_hit && lite_axi_awaddr_r[15:00]==16'h0014	;
-	wire			video_algo_ctrl_sw_keepalive	= video_algo_ctrl_write_hit && sys_axi_wdata[31:0]==32'h0001_0001					;
-	always @(posedge clk or posedge rst) begin
-		if(rst) begin
-			video_algo_ctrl					<= 32'h0000_0007						;	// 新代码：Egor Izmaylov 默认开启算法与演示，便于无 PS 操作时直接上板验收。
-		end else if(video_algo_ctrl_write_hit) begin
-			if(video_algo_ctrl_sw_keepalive) begin
-				video_algo_ctrl				<= video_algo_ctrl						;
-			end else begin
-				// 旧代码保留：video_algo_ctrl <= sys_axi_wdata[31:0];
-				// 新代码：Egor Izmaylov 非保活特征值仍允许 VIO/AXI 调试写入，用于旁路、红外表、激光表和预处理开关切换。
-				video_algo_ctrl				<= sys_axi_wdata[31:0] 					;
-			end
-		end else begin
-			video_algo_ctrl					<= video_algo_ctrl						;	
-		end
-	end
-
-	assign			data_r [6*32+:32]			= D0_18b20								;
-	assign			data_r [7*32+:32]			= D1_18b20								;
-	// 旧代码
-	// assign			data_r [5*32+:32]			= D0_18b20						;
-	// assign			data_r [6*32+:32]			= D1_18b20						;
+	assign			data_r [5*32+:32]			= D0_18b20						;
+	assign			data_r [6*32+:32]			= D1_18b20						;
 	/*-------------------------------------------------------------------
-	--其它信号处理
+	--�����źŴ���
 	-------------------------------------------------------------------*/
 
 	assign	sys_axi_awready				= 1'b1							;
@@ -306,7 +264,7 @@ module axil_reg_EB4110_top # (
 	end
 		
 //==================================================================================================
-//--寄存器读实现
+//--�Ĵ�����ʵ��
  	wire			raddr_hit			= sys_axi_araddr[31:16]==base_addr[31:16]	;
 
 	

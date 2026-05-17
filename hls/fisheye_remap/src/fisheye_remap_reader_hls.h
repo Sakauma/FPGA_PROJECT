@@ -23,9 +23,9 @@ static const int kFisheyeMaxRadius = 947;
 // 新代码：Egor Izmaylov 使用 27/256 近似 100/947，避免 HLS 生成 wrapper 未包含的新乘法 helper。
 // 旧代码保留：static const int kFisheyeRadiusRecipQ20 = 1107;
 static const int kFisheyeRadiusIndexMul = 27;
-// 新代码：Egor Izmaylov 与工程 RTL 参数 P_LINE_DEPTH=200 对齐，避免 remap 读到不存在的 BRAM 行槽。
-static const int kFisheyeLineBufferDepth = 200;
-static const int kFisheyeHalfLineBufferDepth = 100;
+// 新代码：Egor Izmaylov 与新工程 RTL 参数 P_LINE_DEPTH=256 对齐，避免 remap 读到错误的 BRAM 行槽。
+static const int kFisheyeLineBufferDepth = 256;
+static const int kFisheyeHalfLineBufferDepth = 128;
 static const int kFisheyePacketPixels = 128;
 static const int kFisheyePixelsPerWord = 4;
 static const int kFisheyePayloadWordsPerPacket = 32;
@@ -34,7 +34,7 @@ static const int kFisheyeAdaptiveGainIdentityQ8 = 256;
 static const int kFisheyeAdaptiveGainMaxQ8 = 8192;
 static const int kFisheyeAdaptiveMinSpan = 1024;
 // 新代码：Egor Izmaylov
-// 稳定优先版本将去畸变强度拆成水平/垂直两组：水平有完整 2048 像素可读，允许更强；垂直受 200 行环形缓存限制。
+// 稳定优先版本将去畸变强度拆成水平/垂直两组：水平有完整 2048 像素可读，允许更强；垂直受 256 行环形缓存限制。
 // 旧代码保留：static const int kFisheyeRemapStrengthQ8 = 768;
 // 新代码：Egor Izmaylov 参数校准后恢复为畸变表 1x，不再用盲目强度放大替代真实标定。
 // 旧代码保留：static const int kFisheyeRemapStrengthXQ8 = 1024;
@@ -43,7 +43,7 @@ static const int kFisheyeRemapStrengthXQ8 = 256;
 static const int kFisheyeRemapStrengthYQ8 = 256;
 static const int kFisheyeMaxVerticalShift = 96;
 // 新代码：Egor Izmaylov
-// 基于 raw16 参考图观察到的可见圆环补偿参数：在不改底层 200 行缓存的前提下，
+// 基于 raw16 参考图观察到的可见圆环补偿参数：在不改底层 256 行缓存的前提下，
 // 回到第一版“弧线方向拉动明显”的内圈下沿参数，并用局部窄带限制影响范围。
 static const int kFisheyeCurveFlattenCenterX = 964;
 static const int kFisheyeCurveFlattenCenterY = 981;

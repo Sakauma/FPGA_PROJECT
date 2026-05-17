@@ -1,10 +1,3 @@
-// ============================================================================
-// 新增维护说明
-// 作者          : Egor Izmaylov
-// 文件职责      : 当前文件为手工维护源码，具体职责见模块名、端口和上层实例化。
-// 维护边界      : 只追加说明性注释；Vivado/IP 生成物和第三方支撑代码不在此处手改。
-// 修改约束      : 功能改动需同步更新仿真、综合结果和相关文档。
-// ============================================================================
 
 `timescale 1ns/1ns
 //////////////////////////////////////////////////////////////////////////////////
@@ -17,7 +10,7 @@
 // Target Devices:	K7-V7
 // Tool Versions: 	Vivado 2016.1 HDL-EDIT UltraEdit TAB=4 Consolas
 // Description:
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//		ģ��ʵ��IRAX DSW�Ľ�������ȡLVDS iPort������֡������LVDS iPort����֡���
 // Dependencies:
 //
 // Revision:
@@ -25,7 +18,7 @@
 
 
 /*
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+// ˫��ͬ������log_clk �� gt_pcs_clk_out
 reg [1:0] sync_pipe;
 always @(posedge gt_pcs_clk_out or negedge rst_n) begin
     if(!rst_n)
@@ -34,7 +27,7 @@ always @(posedge gt_pcs_clk_out or negedge rst_n) begin
         sync_pipe <= {sync_pipe[0], signal_from_log_clk};
 end
 
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+// ������ǰ�ȫ�Ŀ����ź�
 wire signal_in_gt_pcs_domain = sync_pipe[1];
 
 */
@@ -434,7 +427,7 @@ module srio_v_axis_to_fifo #(
 //	end	
 	
 /*
-* 历史说明：原块注释编码已损坏，按当前文件头和开发文档维护。
+������Է�����
 80_TB/tb_TOP.v
 
 cd E:/WZ_WORK/complete/key/IR2120/prj/710_G/srio_SIM_PRJ/10_PRJ/00_PRJ.sim/sim_1/behav/modelsim

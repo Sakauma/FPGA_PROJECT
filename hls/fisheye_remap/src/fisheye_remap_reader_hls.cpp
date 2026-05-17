@@ -23,7 +23,7 @@ enum reader_state_t {
 static ap_uint<8> calc_delayed_line_slot(bram_addr_t bram_line_cur_w) {
 #pragma HLS INLINE
     ap_uint<8> cur_slot = bram_line_cur_w.range(7, 0);
-    // 新代码：Egor Izmaylov 原实现用 bit7 翻转 128 行半区，只适合 256 深度；当前工程实际为 200/100。
+    // 新代码：Egor Izmaylov 新工程实际为 256 行环形缓存，半深度为 128 行。
     return (cur_slot >= kFisheyeHalfLineBufferDepth)
                ? (ap_uint<8>)(cur_slot - kFisheyeHalfLineBufferDepth)
                : (ap_uint<8>)(cur_slot + kFisheyeHalfLineBufferDepth);
@@ -116,7 +116,7 @@ static ap_uint<18> amplify_scale_y_q16(ap_uint<18> scale_q16) {
 static ap_int<13> clamp_vertical_shift(ap_int<16> shift) {
 #pragma HLS INLINE
     // 新代码：Egor Izmaylov
-    // 当前硬件只有 200 行环形缓存，最大安全半窗约 100 行；这里留 4 行裕量，避免 wrap 到错误行。
+    // 当前新工程使用 256 行环形缓存，最大安全半窗为 128 行；这里仍限制到 96 行，避免 wrap 到错误行。
     if (shift > kFisheyeMaxVerticalShift) {
         return (ap_int<13>)kFisheyeMaxVerticalShift;
     }
@@ -204,7 +204,7 @@ static void map_source_pixel(ap_uint<11> out_x,
     // 新代码：Egor Izmaylov 按 F-THETA 畸变定义使用 source_radius = ideal_radius * (1 + distortion)。
     // 旧代码保留：ap_int<16> src_x_s = (ap_int<16>)kFisheyeCenterX + scale_delta(dx, scale_q16);
     // 旧代码保留：ap_int<16> src_y_s = (ap_int<16>)kFisheyeCenterY + scale_delta(dy, scale_q16);
-    // 新代码：Egor Izmaylov 使用 X/Y 分离强度：水平强化效果，垂直限制到 200 行缓存安全窗口内。
+    // 新代码：Egor Izmaylov 使用 X/Y 分离强度：水平强化效果，垂直限制到 256 行缓存安全窗口内。
     ap_int<16> src_x_s = (ap_int<16>)kFisheyeCenterX + scale_delta(dx, amplified_scale_x_q16);
     ap_int<16> src_y_s_unclamped = (ap_int<16>)kFisheyeCenterY + scale_delta(dy, amplified_scale_y_q16);
     ap_uint<12> src_y = clamp_line(src_y_s_unclamped);

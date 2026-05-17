@@ -1,13 +1,10 @@
 `timescale 1ns/1ns
-`include "fisheye_remap_bram_to_axis.v"
+// 新代码：Egor Izmaylov
+// HLS 去畸变算法只在显式定义 ENABLE_FISHEYE_REMAP_READER 时接入；
+// 未定义该宏时，本文件保持硬件部门新工程原始 readbram_to_axis64_top 链路。
+`ifdef ENABLE_FISHEYE_REMAP_READER
 `include "fisheye_remap_packetizer_to_axis.v"
-// ============================================================================
-// 新增维护说明
-// 作者          : Egor Izmaylov
-// 文件职责      : 当前文件为手工维护源码，具体职责见模块名、端口和上层实例化。
-// 维护边界      : 只追加说明性注释；Vivado/IP 生成物和第三方支撑代码不在此处手改。
-// 修改约束      : 功能改动需同步更新仿真、综合结果和相关文档。
-// ============================================================================
+`endif
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Company			: ZHTY				
 // Engineer			: wangzhen			
@@ -58,8 +55,6 @@ module vbram_lutaxi4_to_axis#(
 //--Input/Output Port--------------------------
 	input										clk											,	//250M
 	input										rstn										,
-	// 新代码：Egor Izmaylov 接收算法控制字；当前仅驱动 HLS 演示核，不改 BRAM 写入路径。
-	input			[31:0]						video_algo_ctrl								,
 //==================================================================================================
 //--视频bram接口--------------------------	
     input		  	[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_cur_w   							,	// 当前bram写入行位置 
@@ -122,44 +117,38 @@ module vbram_lutaxi4_to_axis#(
             depth = depth >> 1;
     endfunction	
 
-	// 新代码：Egor Izmaylov 将原 BRAM->AXIS 输出先命名为 raw_*，再送入 HLS 处理核。
-	// 维护边界：旧的直连路径完整保留在下方注释块中，后续算法只替换 HLS/wrapper 边界。
-	wire			[63:0]						raw_srio_axis_tdata							;
-	wire										raw_srio_axis_tready						;
-	wire										raw_srio_axis_tvalid						;
-	wire										raw_srio_axis_tlast							;
 
 `ifdef ENABLE_FISHEYE_REMAP_READER
-	// 新代码：Egor Izmaylov 将算法前移到 BRAM 读出阶段，实现真实源像素重采样去畸变。
-	// 维护边界：SRIO、MIG、BD/IP、XDC 和板级接口保持不变；旧 AXIS 后处理路径保留在下方宏分支。
 	// 新代码：Egor Izmaylov
-	// 稳定版链路把 SRIO packet/header/payload/tlast 节奏固定在 RTL 中，HLS 只提供源像素地址。
-	// 旧代码保留：原 fisheye_remap_bram_to_axis 仍保留在独立文件中，不再作为默认 ENABLE_FISHEYE_REMAP_READER 路径。
-	fisheye_remap_packetizer_to_axis #(
-		.B_RAM_WIDTH							( B_RAM_WIDTH								),
-		.B_RAM_DEPTH							( B_RAM_DEPTH								),
-		.P_LINE_DEPTH							( P_LINE_DEPTH								)
-	) u_fisheye_remap_bram_to_axis (
-		.bram_clk								( clk										),
-		.bram_rstn								( rstn										),
-		.bram_line_cur_w						( bram_line_cur_w							),
-		.bram_line_cur_w_en						( bram_line_cur_w_en						),
-		.bram_line_num_addr						( bram_line_num_addr						),
-		.bram_line_num							( bram_line_num								),
-		.bram_addrb								( bram_addrb								),
-		.bram_doutb								( bram_doutb								),
-		.video_algo_ctrl						( video_algo_ctrl							),
+	// 新工程不接回旧 0x8600_0014 控制链路；算法 bit 默认启用真实去畸变。
+	// 需要验证原始旁路链路时，不定义 ENABLE_FISHEYE_REMAP_READER 重新构建即可。
+	localparam [31:0] FISHEYE_ALGO_CTRL_DEFAULT = 32'h0000_0001;
 
-		.m_axis_aclk							( m_srio_axis_aclk							),
-		.m_axis_aresetn							( m_srio_axis_rstn							),
-		.m_axis_tready							( m_srio_axis_tready						),
-		.m_axis_tdata							( m_srio_axis_tdata							),
-		.m_axis_tvalid							( m_srio_axis_tvalid						),
-		.m_axis_tlast							( m_srio_axis_tlast							)
+	fisheye_remap_packetizer_to_axis #(
+	    .B_RAM_WIDTH        					( B_RAM_WIDTH    							),
+	    .B_RAM_DEPTH        					( B_RAM_DEPTH      							),
+	    .P_LINE_DEPTH        					( P_LINE_DEPTH      						)
+	) u_fisheye_remap_bram_to_axis (
+	    .bram_clk   	       					( clk   									),
+		.bram_rstn   	    					( rstn   	    							),
+
+	    .bram_line_cur_w   	       				( bram_line_cur_w   						),
+		.bram_line_cur_w_en   	    			( bram_line_cur_w_en   	    				),
+	    .bram_line_num		       				( bram_line_num		    					),
+		.bram_line_num_addr   	    			( bram_line_num_addr   	    				),
+	    .bram_addrb   		       				( bram_addrb   		    					),
+	    .bram_doutb   		       				( bram_doutb   		    					),
+	    .video_algo_ctrl						( FISHEYE_ALGO_CTRL_DEFAULT					),
+
+        .m_axis_aclk		     				( m_srio_axis_aclk               			),
+        .m_axis_aresetn	                        ( m_srio_axis_rstn          				),
+
+        .m_axis_tready	     					( m_srio_axis_tready						),
+        .m_axis_tdata	         				( m_srio_axis_tdata							),
+        .m_axis_tvalid	         				( m_srio_axis_tvalid	      				),
+        .m_axis_tlast	         				( m_srio_axis_tlast	      					)
 	);
 `else
-	// 新代码：Egor Izmaylov 默认恢复旧稳定“顺序读 BRAM -> SRIO AXIS”路径，优先恢复板上出图。
-	// 旧代码保留：退役 AXIS 后处理 HLS 只在 ENABLE_RETIRED_AXIS_POST_HLS_PATH 下参与链路。
 	readbram_to_axis64_top #(
 	    .B_RAM_WIDTH        					( B_RAM_WIDTH    							),
 	    .B_RAM_DEPTH        					( B_RAM_DEPTH      							),
@@ -179,72 +168,13 @@ module vbram_lutaxi4_to_axis#(
         .m_axis_aclk		     				( m_srio_axis_aclk               			),
         .m_axis_aresetn	                        ( m_srio_axis_rstn          				),      
                         
-`ifdef ENABLE_RETIRED_AXIS_POST_HLS_PATH
-        .m_axis_tready	     					( raw_srio_axis_tready						),
-        .m_axis_tdata	         				( {raw_srio_axis_tlast,raw_srio_axis_tdata}	),
-        .m_axis_tvalid	         				( raw_srio_axis_tvalid	      				));
-`else
         .m_axis_tready	     					( m_srio_axis_tready						),
-        .m_axis_tdata	         				( {m_srio_axis_tlast,m_srio_axis_tdata}		),
+        .m_axis_tdata	         				( {m_srio_axis_tlast,m_srio_axis_tdata}	    ),
         .m_axis_tvalid	         				( m_srio_axis_tvalid	      				));
 `endif
-
-`ifdef ENABLE_RETIRED_AXIS_POST_HLS_PATH
-	// 新代码：Egor Izmaylov 退役演示 HLS 路径仅在显式定义 ENABLE_RETIRED_AXIS_POST_HLS_PATH 时启用。
-	// 新代码：Egor Izmaylov 在 SRIO 输出前插入 HLS 去畸变/演示处理。
-	// 数据契约：输入输出均保持 64bit AXIS payload 和 tlast 语义，避免影响后级 SRIO 发送模块。
-	undistort_demo_hls_wrap u_undistort_demo_hls_wrap(
-		.clk									( m_srio_axis_aclk							),
-		.rstn									( m_srio_axis_rstn							),
-		.algo_ctrl								( video_algo_ctrl							),
-
-		.s_axis_tdata							( raw_srio_axis_tdata						),
-		.s_axis_tvalid							( raw_srio_axis_tvalid						),
-		.s_axis_tready							( raw_srio_axis_tready						),
-		.s_axis_tlast							( raw_srio_axis_tlast						),
-
-		.m_axis_tdata							( m_srio_axis_tdata							),
-		.m_axis_tvalid							( m_srio_axis_tvalid						),
-		.m_axis_tready							( m_srio_axis_tready						),
-		.m_axis_tlast							( m_srio_axis_tlast							)
-	);
-`endif
-`endif
-
-	// 旧代码
-//	readbram_to_axis64_top #(
-//	    .B_RAM_WIDTH        					( B_RAM_WIDTH    							),
-//	    .B_RAM_DEPTH        					( B_RAM_DEPTH      							),
-//	    .P_LINE_DEPTH        					( P_LINE_DEPTH      						)
-//	)readbram_to_axis64_top(
-//	    .bram_clk   	       					( clk   									),
-//		.bram_rstn   	    					( rstn   	    							),
-//
-//	    .bram_line_cur_w   	       				( bram_line_cur_w   						),
-//		.bram_line_cur_w_en   	    			( bram_line_cur_w_en   	    				),
-//	    .bram_line_num		       				( bram_line_num		    					),
-//		.bram_line_num_addr   	    			( bram_line_num_addr   	    				),
-//	    .bram_addrb   		       				( bram_addrb   		    					),
-//	    .bram_doutb   		       				( bram_doutb   		    					), 
-//		
-//
-//        .m_axis_aclk		     				( m_srio_axis_aclk               			),
-//        .m_axis_aresetn	                        ( m_srio_axis_rstn          				),      
-//                        
-//        .m_axis_tready	     					( m_srio_axis_tready						),
-//        .m_axis_tdata	         				( {m_srio_axis_tlast,m_srio_axis_tdata}	    ),
-//        .m_axis_tvalid	         				( m_srio_axis_tvalid	      				));
 		
 
-`ifdef ENABLE_FISHEYE_DEBUG_TAPS
-	// 新代码：Egor Izmaylov
-	// 顶层最终 SRIO AXIS 调试探针。wrapper 内部 m_axis 已经可见，但这里再抓一次真正
-	// 输出到 SRIO_2_Video 后级的端口，用于排除顶层宏选择或接线导致的最终输出差异。
-	(* mark_debug = "true", keep = "true" *) wire [63:0] dbg_vbram_m_srio_axis_tdata  = m_srio_axis_tdata;
-	(* mark_debug = "true", keep = "true" *) wire        dbg_vbram_m_srio_axis_tvalid = m_srio_axis_tvalid;
-	(* mark_debug = "true", keep = "true" *) wire        dbg_vbram_m_srio_axis_tready = m_srio_axis_tready;
-	(* mark_debug = "true", keep = "true" *) wire        dbg_vbram_m_srio_axis_tlast  = m_srio_axis_tlast;
-`endif
 
 
 endmodule
+

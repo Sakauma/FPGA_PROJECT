@@ -6731,8 +6731,8 @@
       "ARESETN_1": {
         "ports": [
           "proc_sys_reset_0/peripheral_aresetn",
-          "slb_to_axil_m_0/s_axi_aresetn",
-          "xadc_wiz_1/s_axi_aresetn"
+          "xadc_wiz_1/s_axi_aresetn",
+          "slb_to_axil_m_0/s_axi_aresetn"
         ]
       },
       "In0_0_1": {
@@ -6783,9 +6783,9 @@
           "processing_system7_0/M_AXI_GP0_ACLK",
           "processing_system7_0/M_AXI_GP1_ACLK",
           "processing_system7_0/S_AXI_HP0_ACLK",
-          "slb_to_axil_m_0/s_axi_aclk",
           "vio_0/clk",
-          "xadc_wiz_1/s_axi_aclk"
+          "xadc_wiz_1/s_axi_aclk",
+          "slb_to_axil_m_0/s_axi_aclk"
         ]
       },
       "processing_system7_0_FCLK_RESET0_N": {

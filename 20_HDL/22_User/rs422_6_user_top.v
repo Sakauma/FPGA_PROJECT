@@ -1,11 +1,4 @@
 `timescale 1ns / 1ps
-// ============================================================================
-// 新增维护说明
-// 作者          : Egor Izmaylov
-// 文件职责      : 当前文件为手工维护源码，具体职责见模块名、端口和上层实例化。
-// 维护边界      : 只追加说明性注释；Vivado/IP 生成物和第三方支撑代码不在此处手改。
-// 修改约束      : 功能改动需同步更新仿真、综合结果和相关文档。
-// ============================================================================
 //`define loop_back_test
 //////////////////////////////////////////////////////////////////////////////////
 // Company:
@@ -53,9 +46,9 @@ module	user_top #(
 	output	wire								rs422_tx_out_6								,	
     input	wire								rs422_rx_in_6								,   
 
-    input	wire								rs422_ten_5								,   
+    output	wire								rs422_ten_5								,   
 
-    input	wire								rs422_ten_6								,   
+    output	wire								rs422_ten_6								,   
 
 //		output  wire  SFP_scl, 
 //	inout wire SFP_sda,
@@ -412,7 +405,8 @@ module	user_top #(
 		.rs422_tx_out							( rs422_tx_out_5							),	
 		.rs422_rx_in							( rs422_rx_in_5								),	
 		.rx_fifo_empty							( rs422_int_5								),	
-                                                                                                
+         .rs422_de							( rs422_ten_5								),	
+                                                                          
 		.sys_axi_araddr							( sys_uart_5_axi_araddr						),	
 		.sys_axi_arprot							( sys_uart_5_axi_arprot						),	
 		.sys_axi_arready						( sys_uart_5_axi_arready					),	
@@ -444,6 +438,8 @@ module	user_top #(
 		.rs422_tx_out							( rs422_tx_out_6							),	
 		.rs422_rx_in							( rs422_rx_in_6								),	
 		.rx_fifo_empty							( rs422_int_6								),	
+		.rs422_de							( rs422_ten_6								),	
+                                                   
                                                                                                 
 		.sys_axi_araddr							( sys_uart_6_axi_araddr						),	
 		.sys_axi_arprot							( sys_uart_6_axi_arprot						),	

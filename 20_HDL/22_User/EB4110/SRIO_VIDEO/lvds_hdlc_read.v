@@ -1,11 +1,4 @@
 `timescale 1ns/1ns
-// ============================================================================
-// 新增维护说明
-// 作者          : Egor Izmaylov
-// 文件职责      : 当前文件为手工维护源码，具体职责见模块名、端口和上层实例化。
-// 维护边界      : 只追加说明性注释；Vivado/IP 生成物和第三方支撑代码不在此处手改。
-// 修改约束      : 功能改动需同步更新仿真、综合结果和相关文档。
-// ============================================================================
 //////////////////////////////////////////////////////////////////////////////////
 // Company:			ZHTY
 // Engineer:		ZYL
@@ -16,7 +9,7 @@
 // Target Devices:	K7-V7
 // Tool Versions: 	Vivado 2016.1 HDL-EDIT UltraEdit TAB=4 Consolas
 // Description:
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//		ģ�齫LVDS���ݴ�DDR�ж�����������IT UP Streamʱ������HDLC
 // Dependencies:
 //
 // Revision:
@@ -71,7 +64,7 @@ module lvds_hdlc_read #(
 	input			[31:0]						lvds_cache_cur_waddr						,
 	output			[31:0]						lvds_cache_cur_raddr						,	
 	/*--------------------------------------------------------------------------------------
-	* 历史说明：原块注释编码已损坏，按当前文件头和开发文档维护。
+	--AXI����ͨ��������ӿ�
 	--------------------------------------------------------------------------------------*/
 	
 	output	reg									m_axir_req					= 0				,
@@ -180,7 +173,7 @@ module lvds_hdlc_read #(
 	end
 	
 	
-	reg				[7:0]						wr_frame_all_cnt		= 7'h00				;	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+	reg				[7:0]						wr_frame_all_cnt		= 7'h00				;	//	����д��ddr��ѯ����
 	reg				[31:0]						lvds_cache_cur_waddr_d	= 'b0				;
 
 
@@ -209,7 +202,7 @@ module lvds_hdlc_read #(
 			S_AXIR_IDLE_M						: begin
 			
 
-				if( (lvds_cache_cur_waddr==P_V_FRAME_DDR3_BLOCK_SIZE_R-32'h100)&& ps_video_en&&wr_frame_all_cnt==0&&video_send_en==1) begin// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+				if( (lvds_cache_cur_waddr==P_V_FRAME_DDR3_BLOCK_SIZE_R-32'h100)&& ps_video_en&&wr_frame_all_cnt==0&&video_send_en==1) begin//��Ƶ����
 					S_AXIR_NM					= S_AXIR_FRAME_STAR_M						;
 				end else begin
 					S_AXIR_NM					= S_AXIR_IDLE_M								;
@@ -276,7 +269,7 @@ module lvds_hdlc_read #(
 		endcase
 	end
 //==================================================================================================
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//--���ʿ���
 
 	always @(posedge sys_clk_i or posedge sys_rst_i) begin
 		if(sys_rst_i) begin
@@ -289,7 +282,7 @@ module lvds_hdlc_read #(
 	end
 
 //==================================================================================================
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//--�����ַ�ͳ���ʵ��
 	always @(posedge sys_clk_i or posedge sys_rst_i) begin
 		if(sys_rst_i) begin
 			m_axir_req							<= 1'b0										;
@@ -300,7 +293,7 @@ module lvds_hdlc_read #(
 		end
 	end
 	/*--------------------------------------------------------------------------------------
-	* 历史说明：原块注释编码已损坏，按当前文件头和开发文档维护。
+	--HEAD��DATA�����׵�ַ��ʼ��ȡ��HEAD���ݲ�д��FIFO
 	--------------------------------------------------------------------------------------*/
 	always @(posedge sys_clk_i or posedge sys_rst_i) begin
 		if(sys_rst_i) begin
@@ -326,7 +319,7 @@ module lvds_hdlc_read #(
 	end
 
 //==================================================================================================
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//--���ݶ�ȡ����
 	always @(posedge sys_clk_i or posedge sys_rst_i) begin
 		if(sys_rst_i) begin
 			S_RB_CM								<= S_RB_IDLE_M								;
@@ -392,9 +385,9 @@ module lvds_hdlc_read #(
 			DSW_LEN								<= 16'b0									;
 		end else if(S_RB_CM[B_RB_HDATA_M]) begin
 			if(MLVDS_AXI_RVALID && MLVDS_AXI_RREADY) begin
-				// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+				//DSW_LEN							<= MLVDS_AXI_RDATA[47:32]					;	//	��ȡ֡��
 				
-				DSW_LEN							<= 16'h100					;	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+				DSW_LEN							<= 16'h100					;	//	��ȡ֡��
 			end else begin
 				DSW_LEN							<= DSW_LEN									;
 			end
@@ -435,7 +428,7 @@ module lvds_hdlc_read #(
 			axis_data_fifo_wen					<= 1'b0										;
 			axis_data_fifo_din[65:0]			<= 66'b0									;
 			
-		end else if(S_RB_CM[B_RB_HDATA_M]) begin	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+		end else if(S_RB_CM[B_RB_HDATA_M]) begin	//�����Զ���SRIO֡ͷ
 			axis_data_fifo_wen					<= MLVDS_AXI_RVALID && MLVDS_AXI_RREADY		;
 			axis_data_fifo_din[63:0]			<= {32'h0060_2000,	cur_raddr-P_LVDS_DDR3_START_ADDR_R}	;
 			

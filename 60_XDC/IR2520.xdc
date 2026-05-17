@@ -1,10 +1,3 @@
-# ============================================================================
-# 新增维护说明
-# 作者          : Egor Izmaylov
-# 文件职责      : 当前文件为手工维护源码，具体职责见模块名、端口和上层实例化。
-# 维护边界      : 只追加说明性注释；Vivado/IP 生成物和第三方支撑代码不在此处手改。
-# 修改约束      : 功能改动需同步更新仿真、综合结果和相关文档。
-# ============================================================================
 set_property BITSTREAM.CONFIG.UNUSEDPIN PULLNONE [current_design]
 
 #set_property PACKAGE_PIN AH10 [get_ports {fc_gt_rxp[0]}]
@@ -13,13 +6,13 @@ set_property BITSTREAM.CONFIG.UNUSEDPIN PULLNONE [current_design]
 #set_property PACKAGE_PIN AK6 [get_ports {fc_gt_txp[1]}]
 #set_property PACKAGE_PIN AF10 [get_ports gtxrefclk109_p]
 
-# 历史说明：原注释编码已损坏，已替换为中文维护说明。
+#25M����û�к���
 #set_property PACKAGE_PIN AE22 [get_ports sys_clk_p]
 #set_property	IOSTANDARD	LVCMOS33	[get_ports	sys_clk_p	]
 
-set_property PACKAGE_PIN D9 [get_ports sys_clk_p]
-set_property PACKAGE_PIN D8 [get_ports sys_clk_n]
-set_property IOSTANDARD DIFF_SSTL18_I [get_ports sys_clk_p]
+#set_property PACKAGE_PIN D9 [get_ports sys_clk_p]
+#set_property PACKAGE_PIN D8 [get_ports sys_clk_n]
+#set_property IOSTANDARD DIFF_SSTL18_I [get_ports sys_clk_p]
 
 
 #set_property PACKAGE_PIN AE8 [get_ports {video_srio_rxp0[0]}]
@@ -146,14 +139,14 @@ set_property IOSTANDARD	LVCMOS33 [get_ports {XP1_GPIO[*]}]
 
 set_clock_groups -asynchronous -group [get_clocks clk_fpga_0] -group [get_clocks -of_objects [get_pins srio_video_loop/u_dcm/inst/mmcm_adv_inst/CLKOUT1]]
 
-# set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets srio_video_loop/u_dcm/inst/clk_in1_clk_dcm] 
+ set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets srio_video_loop/u_dcm/inst/clk_in1_clk_dcm] 
 set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins srio_video_loop/u_mem/mig_7series_0/u_MY_MEM_mig_7series_0_0_mig/u_ddr3_infrastructure/gen_mmcm.mmcm_i/CLKFBOUT]] -group [get_clocks clk_fpga_1]
 
 #set_clock_groups -asynchronous -group [get_clocks clk_fpga_0] -group [get_clocks -of_objects [get_pins u_xr2000_top_AT01_TOP/i_srio_support/u_SRIO_5g_1x_8b.u_srio_support/srio_clk_inst/srio_mmcm_inst/CLKOUT1]]
 #set_clock_groups -asynchronous -group [get_clocks clk_fpga_0] -group [get_clocks -of_objects [get_pins srio_video_loop/srio_top/i_srio_support/u_SRIO_5g_2x_8b.u_srio_support/srio_clk_inst/srio_mmcm_inst/CLKOUT2]]
 
 set_false_path -from [get_pins {zynq_i/proc_sys_reset_0/U0/PR_OUT_DFF[0].FDRE_PER/C}]
-# 历史说明：原注释编码已损坏，已替换为中文维护说明。
+##ֻ����Ƶʹ��
 #set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins srio_video_loop/u_mem/mig_7series_0/u_MY_MEM_mig_7series_0_0_mig/u_ddr3_infrastructure/gen_mmcm.mmcm_i/CLKFBOUT]] -group [get_clocks -of_objects [get_pins srio_video_loop/u_mem/mig_7series_0/u_MY_MEM_mig_7series_0_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_0.u_ddr_phy_4lanes/ddr_byte_lane_D.ddr_byte_lane_D/phaser_in_gen.phaser_in/ICLK]]
 #set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins srio_video_loop/u_mem/mig_7series_0/u_MY_MEM_mig_7series_0_0_mig/u_ddr3_infrastructure/gen_mmcm.mmcm_i/CLKFBOUT]] -group [get_clocks -of_objects [get_pins srio_video_loop/u_mem/mig_7series_0/u_MY_MEM_mig_7series_0_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_2.u_ddr_phy_4lanes/ddr_byte_lane_A.ddr_byte_lane_A/phaser_in_gen.phaser_in/ICLK]]
 #set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins srio_video_loop/u_mem/mig_7series_0/u_MY_MEM_mig_7series_0_0_mig/u_ddr3_infrastructure/gen_mmcm.mmcm_i/CLKFBOUT]] -group [get_clocks -of_objects [get_pins srio_video_loop/u_mem/mig_7series_0/u_MY_MEM_mig_7series_0_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_2.u_ddr_phy_4lanes/ddr_byte_lane_B.ddr_byte_lane_B/phaser_in_gen.phaser_in/ICLK]]
@@ -167,34 +160,3 @@ set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins srio_vid
 
 
 set_clock_groups -asynchronous -group [get_clocks clk_fpga_0] -group [get_clocks -of_objects [get_pins srio_video_loop/srio_top/i_srio_support/u_SRIO_5g_2x_8b.u_srio_support/srio_clk_inst/srio_mmcm_inst/CLKOUT2]] 
-
-# 新代码：Egor Izmaylov
-# 说明：video_algo_ctrl 来自 AXI-Lite/PS 时钟域，新增鱼眼去畸变读出链路在 w_user_250m_clk 域使用。
-# 维护边界：这里只约束新增算法控制位进入第一拍同步寄存器的 CDC 路径，不改变 SRIO/MIG/BD/IP/管脚约束。
-# 新代码：Egor Izmaylov XDC 解析器不支持 if/concat，改为纯 XDC 直接命令。
-set_property ASYNC_REG TRUE [get_cells -quiet -hierarchical -filter {NAME =~ */u_fisheye_remap_bram_to_axis/video_algo_ctrl_bram_r0_reg*}]
-set_property ASYNC_REG TRUE [get_cells -quiet -hierarchical -filter {NAME =~ */u_fisheye_remap_bram_to_axis/video_algo_ctrl_bram_r1_reg*}]
-set_false_path -to [get_pins -quiet {srio_video_loop/srio_top/srio_video_frame_d_speed/i_SRIO_2_Video/u_vbram_lutaxi4_to_axis/u_fisheye_remap_bram_to_axis/video_algo_ctrl_bram_r0_reg[*]/D}]
-# 旧代码保留：以下 cell 查询后再取 D pin 的写法包含 if/concat，Vivado XDC 解析阶段会报 Designutils 20-1307。
-# set fisheye_ctrl_sync_stage0 [get_cells -quiet -hierarchical -filter {NAME =~ */u_fisheye_remap_bram_to_axis/video_algo_ctrl_bram_r0_reg*}]
-# set fisheye_ctrl_sync_stage1 [get_cells -quiet -hierarchical -filter {NAME =~ */u_fisheye_remap_bram_to_axis/video_algo_ctrl_bram_r1_reg*}]
-# set fisheye_ctrl_sync_regs [concat $fisheye_ctrl_sync_stage0 $fisheye_ctrl_sync_stage1]
-# if {[llength $fisheye_ctrl_sync_regs] > 0} {
-#     set_property ASYNC_REG TRUE $fisheye_ctrl_sync_regs
-# }
-# set fisheye_ctrl_sync_pins {}
-# if {[llength $fisheye_ctrl_sync_stage0] > 0} {
-#     set fisheye_ctrl_sync_pins [get_pins -quiet -of_objects $fisheye_ctrl_sync_stage0 -filter {REF_PIN_NAME == D}]
-# }
-# if {[llength $fisheye_ctrl_sync_pins] > 0} {
-#     set_false_path -to $fisheye_ctrl_sync_pins
-# }
-# 旧代码保留：以下正则查询在部分 Vivado 网表阶段可能未命中，因此仅保留为历史说明。
-# set fisheye_ctrl_sync_regs [get_cells -quiet -hierarchical -regexp {.*u_fisheye_remap_bram_to_axis/video_algo_ctrl_bram_r[01]_reg\[[0-9]+\]}]
-# if {[llength $fisheye_ctrl_sync_regs] > 0} {
-#     set_property ASYNC_REG TRUE $fisheye_ctrl_sync_regs
-# }
-# set fisheye_ctrl_sync_pins [get_pins -quiet -hierarchical -regexp {.*u_fisheye_remap_bram_to_axis/video_algo_ctrl_bram_r0_reg\[[0-9]+\]/D}]
-# if {[llength $fisheye_ctrl_sync_pins] > 0} {
-#     set_false_path -to $fisheye_ctrl_sync_pins
-# }

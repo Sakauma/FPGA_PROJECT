@@ -39,9 +39,8 @@ module tb_vbram_hls_integration;
     // 新代码：Egor Izmaylov 初始为 1，再由 apply_reset 拉低，确保异步复位逻辑看到真实下降沿。
     reg             rstn                    = 1'b1;
     */
-    reg     [31:0]  video_algo_ctrl         = 32'h0000_0000;
-    // 新代码：Egor Izmaylov 与工程实际 200 行缓存保持一致，半深度位置为 100。
-    reg     [18:0]  bram_line_cur_w         = 19'd100;
+    // 新代码：Egor Izmaylov 与新工程实际 256 行缓存保持一致，半深度位置为 128。
+    reg     [18:0]  bram_line_cur_w         = 19'd128;
     reg             bram_line_cur_w_en      = 1'b0;
     reg     [15:0]  bram_doutb              = 16'd0;
     reg             m_srio_axis_tready      = 1'b1;
@@ -149,11 +148,10 @@ module tb_vbram_hls_integration;
     vbram_lutaxi4_to_axis #(
         .B_RAM_WIDTH            ( 16        ),
         .B_RAM_DEPTH            ( 32'h80000 ),
-        .P_LINE_DEPTH           ( 200       )
+        .P_LINE_DEPTH           ( 256       )
     ) dut (
         .clk                    ( clk               ),
         .rstn                   ( rstn              ),
-        .video_algo_ctrl        ( video_algo_ctrl   ),
 
         .bram_line_cur_w        ( bram_line_cur_w   ),
         .bram_line_cur_w_en     ( bram_line_cur_w_en),
@@ -229,7 +227,7 @@ module tb_vbram_hls_integration;
                 // 新代码：Egor Izmaylov
                 // HLS reader 的 0x0 内部旁路必须与旧 readbram_to_axis64_top 整行逐字一致。
                 expected_stream_payload = expected_bypass_payload_word(stream_packet, stream_phase - 1);
-                if (video_algo_ctrl == 32'h0000_0000 && m_srio_axis_tdata !== expected_stream_payload) begin
+                if (!DEFAULT_REMAP_ENABLED && m_srio_axis_tdata !== expected_stream_payload) begin
                     $display("ERROR: HLS bypass payload mismatch packet=%0d payload=%0d exp=%016h got=%016h",
                              stream_packet, stream_phase - 1, expected_stream_payload, m_srio_axis_tdata);
                     stream_error_count <= stream_error_count + 1;
@@ -291,7 +289,7 @@ module tb_vbram_hls_integration;
     task automatic pulse_line_ready;
         begin
             @(negedge clk);
-            bram_line_cur_w = 19'd100;
+            bram_line_cur_w = 19'd128;
             bram_line_cur_w_en = 1'b1;
             @(negedge clk);
             bram_line_cur_w_en = 1'b0;
@@ -373,7 +371,6 @@ module tb_vbram_hls_integration;
         input integer enable_stall;
         begin
             $display("INFO: running full-line ctrl=0x%08x", ctrl);
-            video_algo_ctrl = ctrl;
             apply_reset();
             m_srio_axis_tready = 1'b1;
             stream_word_count = 0;
@@ -420,7 +417,6 @@ module tb_vbram_hls_integration;
         input        expect_bypass;
         begin
             $display("INFO: running ctrl=0x%08x", ctrl);
-            video_algo_ctrl = ctrl;
             apply_reset();
             pulse_line_ready();
             wait_for_words(2, 2000);
@@ -460,10 +456,17 @@ module tb_vbram_hls_integration;
 
         // 新代码：Egor Izmaylov
         // 先覆盖整行连续 packet 协议，再运行原有首包冒烟用例。
+`ifdef ENABLE_FISHEYE_REMAP_READER
+        // 新代码：Egor Izmaylov 算法构建固定启用 remap，不接旧运行时控制端口。
+        run_full_line_case(32'h0000_0001, 0);
+`else
         run_full_line_case(32'h0000_0000, 1);
+`endif
         run_full_line_case(32'h0000_0001, 0);
 
+`ifndef ENABLE_FISHEYE_REMAP_READER
         run_case(32'h0000_0000, 1'b1);
+`endif
         // 新代码：Egor Izmaylov 默认不定义 ENABLE_FISHEYE_REMAP_READER 时，所有控制值都应走旧稳定直通路径。
         run_case(32'h0000_0001, ~DEFAULT_REMAP_ENABLED);
         run_case(32'h0000_0007, ~DEFAULT_REMAP_ENABLED);
@@ -494,7 +497,6 @@ module tb_vbram_hls_integration;
 
     reg             clk                     = 1'b0;
     reg             rstn                    = 1'b0;
-    reg     [31:0]  video_algo_ctrl         = 32'h0000_0000;
     reg             m_srio_axis_tready      = 1'b0;
 
     reg     [63:0]  force_raw_data          = 64'd0;
@@ -520,7 +522,6 @@ module tb_vbram_hls_integration;
     vbram_lutaxi4_to_axis dut (
         .clk                    ( clk               ),
         .rstn                   ( rstn              ),
-        .video_algo_ctrl        ( video_algo_ctrl   ),
 
         .bram_line_cur_w        ( 'd0               ),
         .bram_line_cur_w_en     ( 1'b0              ),
@@ -754,7 +755,6 @@ module tb_vbram_hls_integration;
         input integer enable_stall;
         begin
             $display("INFO: running ctrl=0x%08x", ctrl);
-            video_algo_ctrl = ctrl;
             apply_reset();
 
             if (enable_stall != 0) begin

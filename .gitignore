@@ -80,5 +80,6 @@ xvlog.log
 xvlog.pb
 xelab.log
 xsim.log
+80_TB/build_*_work/
 80_TB/build_vbram_hls_integration*/
 80_TB/build_vbram_hls_debug_work/

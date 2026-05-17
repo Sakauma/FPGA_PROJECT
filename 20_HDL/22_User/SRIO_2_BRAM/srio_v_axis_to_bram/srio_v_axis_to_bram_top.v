@@ -1,10 +1,3 @@
-// ============================================================================
-// 新增维护说明
-// 作者          : Egor Izmaylov
-// 文件职责      : 当前文件为手工维护源码，具体职责见模块名、端口和上层实例化。
-// 维护边界      : 只追加说明性注释；Vivado/IP 生成物和第三方支撑代码不在此处手改。
-// 修改约束      : 功能改动需同步更新仿真、综合结果和相关文档。
-// ============================================================================
 
 `timescale 1ns/1ns
 //////////////////////////////////////////////////////////////////////////////////
@@ -17,7 +10,7 @@
 // Target Devices:	K7-V7
 // Tool Versions: 	Vivado 2016.1 HDL-EDIT UltraEdit TAB=4 Consolas
 // Description:
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//		ģ��ʵ��IRAX DSW�Ľ�������ȡLVDS iPort������֡������LVDS iPort����֡���
 // Dependencies:
 //
 // Revision:
@@ -25,7 +18,7 @@
 
 
 /*
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+// ˫��ͬ������log_clk �� gt_pcs_clk_out
 reg [1:0] sync_pipe;
 always @(posedge gt_pcs_clk_out or negedge rst_n) begin
     if(!rst_n)
@@ -34,7 +27,7 @@ always @(posedge gt_pcs_clk_out or negedge rst_n) begin
         sync_pipe <= {sync_pipe[0], signal_from_log_clk};
 end
 
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+// ������ǰ�ȫ�Ŀ����ź�
 wire signal_in_gt_pcs_domain = sync_pipe[1];
 
 */
@@ -70,9 +63,9 @@ module srio_v_axis_to_bram_top #(
     input  	wire                                bram_clkb_rstn     								,      
     
     output  wire    [clogb2(B_RAM_DEPTH-1)-1:0] bram_line_cur_w   							,
-    output      					 			bram_line_cur_w_en   						, 	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-	input	wire	[clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    output      	[12-1:0] 					bram_line_num									// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+    output      					 			bram_line_cur_w_en   						, 	//	1 :��ʾ�ɹ�д���bram_line_cur_w��������bram��
+	input	wire	[clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							,	// ÿ��bram��ַ��Ӧ���кŵ�ַ
+    output      	[12-1:0] 					bram_line_num									// ÿ��bram��ַ��Ӧ���к� , bram_line_num_addr*32'h0~bram_line_num_addr*32'h800��Ӧ���к�,�����кŶ�Ӧ��ǰ�еĲ�ͬ��ַ
 	);
     //  The following function calculates the address width based on specified RAM depth
     function integer clogb2;

@@ -1,11 +1,4 @@
 `timescale 1ns/1ns
-// ============================================================================
-// 新增维护说明
-// 作者          : Egor Izmaylov
-// 文件职责      : 当前文件为手工维护源码，具体职责见模块名、端口和上层实例化。
-// 维护边界      : 只追加说明性注释；Vivado/IP 生成物和第三方支撑代码不在此处手改。
-// 修改约束      : 功能改动需同步更新仿真、综合结果和相关文档。
-// ============================================================================
 //////////////////////////////////////////////////////////////////////////////////
 // Company:			ZHTY
 // Engineer:		ZhengYunLong
@@ -17,7 +10,7 @@
 // Target Devices:	XC7k325T
 // Tool Versions: 	Vivado 2016.1
 // Description:
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//		ģ��ʵ�ֻ���AXI4�ӿڵ�Burstд����
 // Dependencies:
 //		
 // Revision:
@@ -37,7 +30,7 @@ module srio_v_fifo_to_bram_wb#(
 	input										clk											,
 	input										rst											,
 //==================================================================================================
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//--bramд�ӿ�
     output  wire                                bram_wea     								,   
     output  wire    [clogb2(A_RAM_DEPTH-1)-1:0] bram_addra   								,   
     output  wire    [A_RAM_WIDTH-1:0]           bram_dina    								,   
@@ -47,17 +40,17 @@ module srio_v_fifo_to_bram_wb#(
 
                                                                     		                    
     output  reg    [clogb2(B_RAM_DEPTH-1)-1:0]  bram_line_cur_w_o   						,   
-    output  wire    					 		bram_line_cur_w_en_o   						, 	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+    output  wire    					 		bram_line_cur_w_en_o   						, 	//	1 :��ʾ�ɹ�д���bram_line_cur_w��������bram��
     
-	input	wire	[clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
-    output      	[12-1:0] 					bram_line_num								,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+	input	wire	[clogb2(P_LINE_DEPTH-1):0]	bram_line_num_addr							,	// ÿ��bram��ַ��Ӧ���кŵ�ַ
+    output      	[12-1:0] 					bram_line_num								,	// ÿ��bram��ַ��Ӧ���к� , bram_line_num_addr*32'h0~bram_line_num_addr*32'h800��Ӧ���к�,�����кŶ�Ӧ��ǰ�еĲ�ͬ��ַ
 //==================================================================================================
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//--д����ӿ�
 	input										m_axiw_req									,
 	output	wire								m_axiw_gnt									,
 	input			[10:0]						m_axiw_len64								,
 	input			[31:0]						m_axiw_addr									,
-	input			[7:0]						m_axiw_wstrb								,	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+	input			[7:0]						m_axiw_wstrb								,	//�������һ��64����������Ч������OnlyOneģʽ
 	
 	input			[63:0]						m_axiw_fifo_rdata							,
 	input										m_axiw_fifo_empty							,
@@ -71,7 +64,7 @@ module srio_v_fifo_to_bram_wb#(
     endfunction			
 	
     wire    		[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_cur_w   							;   
-    reg    					 					bram_line_cur_w_en   						; 	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+    reg    					 					bram_line_cur_w_en   						; 	//	1 :��ʾ�ɹ�д���bram_line_cur_w��������bram��
     
    	wire    		[clogb2(B_RAM_DEPTH-1)-1:0] bram_line_cur_w_o_pre   					;
 
@@ -81,7 +74,7 @@ module srio_v_fifo_to_bram_wb#(
 
     async_fifo#(
         .AF                 					( 1                 						),
-        .DATA_BITS          					( clogb2(B_RAM_DEPTH-1)                 	),    // 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+        .DATA_BITS          					( clogb2(B_RAM_DEPTH-1)                 	),    //������ip��ʱע��ͬ������
         .DEPTH_BITS         					( 4                 						),
         .SHOW_AHEAD         					( 0                 						),
         .RAM_STYLE          					( "distributed"    							)
@@ -117,11 +110,11 @@ module srio_v_fifo_to_bram_wb#(
 	
 	assign			bram_dina					= M_AXI_WDATA								;
 //==================================================================================================
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//--��������
 	localparam		[10:0]						PR_AXI_BURST				= 11'd64		;
 
 //==================================================================================================
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//--�źŶ���
 	(* fsm_safe_state	=	"reset_state"*)reg				[5:0]						S_AXI_CM									;
 	reg				[5:0]						S_AXI_NM									;
 	
@@ -152,7 +145,7 @@ module srio_v_fifo_to_bram_wb#(
         endcase
 	end	
 //==================================================================================================
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//--״̬��ʵ��
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
 			S_AXI_CM							<= S_AXI_IDLE_M								;
@@ -198,7 +191,7 @@ module srio_v_fifo_to_bram_wb#(
 	end
 	
 	/*--------------------------------------------------------------------------------------
-	* 历史说明：原块注释编码已损坏，按当前文件头和开发文档维护。
+	--AXI_LENʵ��
 	--------------------------------------------------------------------------------------*/	
 	always @(posedge clk) begin
 		case(S_AXI_CM)
@@ -227,7 +220,7 @@ module srio_v_fifo_to_bram_wb#(
 	end
 	
 	/*--------------------------------------------------------------------------------------
-	* 历史说明：原块注释编码已损坏，按当前文件头和开发文档维护。
+	--AXI_CNT������ʵ��
 	--------------------------------------------------------------------------------------*/	
 	always @(posedge clk) begin
 		if(S_AXI_CM==S_AXI_W_M) begin
@@ -242,7 +235,7 @@ module srio_v_fifo_to_bram_wb#(
 	end
 	
 //==================================================================================================
-// 历史说明：原注释编码已损坏，已替换为中文维护说明。
+//--M_AXI_*�ź�ʵ��
 
 	
 	always @(posedge clk) begin
@@ -280,11 +273,11 @@ module srio_v_fifo_to_bram_wb#(
 
 	
 	assign			bram_wea					= M_AXI_WVALID&M_AXI_WREADY					;
-	wire		[15:0]		m_axiw_line_cur_w	= m_axiw_addr>>12							;	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+	wire		[15:0]		m_axiw_line_cur_w	= m_axiw_addr>>12							;	// ��
 
-	wire		[15:0]		bram_w_8bytes_cnt	= (m_axiw_addr[11:0]>>3)+ axi_cnt[4:0]		;	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+	wire		[15:0]		bram_w_8bytes_cnt	= (m_axiw_addr[11:0]>>3)+ axi_cnt[4:0]		;	// �е�8�ֽ�λ��	
 
-	wire		[3:0]		bram_w_srio_line_cnt= m_axiw_addr[11:8]							;	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+	wire		[3:0]		bram_w_srio_line_cnt= m_axiw_addr[11:8]							;	// ÿ����srio���ļ���
 		
 	assign		bram_addra						= (bram_w_line_cnt<<9) + bram_w_8bytes_cnt	;
 
@@ -351,7 +344,7 @@ module srio_v_fifo_to_bram_wb#(
 	    .clkb                					( bram_line_clk                             ),
 	    .rstb                					( ~bram_line_rstn                           ),
 
-	    .enb                					( 1'b1		                                ),	// 历史说明：原尾注编码已损坏，代码含义以信号名和开发文档为准。
+	    .enb                					( 1'b1		                                ),	// ���޸�
 	    .addrb              					( bram_line_num_addr               			),
 	    .doutb              					( bram_line_num               				),
 	    .regceb             					( 1'b1                                  	)

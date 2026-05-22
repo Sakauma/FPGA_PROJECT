@@ -38,6 +38,7 @@
 10_PRJ/*.pb
 10_PRJ/*.str
 10_PRJ/*.zip
+10_PRJ/release_*/
 10_PRJ/hs_err_pid*
 10_PRJ/vivado_pid*
 10_PRJ/reports_*/

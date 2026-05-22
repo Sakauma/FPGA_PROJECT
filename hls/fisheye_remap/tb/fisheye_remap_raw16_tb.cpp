@@ -53,6 +53,17 @@ static void make_dir(const std::string& path) {
 #endif
 }
 
+static std::string join_path(const std::string& lhs, const std::string& rhs) {
+    if (lhs.empty()) {
+        return rhs;
+    }
+    const char last = lhs[lhs.size() - 1];
+    if (last == '/' || last == '\\') {
+        return lhs + rhs;
+    }
+    return lhs + "/" + rhs;
+}
+
 static std::string env_or_default(const char* name, const std::string& fallback) {
     const char* value = std::getenv(name);
     return (value && value[0]) ? std::string(value) : fallback;
@@ -76,11 +87,13 @@ static std::string frame_path(const std::string& out_dir,
                               int frame_idx,
                               const std::string& ext) {
     std::ostringstream oss;
-    oss << out_dir << "/" << prefix << "_frame_";
+    oss << "frame_";
     oss.width(4);
     oss.fill('0');
-    oss << frame_idx << ext;
-    return oss.str();
+    oss << frame_idx;
+    const std::string frames_dir = join_path(out_dir, "frames");
+    const std::string frame_dir = join_path(frames_dir, oss.str());
+    return join_path(frame_dir, prefix + ext);
 }
 
 static std::vector<uint16_t> read_raw16(const std::string& path, bool big_endian) {
@@ -137,6 +150,15 @@ static void write_frame_pair(const std::string& out_dir,
                              const std::string& prefix,
                              int frame_idx,
                              const std::vector<uint16_t>& pixels) {
+    std::ostringstream oss;
+    oss << "frame_";
+    oss.width(4);
+    oss.fill('0');
+    oss << frame_idx;
+    const std::string frames_dir = join_path(out_dir, "frames");
+    const std::string frame_dir = join_path(frames_dir, oss.str());
+    make_dir(frames_dir);
+    make_dir(frame_dir);
     write_pgm16(frame_path(out_dir, prefix, frame_idx, ".pgm"), pixels);
     write_raw16_le(frame_path(out_dir, prefix, frame_idx, ".raw"), pixels);
 }
@@ -364,6 +386,7 @@ int main(int argc, char** argv) {
     write_pgm16(out_dir + "/bypass.pgm", bypass.pixels);
     write_pgm16(out_dir + "/remap_no_adaptive.pgm", remap_no_adaptive.pixels);
     write_pgm16(out_dir + "/remap_infrared.pgm", remap_infrared.pixels);
+    write_raw16_le(out_dir + "/input.raw", frames.back());
     write_raw16_le(out_dir + "/bypass.raw", bypass.pixels);
     write_raw16_le(out_dir + "/remap_no_adaptive.raw", remap_no_adaptive.pixels);
     write_raw16_le(out_dir + "/remap_infrared.raw", remap_infrared.pixels);

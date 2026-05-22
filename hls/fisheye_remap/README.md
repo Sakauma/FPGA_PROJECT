@@ -2,40 +2,51 @@
 
 作者：Egor Izmaylov
 
-本目录保存真实鱼眼去畸变 BRAM 读出核。该核根据输出像素坐标和畸变表计算源像素地址，从现有视频 BRAM 读取真实图像数据，再打包为原工程使用的 65bit FIFO 数据 `{tlast, tdata[63:0]}`。
+本目录保存鱼眼去畸变算法的 HLS 源码、仿真入口、畸变表和导出 RTL。当前稳定上板版本使用 `fisheye_remap_addr_hls` 作为 HLS 顶层：HLS 只计算源像素地址，SRIO 发包节奏由 RTL packetizer 保证。
 
-## 维护边界
+## 目录说明
 
-- 算法源码位于 `src/fisheye_remap_reader_hls.cpp`。
-- 畸变表定点 LUT 位于 `src/distortion_lut.h`，来源为 `data/distortion_table.csv`。
-- `rtl/` 为 HLS 导出 RTL；需要变更时回到 `src/` 后重新综合。
-- `scripts/csynth.tcl` 会自动复制 ROM `.dat`，并把 HLS 空闲周期的 `fifo_wr_en/fifo_din` 从不确定 `X` 后处理为确定 0，避免接入真实 FIFO 时污染仿真和综合。
-- 本工程不修改 SRIO、MIG、BD/IP、XDC、时钟或板级接口。
+- `src/fisheye_remap_reader_hls.h`：算法常量、控制位、HLS 顶层接口和旧 reader 声明。
+- `src/fisheye_remap_reader_hls.cpp`：去畸变映射、局部圆环拉平补偿、自适应预处理函数和旧 reader 保留代码。
+- `src/distortion_lut.h`：红外/激光畸变表的 Q2.16 定点 LUT。
+- `tb/fisheye_remap_reader_hls_tb.cpp`：地址核和 packet 协议单元测试。
+- `tb/fisheye_remap_raw16_tb.cpp`：读取 `2048x2048 raw16` 相机帧并保存逐帧仿真结果。
+- `scripts/csim.tcl`：HLS C 仿真。
+- `scripts/csim_raw.tcl`：真实 raw16 数据仿真。
+- `scripts/csynth.tcl`：综合并同步 `rtl/` 下导出文件。
+- `rtl/`：Vitis HLS 导出的 Verilog 和 ROM `.dat`，不要手工修改。
 
-## 控制位
+## 当前硬件假设
 
-- `algo_ctrl[0] = 0`：旁路，按原顺序读取 BRAM 输出原图。
-- `algo_ctrl[0] = 1`：启用鱼眼去畸变重采样，并默认启用自适应预处理。
-- `algo_ctrl[3] = 0`：使用红外畸变表，默认上板模式。
-- `algo_ctrl[3] = 1`：使用激光畸变表，仅用于对比验证。
-- `algo_ctrl[4] = 1`：关闭自适应预处理，仅保留去畸变。
-- `algo_ctrl[5] = 1`：冻结当前自适应预处理参数。
+- 图像尺寸：`2048 x 2048`。
+- 像素格式：raw16，小端输入，SRIO payload 内 4 像素打包为 64 bit。
+- BRAM 行缓存：`P_LINE_DEPTH=256`，半深度 `128`。
+- 垂直 remap 安全窗口：`±96` 行。
+- 每行输出：16 包，每包 1 个 header + 32 个 payload。
 
-`algo_ctrl[1]` 和 `algo_ctrl[2]` 不再产生棋盘、黑白或翻转图案。
+这些假设必须与 `20_HDL/22_User/SRIO_2_BRAM/fisheye_remap_packetizer_to_axis.v` 和 `vbram_lutaxi4_to_axis.v` 保持一致。
 
-## 运行方式
-
-在 `hls/fisheye_remap` 目录下执行：
+## 常用命令
 
 ```powershell
-$env:HLS_BUILD_ROOT=(Resolve-Path "..\..\hls_work").Path
-cmd /c "\"D:\AMD\2025.2\Vitis\settings64.bat\" && \"D:\AMD\2025.2\Vitis\bin\vitis-run.bat\" --mode hls --tcl scripts\csim.tcl --work_dir %HLS_BUILD_ROOT%\fisheye_csim"
-cmd /c "\"D:\AMD\2025.2\Vitis\settings64.bat\" && \"D:\AMD\2025.2\Vitis\bin\vitis-run.bat\" --mode hls --tcl scripts\csynth.tcl --work_dir %HLS_BUILD_ROOT%\fisheye_csynth"
-..\..\80_TB\run_tb_vbram_hls_integration.bat
+cmd /c "D:\AMD\2025.2\Vitis\settings64.bat && D:\AMD\2025.2\Vitis\bin\vitis-run.bat --mode hls --tcl hls\fisheye_remap\scripts\csim.tcl"
+cmd /c "D:\AMD\2025.2\Vitis\settings64.bat && D:\AMD\2025.2\Vitis\bin\vitis-run.bat --mode hls --tcl hls\fisheye_remap\scripts\csynth.tcl"
 ```
 
-说明：Vitis HLS 2025.2 自动 `cosim` 不支持该类 `ap_ctrl_none` 多周期、非自同步 BRAM 控制端口核，会报 `COSIM 212-345`。本子工程以 `csim`、`csynth` 和 XSim RTL 集成仿真作为通过标准。
+raw16 逐帧仿真：
 
-## 当前实现约束
+```powershell
+$env:FISHEYE_RAW_DIR='D:\Staff\data'
+$env:FISHEYE_RAW_MAX_FRAMES='100'
+$env:FISHEYE_RAW_SAVE_EACH_FRAME='1'
+$env:FISHEYE_RAW_OUT_DIR='D:\Staff\data\fisheye_clean_results'
+cmd /c "D:\AMD\2025.2\Vitis\settings64.bat && D:\AMD\2025.2\Vitis\bin\vitis-run.bat --mode hls --tcl hls\fisheye_remap\scripts\csim_raw.tcl"
+```
 
-首版采用最近邻采样，每个输出像素读取一个源像素，匹配现有单读口 BRAM 带宽。半径默认按 `1024px -> 93°` 映射，图像中心默认 `(1024,1024)`。红外表来自 `畸变表.xlsx` 的 `红外` sheet，激光表来自 `激光` sheet。自适应预处理使用上一帧 min/max 估计黑电平和 Q8 增益，第一帧保持单位增益，输出做 16-bit 饱和。如果后续提供实际主点、焦距或完整相机内参，应更新 HLS 常量并重新综合。
+## 开发注意事项
+
+- 优先修改 `src/`，再用 `csynth.tcl` 重新生成 `rtl/`。
+- 不要手改 `rtl/` 下 HLS 生成文件。
+- 如果 HLS 生成新 helper 模块，必须同步检查 RTL wrapper 的 include 列表。
+- 如果修改 `algo_ctrl` 语义，必须同步更新 `80_TB/` 测试平台和 `docs/algorithm_development_guide.md`。
+- 当前工程不使用 HLS 旧 reader 作为实时上板路径，旧代码只作为历史保留和对照。

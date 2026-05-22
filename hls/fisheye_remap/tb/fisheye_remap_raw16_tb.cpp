@@ -2,7 +2,7 @@
 // 新增维护说明
 // 作者          : Egor Izmaylov
 // 文件职责      : 使用真实 2048x2048 raw16 相机帧验证 fisheye_remap HLS 输出效果。
-// 数据流位置    : 软件侧模拟 200 行环形 BRAM，驱动 HLS 核输出旧 SRIO packet 协议。
+// 数据流位置    : 软件侧模拟 256 行环形 BRAM，驱动 HLS 地址核并重建 SRIO packet 输出图。
 // 维护边界      : 仅用于 HLS C 仿真和图像可视化，不改变板级硬件接口。
 // ============================================================================
 #include "fisheye_remap_reader_hls.h"
@@ -86,6 +86,7 @@ static std::string frame_path(const std::string& out_dir,
                               const std::string& prefix,
                               int frame_idx,
                               const std::string& ext) {
+    // 每帧独立保存到 frames/frame_####，避免压力测试输出全部挤在同一层目录里。
     std::ostringstream oss;
     oss << "frame_";
     oss.width(4);
@@ -231,6 +232,7 @@ static captured_frame_t simulate_mode(const std::vector<std::vector<uint16_t> >&
                                       bool save_each_frame) {
     reset_reader();
 
+    // 软件模型按硬件的 256 行环形缓存写入，再在延迟半缓存后读出，复现板上乒乓延迟。
     std::vector<uint16_t> ring(kFisheyeLineBufferDepth * kFisheyeImageWidth, 0);
     std::vector<uint16_t> line_table(kFisheyeLineBufferDepth, 0);
     captured_frame_t result;

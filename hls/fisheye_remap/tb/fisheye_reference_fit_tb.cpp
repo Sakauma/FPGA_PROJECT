@@ -2,7 +2,7 @@
 // 新增维护说明
 // 作者          : Egor Izmaylov
 // 文件职责      : 从真实 raw16 帧拟合鱼眼圆心/半径，并生成去畸变软件参考图。
-// 数据流位置    : HLS C 仿真侧校准工具，用于判断畸变表方向和 200 行缓存限制影响。
+// 数据流位置    : HLS C 仿真侧校准工具，用于判断畸变表方向和 256 行缓存限制影响。
 // 维护边界      : 不进入综合核心；确认参数后再单独修改 HLS 算法源码和导出 RTL。
 // ============================================================================
 #include "fisheye_remap_reader_hls.h"
@@ -785,7 +785,7 @@ static void write_reports(const std::string& out_dir,
     }
     md << "\n## 结论提示\n";
     md << "- 若 full-frame 参考图效果仍弱，优先怀疑畸变表不是完整去畸变模型，或缺少真实 `fx/fy/cx/cy`。\n";
-    md << "- 若 full-frame 明显优于 constrained，则当前 200 行缓存是主要限制。\n";
+    md << "- 若 full-frame 明显优于 constrained，则当前 256 行缓存是主要限制。\n";
     md << "- `curve_flatten_full` 用于判断内圈下半边界能否被拉平；`curve_flatten_constrained` 用于判断 96 行窗口内的可上板效果。\n";
     md << "- `preview_contact.ppm` 的排列顺序为：input、infrared_forward_full、infrared_inverse_full、laser_forward_full、laser_inverse_full、infrared_forward_constrained、infrared_inverse_constrained、laser_forward_constrained、laser_inverse_constrained。\n";
 }

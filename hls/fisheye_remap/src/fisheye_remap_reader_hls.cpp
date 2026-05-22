@@ -58,6 +58,8 @@ static ap_uint<12> clamp_line(ap_int<16> value) {
 
 static ap_uint<13> approx_radius(ap_uint<13> abs_x, ap_uint<13> abs_y) {
 #pragma HLS INLINE
+    // 使用 max + 3/8*min 近似半径，避免 sqrt 进入实时 HLS 路径。
+    // 该近似只用于 LUT 索引，最终坐标仍由 dx/dy 和 LUT 比例计算。
     ap_uint<13> max_v = (abs_x > abs_y) ? abs_x : abs_y;
     ap_uint<13> min_v = (abs_x > abs_y) ? abs_y : abs_x;
     ap_uint<15> radius = (ap_uint<15>)max_v + (((ap_uint<15>)min_v * 3) >> 3);
@@ -164,6 +166,8 @@ static ap_int<13> calc_curve_flatten_delta_y(ap_uint<11> out_x,
 
 static ap_uint<8> wrap_source_slot(ap_uint<8> out_slot, ap_int<13> delta_line) {
 #pragma HLS INLINE
+    // 垂直 remap 只能在 256 行环形缓存内移动。这里做两次加减是为了覆盖 ±96 行位移，
+    // 同时避免在 HLS 中引入除法或取模运算。
     ap_int<14> slot = (ap_int<14>)out_slot + (ap_int<14>)delta_line;
     if (slot < 0) {
         slot += kFisheyeLineBufferDepth;
@@ -187,6 +191,7 @@ static void map_source_pixel(ap_uint<11> out_x,
                              ap_uint<8>& src_slot,
                              ap_uint<11>& src_x) {
 #pragma HLS INLINE
+    // 旁路模式用于验证链路完整性：只要 algo_ctrl[0]=0，HLS 地址核不改变源行槽和源列。
     if (algo_ctrl[0] == 0) {
         src_slot = out_slot;
         src_x = out_x;
@@ -243,6 +248,7 @@ void fisheye_remap_addr_hls(ap_uint<1> in_valid,
 #pragma HLS PIPELINE II=1
     // 新代码：Egor Izmaylov
     // HLS 只承担去畸变地址计算，并回传对齐后的 packet 内像素序号；发包节奏由 RTL packetizer 固定。
+    // in_valid 由 RTL packetizer 对每个待读像素拉高；out_valid 原样延迟输出，便于 RTL 侧判断地址有效。
     ap_uint<8> mapped_slot = 0;
     ap_uint<11> mapped_x = 0;
     if (in_valid) {

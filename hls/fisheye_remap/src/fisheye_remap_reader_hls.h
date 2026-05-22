@@ -13,6 +13,9 @@
 
 static const int kFisheyeImageWidth = 2048;
 static const int kFisheyeImageHeight = 2048;
+// HLS 坐标模型说明：
+// 输出坐标始终按 2048x2048 全帧计算；垂直方向最终只转换成 256 行环形 BRAM 的相对行槽。
+// 这意味着算法可以改变源列和有限源行偏移，但不能跨整帧任意随机访问历史图像。
 // 新代码：Egor Izmaylov 使用 raw16 软件拟合得到的真实鱼眼圆参数，替代理想图像中心假设。
 // 旧代码保留：static const int kFisheyeCenterX = 1024;
 // 旧代码保留：static const int kFisheyeCenterY = 1024;
@@ -52,12 +55,16 @@ static const int kFisheyeCurveFlattenTargetY = 1606;
 static const int kFisheyeCurveFlattenArcBase = 135;
 static const int kFisheyeCurveFlattenBand = 256;
 
+// 地址类型说明：
+// bram_addr_t[18:11] 是 256 行环形缓存的行槽，bram_addr_t[10:0] 是行内 0..2047 像素列。
+// fifo_word_t[64] 对应 tlast，fifo_word_t[63:0] 对应 4 个 raw16 像素或 SRIO header。
 typedef ap_uint<19> bram_addr_t;
 typedef ap_uint<9> line_slot_addr_t;
 typedef ap_uint<65> fifo_word_t;
 
 // 新代码：Egor Izmaylov
 // 稳定上板版本只让 HLS 计算去畸变源像素地址，SRIO header/payload/tlast 节奏由 RTL 固定生成。
+// 该接口是当前默认综合顶层；保持 II=1 对实时输出节奏非常关键。
 void fisheye_remap_addr_hls(ap_uint<1> in_valid,
                             ap_uint<11> out_x,
                             ap_uint<12> out_line,
@@ -70,6 +77,7 @@ void fisheye_remap_addr_hls(ap_uint<1> in_valid,
                             ap_uint<7>& packet_pixel_idx_out);
 
 // 新代码：Egor Izmaylov 使用 HLS 直接生成 BRAM 读地址和 SRIO payload FIFO 数据。
+// 当前工程不把该 reader 作为默认实时路径，保留它是为了历史对照和离线验证。
 void fisheye_remap_reader_hls(bram_addr_t bram_line_cur_w,
                               ap_uint<1> bram_line_cur_w_en,
                               ap_uint<12> bram_line_num,
